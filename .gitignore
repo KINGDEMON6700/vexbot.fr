@@ -5,7 +5,7 @@ build
 .env.local
 .env.*.local
 .env.*
-!.env.example
+.env.example
 .envrc
 .direnv/
 *.db
