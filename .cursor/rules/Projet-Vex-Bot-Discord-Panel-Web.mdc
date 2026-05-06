@@ -1,0 +1,70 @@
+---
+description: 
+alwaysApply: true
+---
+@CONTEXT.md
+
+## Contexte
+Vex est un bot Discord tout-en-un avec un panel web d'administration.
+Les utilisateurs du panel sont des admins de serveurs Discord, 
+pas des développeurs. Ils doivent comprendre chaque fonctionnalité 
+sans aide externe.
+Le service se positionne comme une alternative premium à Carl-bot.
+
+## Stack
+- Bot : Node.js + TypeScript
+- Panel : React + TypeScript + Tailwind CSS
+- API : Express + Prisma + SQLite
+- Auth : OAuth2 Discord
+
+## Règles de cohérence — TOUJOURS respecter
+
+QUAND tu ajoutes un élément UI (composant, aide, style, texte) :
+→ Identifie tous les endroits similaires dans le projet
+→ Liste-les moi avant de coder
+→ Applique la modification partout de façon uniforme
+→ Ne jamais faire une modification isolée si le même pattern existe ailleurs
+
+QUAND tu crées un composant :
+→ Il doit être réutilisable
+→ Il doit respecter le design system existant (couleurs, espacements, radius)
+→ Il doit fonctionner sur toutes les pages sans adaptation
+
+QUAND tu écris un texte visible par l'utilisateur :
+→ Langage simple, humain, naturel — comme si c'était écrit par une vraie personne
+→ Pas de jargon technique, pas de termes Discord/API visibles
+→ Tutoiement, ton bienveillant mais direct
+→ Jamais de formulations qui semblent générées par une IA
+→ Exemples à éviter : "Veuillez sélectionner", "Cette fonctionnalité permet de"
+→ Exemples corrects : "Choisis", "Ça te permet de"
+
+QUAND tu corriges un bug :
+→ Ne pas réécrire ce qui marche
+→ Toucher uniquement ce qui est cassé
+→ Me dire ce qui était cassé et pourquoi en termes simples
+
+## Design system
+- Accent : #6366F1 (indigo)
+- Fond : #0E0E14
+- Surface : #13131A
+- Bordures : #1F1F2E
+- Texte principal : zinc-100
+- Texte secondaire : zinc-400
+- Arrondis : rounded-xl sur cards, rounded-lg sur inputs
+- Toujours cohérent avec ce qui existe déjà
+
+## Patchnotes — RÈGLE ABSOLUE
+À chaque prompt, sans exception :
+1. Mettre à jour panel/src/data/patchnotes.ts
+2. Incrémenter +0.0.1
+3. Entrée en haut du tableau : date, version, changements
+4. Langage utilisateur simple — jamais de détails techniques
+5. Jamais de noms de fichiers, routes API ou infos internes
+
+## Ce qu'il ne faut JAMAIS faire
+- Afficher des clés techniques à l'utilisateur (guild_not_found, etc.)
+- Perdre le ?guild= dans les URLs
+- Modifier la logique API sans me prévenir
+- Créer un nouveau composant si un similaire existe déjà
+- S'éloigner du design system sans me demander
+- Réécrire des parties qui fonctionnent bien

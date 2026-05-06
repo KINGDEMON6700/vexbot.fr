@@ -1,0 +1,42 @@
+node_modules
+dist
+build
+.env
+.env.local
+.env.*.local
+.env.*
+!.env.example
+.envrc
+.direnv/
+*.db
+*.db-journal
+.DS_Store
+coverage
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Secrets and keys
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+*.crt
+*.cer
+*.jks
+*.kdbx
+
+# Tooling / caches
+.idea/
+.vscode/
+.cache/
+.turbo/
+
+# Runtime local files
+tmp/
+temp/
+uploads/

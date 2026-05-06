@@ -1,0 +1,19 @@
+{
+  "name": "vex",
+  "private": true,
+  "workspaces": [
+    "api",
+    "panel",
+    "bot"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,panel,bot -c blue,magenta,green \"npm run dev -w api\" \"npm run dev -w panel\" \"npm run dev -w bot\"",
+    "build": "npm run build --workspaces --if-present",
+    "dev:api": "npm run dev -w api",
+    "dev:panel": "npm run dev -w panel",
+    "dev:bot": "npm run dev -w bot"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

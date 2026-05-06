@@ -1,0 +1,118 @@
+@import url("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark-dimmed.min.css");
+
+/* Typo et couleurs proches du client Discord (thème sombre, embed). */
+.discord-md-root {
+  font-family: var(--font-discord-body, "Noto Sans", ui-sans-serif, system-ui, sans-serif);
+  font-size: 14px;
+  line-height: 1.375;
+  font-weight: 400;
+  color: #dbdee1;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.discord-md-root a {
+  color: #00a8fc;
+  text-decoration: none;
+  font-weight: 500;
+}
+.discord-md-root a:hover {
+  text-decoration: underline;
+}
+
+.discord-md-root strong {
+  font-weight: 600;
+  color: #f2f3f5;
+}
+
+.discord-md-root em {
+  font-style: italic;
+}
+
+.discord-md-root u {
+  text-decoration: underline;
+}
+
+.discord-md-root s,
+.discord-md-root del {
+  text-decoration: line-through;
+  color: #b5bac1;
+}
+
+.discord-md-root .d-spoiler {
+  background: #202225;
+  color: transparent;
+  border-radius: 3px;
+  padding: 0 2px;
+  cursor: pointer;
+}
+.discord-md-root .d-spoiler:hover {
+  background: #202225;
+  color: #dbdee1;
+}
+
+.discord-md-root .d-mention {
+  border-radius: 3px;
+  padding: 0 4px;
+  font-weight: 500;
+  background: hsl(235 46% 44% / 0.3);
+  color: #dee0fc;
+}
+
+.discord-md-root .d-mention.d-channel {
+  background: hsl(235 46% 44% / 0.3);
+  color: #dee0fc;
+}
+
+.discord-md-root .d-mention.d-role {
+  background: hsl(235 46% 44% / 0.25);
+  color: #c9cdfb;
+}
+
+.discord-md-root .d-mention.d-user {
+  background: hsl(235 46% 44% / 0.3);
+  color: #dee0fc;
+}
+
+.discord-md-root code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875em;
+  padding: 0.1em 0.2em;
+  border-radius: 3px;
+  background: #1e1f22;
+  color: #e6e6e7;
+}
+
+.discord-md-root pre {
+  margin: 0.5em 0;
+  padding: 0.75em;
+  border-radius: 4px;
+  background: #1e1f22;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.discord-md-root pre code {
+  padding: 0;
+  background: transparent;
+  font-size: 0.8125rem;
+  line-height: 1.25;
+}
+
+.discord-md-root .hljs {
+  background: transparent !important;
+}
+
+.discord-md-root blockquote {
+  margin: 0.25em 0;
+  padding-left: 0.6em;
+  border-left: 4px solid #4e5058;
+  color: #b5bac1;
+}
+
+.discord-md-root .d-emoji {
+  width: 1.375em;
+  height: 1.375em;
+  vertical-align: -0.3em;
+  object-fit: contain;
+}

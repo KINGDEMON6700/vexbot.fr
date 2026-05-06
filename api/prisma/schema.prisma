@@ -1,0 +1,358 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// --- Enums ---
+
+enum TicketStatus {
+  OPEN
+  CLOSED
+  ARCHIVED
+}
+
+enum TicketCloseReason {
+  RESOLVED
+  DUPLICATE
+  INVALID
+  OTHER
+}
+
+enum TranscriptFormat {
+  PLAIN
+  HTML
+  JSON
+}
+
+enum ModerationAction {
+  WARN
+  TIMEOUT
+  KICK
+  BAN
+  UNBAN
+  MUTE
+  UNMUTE
+  NOTE
+}
+
+enum CustomSlashResponseType {
+  PLAIN_TEXT
+  EMBED_INLINE
+  EMBED_TEMPLATE
+}
+
+enum RoleGroupRuleType {
+  ON_MEMBER_JOIN
+  ON_REACTION
+  ON_BUTTON
+  ON_MESSAGE_PATTERN
+}
+
+enum EmbedTimestampMode {
+  NONE
+  NOW
+  FIXED
+}
+
+// --- Modèles ---
+
+/// Serveur Discord : tout est rattaché à une guild.
+model Guild {
+  id        String  @id @default(cuid())
+  discordId String  @unique
+  name      String?
+  locale    String?
+  timezone  String?
+
+  /// Fin d’éventuel abonnement premium (null = pas premium / illimité selon ta logique métier)
+  premiumUntil DateTime?
+
+  /// Drapeaux ou réglages rares (JSON), pour éviter d’exploser le schéma trop tôt
+  settings Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  embeds              Embed[]
+  tickets             Ticket[]
+  logSettings         GuildLogSettings?
+  roleGroups          RoleGroup[]
+  customSlashCommands CustomSlashCommand[]
+  welcomeSettings     WelcomeSettings?
+  moderationCases     ModerationCase[]
+  panelAllowedRoles   PanelAllowedRole[]
+}
+
+/// Modèle d’embed réutilisable pour ce serveur (pas d’historique de versions).
+model Embed {
+  id      String @id @default(cuid())
+  guildId String
+  guild   Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  /// Nom interne unique par serveur (ex. "Bienvenue principal")
+  name String
+
+  /// Texte du message Discord au-dessus des embeds (markdown).
+  messageContent String?
+
+  /// Plusieurs embeds + texte : { "v": 1, "embeds": [ ... ] }. Si null, on lit les colonnes historiques (1 seul embed).
+  embedsJson Json?
+
+  title       String?
+  description String?
+  color       Int?
+  url         String?
+
+  thumbnailUrl String?
+  imageUrl     String?
+
+  authorName    String?
+  authorUrl     String?
+  authorIconUrl String?
+
+  footerText    String?
+  footerIconUrl String?
+
+  /// Tableau { name, value, inline }[]
+  fields Json?
+
+  timestampMode EmbedTimestampMode @default(NONE)
+  fixedAt       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  welcomeSettingsAsWelcome WelcomeSettings[]    @relation("WelcomeEmbed")
+  welcomeSettingsAsGoodbye WelcomeSettings[]    @relation("GoodbyeEmbed")
+  customSlashCommands      CustomSlashCommand[]
+  tickets                  Ticket[]
+
+  @@unique([guildId, name])
+  @@index([guildId])
+}
+
+/// Ticket : salon texte classique par serveur.
+model Ticket {
+  id      String @id @default(cuid())
+  guildId String
+  guild   Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  /// Numéro affiché (#123)
+  ticketNumber Int
+
+  /// Salon texte du ticket
+  channelId String @unique
+
+  openerId String
+
+  status TicketStatus @default(OPEN)
+
+  subject  String?
+  priority Int?
+
+  claimedById String?
+
+  closedAt    DateTime?
+  closedById  String?
+  closeReason TicketCloseReason?
+
+  /// Embed d’accueil ou de présentation du ticket (optionnel)
+  embedId String?
+  embed   Embed?  @relation(fields: [embedId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transcript TicketTranscript?
+
+  @@unique([guildId, ticketNumber])
+  @@index([guildId])
+  @@index([openerId])
+}
+
+model TicketTranscript {
+  id String @id @default(cuid())
+
+  ticketId String @unique
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  format TranscriptFormat @default(PLAIN)
+
+  content String
+
+  messageCount  Int?
+  generatedAt   DateTime @default(now())
+  generatedById String?
+}
+
+/// Une ligne par serveur : salons de logs (IDs Discord). Option simple.
+model GuildLogSettings {
+  id String @id @default(cuid())
+
+  guildId String @unique
+  guild   Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  moderationChannelId String?
+  messageChannelId    String?
+  memberChannelId     String?
+  serverChannelId     String?
+  voiceChannelId      String?
+  inviteChannelId     String?
+  roleChannelId       String?
+
+  /// Liste d’IDs de salons à ignorer pour les logs
+  ignoredChannelIds Json?
+
+  ignoreBots Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Groupe de règles (ex. jeu, annonces).
+model RoleGroup {
+  id String @id @default(cuid())
+
+  guildId String
+  guild   Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String?
+
+  enabled   Boolean @default(true)
+  sortOrder Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rules RoleGroupRule[]
+
+  @@index([guildId])
+}
+
+/// Une règle : quand / comment attribuer un rôle Discord.
+model RoleGroupRule {
+  id String @id @default(cuid())
+
+  roleGroupId String
+  roleGroup   RoleGroup @relation(fields: [roleGroupId], references: [id], onDelete: Cascade)
+
+  discordRoleId String
+
+  type   RoleGroupRuleType
+  /// Ex. messageId, emoji, customId, regex, etc.
+  config Json?
+
+  enabled  Boolean @default(true)
+  priority Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([roleGroupId])
+}
+
+/// Commande slash personnalisée enregistrée pour ce serveur.
+model CustomSlashCommand {
+  id String @id @default(cuid())
+
+  guildId String
+  guild   Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String
+
+  responseType CustomSlashResponseType
+
+  responseText String?
+
+  embedId String?
+  embed   Embed?  @relation(fields: [embedId], references: [id], onDelete: SetNull)
+
+  ephemeral Boolean @default(false)
+  enabled   Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([guildId, name])
+  @@index([guildId])
+}
+
+/// Messages de bienvenue / au revoir / DM (une ligne par serveur).
+model WelcomeSettings {
+  id String @id @default(cuid())
+
+  guildId String @unique
+  guild   Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  welcomeChannelId String?
+  welcomeContent   String?
+  welcomeEmbedId   String?
+  welcomeEmbed     Embed?  @relation("WelcomeEmbed", fields: [welcomeEmbedId], references: [id], onDelete: SetNull)
+
+  goodbyeChannelId String?
+  goodbyeContent   String?
+  goodbyeEmbedId   String?
+  goodbyeEmbed     Embed?  @relation("GoodbyeEmbed", fields: [goodbyeEmbedId], references: [id], onDelete: SetNull)
+
+  dmWelcomeEnabled Boolean @default(false)
+  dmWelcomeContent String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Cas de modération numéroté par serveur.
+model ModerationCase {
+  id String @id @default(cuid())
+
+  guildId String
+  guild   Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  caseNumber Int
+
+  targetId    String
+  moderatorId String
+
+  action ModerationAction
+  reason String?
+
+  durationSeconds Int?
+  expiresAt       DateTime?
+  /// Pour les sanctions temporaires : encore en vigueur ou non
+  active          Boolean   @default(true)
+
+  proofUrl         String?
+  contextMessageId String?
+
+  relatedCaseId String?
+  relatedCase   ModerationCase?  @relation("ModerationCaseLink", fields: [relatedCaseId], references: [id], onDelete: SetNull)
+  linkedFrom    ModerationCase[] @relation("ModerationCaseLink")
+
+  createdAt DateTime @default(now())
+
+  @@unique([guildId, caseNumber])
+  @@index([guildId])
+  @@index([targetId])
+}
+
+/// Rôles Discord autorisés à utiliser le panel pour ce serveur.
+model PanelAllowedRole {
+  id String @id @default(cuid())
+
+  guildId String
+  guild   Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  discordRoleId String
+
+  note    String?
+  addedAt DateTime @default(now())
+
+  @@unique([guildId, discordRoleId])
+  @@index([guildId])
+}

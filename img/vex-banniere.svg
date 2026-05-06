@@ -1,0 +1,24 @@
+<svg width="960" height="540" viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fond -->
+  <rect width="960" height="540" fill="#0E0E14"/>
+  <!-- Grille déco -->
+  <line x1="0" y1="135" x2="960" y2="135" stroke="#1F1F2E" stroke-width="1"/>
+  <line x1="0" y1="270" x2="960" y2="270" stroke="#1F1F2E" stroke-width="1"/>
+  <line x1="0" y1="405" x2="960" y2="405" stroke="#1F1F2E" stroke-width="1"/>
+  <line x1="240" y1="0" x2="240" y2="540" stroke="#1F1F2E" stroke-width="1"/>
+  <line x1="480" y1="0" x2="480" y2="540" stroke="#1F1F2E" stroke-width="1"/>
+  <line x1="720" y1="0" x2="720" y2="540" stroke="#1F1F2E" stroke-width="1"/>
+  <!-- Glow indigo centre -->
+  <ellipse cx="480" cy="240" rx="280" ry="180" fill="#6366F1" opacity="0.07"/>
+  <!-- Icône -->
+  <rect x="380" y="100" width="200" height="200" rx="44" fill="#6366F1"/>
+  <text x="480" y="233" text-anchor="middle" font-family="Inter, Segoe UI, sans-serif" font-size="96" font-weight="900" fill="#FFFFFF">Vx</text>
+  <!-- Nom -->
+  <text x="480" y="354" text-anchor="middle" font-family="Inter, Segoe UI, sans-serif" font-size="64" font-weight="900" fill="#FFFFFF" letter-spacing="8">VEX</text>
+  <!-- Tagline -->
+  <text x="480" y="392" text-anchor="middle" font-family="Inter, Segoe UI, sans-serif" font-size="14" font-weight="400" fill="#6366F1" letter-spacing="6">ALL-IN-ONE DISCORD BOT</text>
+  <!-- Sous-tagline -->
+  <text x="480" y="430" text-anchor="middle" font-family="Inter, Segoe UI, sans-serif" font-size="13" font-weight="400" fill="#444466" letter-spacing="2">Modération · Musique · Tickets · Logs · Fun</text>
+  <!-- Ligne déco bas -->
+  <rect x="360" y="455" width="240" height="1" fill="#6366F1" opacity="0.4"/>
+</svg>

@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-vex-accent: #6366f1;
+  --color-vex-bg: #0e0e14;
+  --color-vex-surface: #13131a;
+  --color-vex-border: #1f1f2e;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+:root {
+  --font-discord-body: "Noto Sans", ui-sans-serif, system-ui, sans-serif;
+}
