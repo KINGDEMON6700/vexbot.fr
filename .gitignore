@@ -40,3 +40,7 @@ id_ed25519
 tmp/
 temp/
 uploads/
+
+# Local-only project context
+context.md
+.cursor/
