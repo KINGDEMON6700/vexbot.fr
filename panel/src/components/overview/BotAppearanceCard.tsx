@@ -182,7 +182,7 @@ export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
           maxLength={32}
           value={nickDraft}
           onChange={(e) => setNickDraft(e.target.value)}
-          className="w-full max-w-md rounded-lg border border-vex-border bg-vex-bg px-3 py-2 text-sm text-zinc-100 focus:border-vex-accent focus:outline-none focus:ring-1 focus:ring-vex-accent"
+          className="ui-input max-w-md"
           aria-label="Nom du bot"
         />
       </div>
@@ -215,7 +215,7 @@ export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
             <button
               type="button"
               onClick={() => avatarInputRef.current?.click()}
-              className="rounded-lg border border-vex-border px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-vex-surface"
+              className="ui-btn-secondary px-3 py-1.5 text-xs font-medium text-zinc-200"
             >
               Choisir une image
             </button>
@@ -226,7 +226,7 @@ export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
                   setPendingAvatar(null);
                   if (bot.guildAvatarUrl) setRemoveAvatar(true);
                 }}
-                className="rounded-lg border border-vex-border px-3 py-1.5 text-xs text-zinc-400 transition hover:bg-vex-surface hover:text-zinc-200"
+                className="ui-btn-secondary px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200"
               >
                 Retirer la photo
               </button>
@@ -261,7 +261,7 @@ export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
             <button
               type="button"
               onClick={() => bannerInputRef.current?.click()}
-              className="rounded-lg border border-vex-border px-3 py-1.5 text-xs font-medium text-zinc-200 transition hover:bg-vex-surface"
+              className="ui-btn-secondary px-3 py-1.5 text-xs font-medium text-zinc-200"
             >
               Choisir une bannière
             </button>
@@ -272,7 +272,7 @@ export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
                   setPendingBanner(null);
                   if (bot.guildBannerUrl) setRemoveBanner(true);
                 }}
-                className="rounded-lg border border-vex-border px-3 py-1.5 text-xs text-zinc-400 transition hover:bg-vex-surface hover:text-zinc-200"
+                className="ui-btn-secondary px-3 py-1.5 text-xs text-zinc-400 hover:text-zinc-200"
               >
                 Retirer la bannière
               </button>
@@ -289,7 +289,7 @@ export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
           type="button"
           disabled={saving}
           onClick={() => void handleSave()}
-          className="rounded-lg bg-vex-accent px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:opacity-50"
+          className="ui-btn-primary"
         >
           {saving ? "Enregistrement…" : "Enregistrer les changements"}
         </button>

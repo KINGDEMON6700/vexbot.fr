@@ -3,9 +3,12 @@ import { RootLayout } from "./layouts/RootLayout.js";
 import { CommandsPage } from "./pages/CommandsPage.js";
 import { EmbedsPage } from "./pages/EmbedsPage.js";
 import { LogsPage } from "./pages/LogsPage.js";
-import { PatchnotesPage } from "./pages/PatchnotesPage.js";
+import { ModulesPage } from "./pages/ModulesPage.js";
+import { MarketplacePage } from "./pages/MarketplacePage.js";
 import { OverviewPage } from "./pages/OverviewPage.js";
-import { RolesPage } from "./pages/RolesPage.js";
+import { ServerSelectionPage } from "./pages/ServerSelectionPage.js";
+import { ServerTemplatesPage } from "./pages/ServerTemplatesPage.js";
+import { PatchnotesPage } from "./pages/PatchnotesPage.js";
 import { TicketsPage } from "./pages/TicketsPage.js";
 
 export default function App() {
@@ -16,8 +19,11 @@ export default function App() {
         <Route path="embeds" element={<EmbedsPage />} />
         <Route path="tickets" element={<TicketsPage />} />
         <Route path="logs" element={<LogsPage />} />
-        <Route path="roles" element={<RolesPage />} />
+        <Route path="templates" element={<ServerTemplatesPage />} />
+        <Route path="marketplace" element={<MarketplacePage />} />
         <Route path="commands" element={<CommandsPage />} />
+        <Route path="modules" element={<ModulesPage />} />
+        <Route path="select-server" element={<ServerSelectionPage />} />
         <Route path="patchnotes" element={<PatchnotesPage />} />
       </Route>
     </Routes>

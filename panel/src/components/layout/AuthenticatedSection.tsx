@@ -52,11 +52,10 @@ export function AuthenticatedSection({ title, description, children, wrapContent
   if (eligibleGuilds.length === 0) {
     return (
       <div className="flex flex-col gap-6">
-        <header>
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-100">{title}</h1>
-          {description ? (
-            <p className="mt-1 text-sm text-zinc-400">{description}</p>
-          ) : null}
+        <header className="ui-page-header">
+          <h1>{title}</h1>
+          {description ? <p>{description}</p> : null}
+          <div className="ui-page-header-accent" aria-hidden />
         </header>
         <div className="rounded-xl border border-vex-border bg-vex-surface px-6 py-10 text-center text-sm text-zinc-400">
           Tu n’as aucun serveur où tu es propriétaire ou administrateur. Reviens quand c’est le cas.
@@ -101,11 +100,10 @@ export function AuthenticatedSection({ title, description, children, wrapContent
 
   return (
     <div className="flex flex-col gap-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-100">{title}</h1>
-        {description ? (
-          <p className="mt-1 text-sm text-zinc-400">{description}</p>
-        ) : null}
+      <header className="ui-page-header">
+        <h1>{title}</h1>
+        {description ? <p>{description}</p> : null}
+        <div className="ui-page-header-accent" aria-hidden />
       </header>
       {wrapContent ? (
         <div className="rounded-xl border border-dashed border-vex-border/80 bg-vex-bg/40 px-6 py-10 text-center text-sm text-zinc-500">

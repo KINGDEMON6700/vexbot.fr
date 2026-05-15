@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vex — Bot Discord & panel de gestion pour votre serveur</title>
+    <meta
+      name="description"
+      content="Vex structure, sécurise et anime votre communauté Discord : tickets, embeds, bienvenue, vérification et commandes — le tout depuis un panel web clair, sans coder."
+    />
+    <link rel="canonical" href="https://vexbot.fr/" />
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <style>
+      :root {
+        --accent: #6366f1;
+        --accent-hover: #818cf8;
+        --accent-glow: rgba(99, 102, 241, 0.35);
+        --bg: #0e0e14;
+        --surface: #13131a;
+        --surface-2: #1a1a24;
+        --border: #1f1f2e;
+        --text: #f4f4f5;
+        --muted: #a1a1aa;
+        --muted-2: #71717a;
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .wrap {
+        width: min(1120px, 100% - 2rem);
+        margin-inline: auto;
+      }
+
+      /* Nav */
+      .nav {
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        border-bottom: 1px solid var(--border);
+        background: rgba(14, 14, 20, 0.85);
+        backdrop-filter: blur(12px);
+      }
+
+      .nav-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.85rem 0;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        font-weight: 700;
+        font-size: 1.15rem;
+        letter-spacing: -0.02em;
+      }
+
+      .brand img {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+      }
+
+      .nav-links {
+        display: none;
+        gap: 1.5rem;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      .nav-links a:hover {
+        color: var(--text);
+      }
+
+      .nav-cta {
+        display: flex;
+        gap: 0.5rem;
+        flex-shrink: 0;
+      }
+
+      @media (min-width: 768px) {
+        .nav-links {
+          display: flex;
+        }
+      }
+
+      /* Buttons */
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        padding: 0.6rem 1.1rem;
+        border-radius: 0.65rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+        transition: background 0.2s, border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+
+      .btn:active {
+        transform: scale(0.98);
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: #fff;
+        box-shadow: 0 0 24px var(--accent-glow);
+      }
+
+      .btn-primary:hover {
+        background: var(--accent-hover);
+      }
+
+      .btn-ghost {
+        border-color: var(--border);
+        background: var(--surface);
+        color: var(--text);
+      }
+
+      .btn-ghost:hover {
+        border-color: #3f3f5a;
+        background: var(--surface-2);
+      }
+
+      .btn-lg {
+        padding: 0.85rem 1.5rem;
+        font-size: 1rem;
+        border-radius: 0.75rem;
+      }
+
+      /* Hero */
+      .hero {
+        position: relative;
+        padding: 4rem 0 5rem;
+        overflow: hidden;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        inset: -40% 0 auto;
+        height: 80%;
+        background: radial-gradient(ellipse 70% 50% at 50% 0%, var(--accent-glow), transparent 70%);
+        pointer-events: none;
+      }
+
+      .hero-grid {
+        position: relative;
+        display: grid;
+        gap: 3rem;
+        align-items: center;
+      }
+
+      @media (min-width: 900px) {
+        .hero-grid {
+          grid-template-columns: 1.1fr 0.9fr;
+        }
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--accent-hover);
+        background: rgba(99, 102, 241, 0.12);
+        border: 1px solid rgba(99, 102, 241, 0.25);
+        margin-bottom: 1.25rem;
+      }
+
+      .hero h1 {
+        margin: 0 0 1rem;
+        font-size: clamp(2rem, 5vw, 2.85rem);
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -0.03em;
+      }
+
+      .hero h1 span {
+        color: var(--accent-hover);
+      }
+
+      .hero-lead {
+        margin: 0 0 1.75rem;
+        font-size: 1.1rem;
+        color: var(--muted);
+        max-width: 34rem;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 2rem;
+      }
+
+      .hero-note {
+        font-size: 0.85rem;
+        color: var(--muted-2);
+      }
+
+      .hero-note i {
+        color: var(--accent-hover);
+        margin-right: 0.25rem;
+      }
+
+      .hero-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 1.25rem;
+        padding: 1.5rem;
+        box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+      }
+
+      .hero-card h3 {
+        margin: 0 0 1rem;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted-2);
+        font-weight: 600;
+      }
+
+      .check-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+      }
+
+      .check-list li {
+        display: flex;
+        gap: 0.75rem;
+        font-size: 0.95rem;
+        color: var(--muted);
+      }
+
+      .check-list i {
+        color: #34d399;
+        margin-top: 0.2rem;
+        flex-shrink: 0;
+      }
+
+      /* Trust bar */
+      .trust {
+        border-block: 1px solid var(--border);
+        background: var(--surface);
+        padding: 1.25rem 0;
+      }
+
+      .trust-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.25rem;
+        text-align: center;
+      }
+
+      .trust-item strong {
+        display: block;
+        font-size: 0.95rem;
+        margin-bottom: 0.2rem;
+      }
+
+      .trust-item span {
+        font-size: 0.85rem;
+        color: var(--muted-2);
+      }
+
+      .trust-item i {
+        display: block;
+        font-size: 1.35rem;
+        color: var(--accent-hover);
+        margin-bottom: 0.5rem;
+      }
+
+      /* Sections */
+      section {
+        padding: 4.5rem 0;
+      }
+
+      .section-head {
+        text-align: center;
+        max-width: 40rem;
+        margin: 0 auto 3rem;
+      }
+
+      .section-head h2 {
+        margin: 0 0 0.75rem;
+        font-size: clamp(1.5rem, 3.5vw, 2rem);
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+
+      .section-head p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 1.05rem;
+      }
+
+      .pillars {
+        display: grid;
+        gap: 1.25rem;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+
+      .pillar {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        padding: 1.5rem;
+        transition: border-color 0.2s, transform 0.2s;
+      }
+
+      .pillar:hover {
+        border-color: rgba(99, 102, 241, 0.4);
+        transform: translateY(-2px);
+      }
+
+      .pillar-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        background: rgba(99, 102, 241, 0.15);
+        color: var(--accent-hover);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+        margin-bottom: 1rem;
+      }
+
+      .pillar h3 {
+        margin: 0 0 0.5rem;
+        font-size: 1.05rem;
+      }
+
+      .pillar p {
+        margin: 0;
+        font-size: 0.92rem;
+        color: var(--muted);
+      }
+
+      /* Feature blocks */
+      .feature {
+        display: grid;
+        gap: 2.5rem;
+        align-items: center;
+        margin-bottom: 4rem;
+      }
+
+      .feature:last-child {
+        margin-bottom: 0;
+      }
+
+      @media (min-width: 800px) {
+        .feature {
+          grid-template-columns: 1fr 1fr;
+        }
+        .feature.reverse .feature-text {
+          order: 2;
+        }
+        .feature.reverse .feature-visual {
+          order: 1;
+        }
+      }
+
+      .feature-tag {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--accent-hover);
+        margin-bottom: 0.75rem;
+      }
+
+      .feature h3 {
+        margin: 0 0 0.75rem;
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
+      }
+
+      .feature-desc {
+        color: var(--muted);
+        margin: 0 0 1.25rem;
+        font-size: 1rem;
+      }
+
+      .feature-bullets {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+      }
+
+      .feature-bullets li {
+        font-size: 0.92rem;
+        color: var(--muted);
+        padding-left: 1.35rem;
+        position: relative;
+      }
+
+      .feature-bullets li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0.55em;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+
+      .feature-visual {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        padding: 1.25rem;
+        min-height: 220px;
+      }
+
+      .mock-ui {
+        font-size: 0.8rem;
+      }
+
+      .mock-bar {
+        display: flex;
+        gap: 0.35rem;
+        margin-bottom: 1rem;
+      }
+
+      .mock-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--border);
+      }
+
+      .mock-row {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        padding: 0.55rem 0.65rem;
+        border-radius: 0.5rem;
+        margin-bottom: 0.35rem;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        color: var(--muted);
+      }
+
+      .mock-row.active {
+        border-color: rgba(99, 102, 241, 0.5);
+        background: rgba(99, 102, 241, 0.08);
+        color: var(--text);
+      }
+
+      .mock-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        background: rgba(99, 102, 241, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent-hover);
+        flex-shrink: 0;
+      }
+
+      /* Steps */
+      .steps {
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      }
+
+      .step {
+        text-align: center;
+        padding: 1.75rem 1.25rem;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+      }
+
+      .step-num {
+        width: 40px;
+        height: 40px;
+        margin: 0 auto 1rem;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+      }
+
+      .step h3 {
+        margin: 0 0 0.5rem;
+        font-size: 1.05rem;
+      }
+
+      .step p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      /* CTA */
+      .cta-block {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(99, 102, 241, 0.05));
+        border: 1px solid rgba(99, 102, 241, 0.35);
+        border-radius: 1.5rem;
+        padding: 3rem 2rem;
+        text-align: center;
+      }
+
+      .cta-block h2 {
+        margin: 0 0 0.75rem;
+        font-size: clamp(1.4rem, 3vw, 1.85rem);
+      }
+
+      .cta-block p {
+        margin: 0 auto 1.75rem;
+        max-width: 32rem;
+        color: var(--muted);
+      }
+
+      .cta-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        justify-content: center;
+      }
+
+      /* Footer */
+      footer {
+        border-top: 1px solid var(--border);
+        padding: 2rem 0;
+        margin-top: 2rem;
+      }
+
+      .footer-inner {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.85rem;
+        color: var(--muted-2);
+      }
+
+      .footer-links {
+        display: flex;
+        gap: 1.25rem;
+      }
+
+      .footer-links a:hover {
+        color: var(--text);
+      }
+
+      .bg-alt {
+        background: var(--surface);
+        border-block: 1px solid var(--border);
+      }
+    </style>
+    <script>
+      if (location.protocol === "http:") {
+        location.replace("https://" + location.host + location.pathname + location.search);
+      }
+    </script>
+  </head>
+  <body>
+    <header class="nav">
+      <motion-div class="wrap nav-inner">
+        <a href="#" class="brand">
+          <img src="assets/vex-logo.svg" width="36" height="36" alt="Logo Vex" />
+          Vex
+        </a>
+        <nav class="nav-links" aria-label="Navigation">
+          <a href="#pourquoi">Pourquoi Vex</a>
+          <a href="#fonctionnalites">Fonctionnalités</a>
+          <a href="#demarrage">Démarrer</a>
+        </nav>
+        <motion-div class="nav-cta">
+          <a class="btn btn-ghost" href="https://panel.vexbot.fr/">Panel</a>
+          <a
+            class="btn btn-primary"
+            href="https://discord.com/api/oauth2/authorize?client_id=1495026020473110619&amp;permissions=8&amp;scope=bot%20applications.commands"
+            >Ajouter le bot</a
+          >
+        </motion-div>
+      </motion-div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <motion-div class="wrap hero-grid">
+          <motion-div>
+            <p class="badge"><i class="fa-solid fa-sparkles" aria-hidden="true"></i> Bot + panel web pour Discord</p>
+            <h1>Votre serveur Discord, <span>structuré et serein</span></h1>
+            <p class="hero-lead">
+              Vex centralise l’essentiel : support par tickets, messages soignés, accueil des membres et
+              sécurité à l’arrivée. Tout se règle depuis un panel clair — sans écrire une ligne de code.
+            </p>
+            <motion-div class="hero-actions">
+              <a
+                class="btn btn-primary btn-lg"
+                href="https://discord.com/api/oauth2/authorize?client_id=1495026020473110619&amp;permissions=8&amp;scope=bot%20applications.commands"
+              >
+                <i class="fa-brands fa-discord" aria-hidden="true"></i>
+                Ajouter Vex à mon serveur
+              </a>
+              <a class="btn btn-ghost btn-lg" href="https://panel.vexbot.fr/">
+                <i class="fa-solid fa-sliders" aria-hidden="true"></i>
+                Ouvrir le panel
+              </a>
+            </motion-div>
+            <p class="hero-note">
+              <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+              Connexion avec votre compte Discord · Réservé aux administrateurs de serveur
+            </p>
+          </motion-div>
+          <motion-div class="hero-card">
+            <h3>Ce que vous gagnez dès le premier jour</h3>
+            <ul class="check-list">
+              <li>
+                <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                <span>Un support organisé : panneau d’ouverture, suivi des tickets et historique à la fermeture.</span>
+              </li>
+              <li>
+                <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                <span>Des messages professionnels : embeds, boutons et envoi direct depuis le panel.</span>
+              </li>
+              <li>
+                <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                <span>Une porte d’entrée maîtrisée : bienvenue, rôles automatiques et vérification anti-bots.</span>
+              </li>
+              <li>
+                <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                <span>Des modèles prêts à partager ou à importer depuis la communauté Vex.</span>
+              </li>
+            </ul>
+          </motion-div>
+        </motion-div>
+      </section>
+
+      <motion-div class="trust">
+        <motion-div class="wrap trust-grid">
+          <motion-div class="trust-item">
+            <i class="fa-solid fa-window-maximize" aria-hidden="true"></i>
+            <strong>Panel web dédié</strong>
+            <span>Configurez sans passer par des commandes obscures</span>
+          </motion-div>
+          <motion-div class="trust-item">
+            <i class="fa-brands fa-discord" aria-hidden="true"></i>
+            <strong>Intégré à Discord</strong>
+            <span>Boutons, menus et commandes slash natives</span>
+          </motion-div>
+          <motion-div class="trust-item">
+            <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
+            <strong>Sans développeur</strong>
+            <span>Créateurs, admins et modérateurs autonomes</span>
+          </motion-div>
+          <motion-div class="trust-item">
+            <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
+            <strong>Évolution continue</strong>
+            <span>Nouvelles fonctions ajoutées au fil du temps</span>
+          </motion-div>
+        </motion-div>
+      </motion-div>
+
+      <section id="pourquoi" class="bg-alt">
+        <motion-div class="wrap">
+          <motion-div class="section-head">
+            <h2>Pourquoi les serveurs choisissent Vex</h2>
+            <p>
+              Que vous gériez une communauté gaming, un serveur d’entraide ou un espace pro, Vex vous aide à
+              gagner du temps et à offrir une expérience cohérente — pour vos membres comme pour votre équipe.
+            </p>
+          </motion-div>
+          <motion-div class="pillars">
+            <article class="pillar">
+              <motion-div class="pillar-icon"><i class="fa-solid fa-headset" aria-hidden="true"></i></motion-div>
+              <h3>Support qui rassure</h3>
+              <p>
+                Vos membres ouvrent un ticket en un clic. Vous suivez, répondez et clôturez avec une trace
+                claire — moins de messages perdus dans le général.
+              </p>
+            </article>
+            <article class="pillar">
+              <motion-div class="pillar-icon"><i class="fa-solid fa-palette" aria-hidden="true"></i></motion-div>
+              <h3>Image soignée</h3>
+              <p>
+                Embeds, couleurs, boutons : votre communication ressemble à celle des grandes communautés, sans
+                outils externes compliqués.
+              </p>
+            </article>
+            <article class="pillar">
+              <motion-div class="pillar-icon"><i class="fa-solid fa-user-shield" aria-hidden="true"></i></motion-div>
+              <h3>Arrivées sous contrôle</h3>
+              <p>
+                Bienvenue personnalisée, rôles automatiques et vérification (bouton ou code) avant d’accéder au
+                reste du serveur.
+              </p>
+            </article>
+            <article class="pillar">
+              <motion-div class="pillar-icon"><i class="fa-solid fa-copy" aria-hidden="true"></i></motion-div>
+              <h3>Gain de temps</h3>
+              <p>
+                Dupliquez la structure d’un serveur, réutilisez des modèles embeds et inspirez-vous du
+                marketplace communautaire.
+              </p>
+            </article>
+          </motion-div>
+        </motion-div>
+      </section>
+
+      <section id="fonctionnalites">
+        <motion-div class="wrap">
+          <motion-div class="section-head">
+            <h2>Tout ce que Vex met à votre disposition</h2>
+            <p>
+              Un bot sur Discord, un cerveau dans le panel : chaque fonctionnalité est pensée pour être
+              comprise et réglée en quelques minutes.
+            </p>
+          </motion-div>
+
+          <article class="feature">
+            <motion-div class="feature-text">
+              <span class="feature-tag">Tickets</span>
+              <h3>Un support structuré, de l’ouverture à l’archivage</h3>
+              <p class="feature-desc">
+                Fini les fils de discussion noyés dans le général. Vex propose un parcours clair pour vos
+                membres et votre équipe de modération.
+              </p>
+              <ul class="feature-bullets">
+                <li>Panneau d’ouverture par bouton ou menu déroulant, synchronisé automatiquement</li>
+                <li>Formulaire optionnel avant création du salon (moins de tickets vides)</li>
+                <li>Messages d’accueil personnalisables, fermeture et ajout de membres depuis Discord</li>
+                <li>Liste des tickets ouverts et fermés, lecture des échanges depuis le panel</li>
+                <li>Transcript HTML enregistré à chaque fermeture — utile pour le suivi ou la formation</li>
+                <li>Commandes <code>/ticket</code> pour le staff : fermer, inviter, retirer</li>
+              </ul>
+            </motion-div>
+            <motion-div class="feature-visual mock-ui" aria-hidden="true">
+              <motion-div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span></motion-div>
+              <motion-div class="mock-row active"><span class="mock-icon"><i class="fa-solid fa-ticket"></i></span> Ticket #042 — Ouvert</motion-div>
+              <motion-div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-message"></i></span> Conversation en direct</motion-div>
+              <motion-div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-file-lines"></i></span> Transcript à la fermeture</motion-div>
+            </motion-div>
+          </article>
+
+          <article class="feature reverse">
+            <motion-div class="feature-text">
+              <span class="feature-tag">Embeds</span>
+              <h3>Des messages visuels, réutilisables à l’infini</h3>
+              <p class="feature-desc">
+                Créez une bibliothèque de modèles : annonces, règles, FAQ, panneaux ticket… Aperçu fidèle à
+                Discord avant publication.
+              </p>
+              <ul class="feature-bullets">
+                <li>Éditeur complet : texte, embeds, images, boutons et liens</li>
+                <li>Envoi direct dans un salon ou un fil depuis le panel</li>
+                <li>Commande <code>/sendembed</code> pour publier un modèle en un instant sur Discord</li>
+                <li>Import et export JSON pour sauvegarder ou partager vos créations</li>
+              </ul>
+            </motion-div>
+            <motion-div class="feature-visual mock-ui" aria-hidden="true">
+              <motion-div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span></motion-div>
+              <motion-div class="mock-row active"><span class="mock-icon"><i class="fa-solid fa-layer-group"></i></span> Modèle « Bienvenue support »</motion-div>
+              <motion-div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-eye"></i></span> Aperçu en temps réel</motion-div>
+              <motion-div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-paper-plane"></i></span> Publier sur #annonces</motion-div>
+            </motion-div>
+          </article>
+
+          <article class="feature">
+            <motion-div class="feature-text">
+              <span class="feature-tag">Modules</span>
+              <h3>Accueillir, informer et filtrer les nouveaux membres</h3>
+              <p class="feature-desc">
+                Donnez le ton dès l’arrivée et protégez votre serveur avant que les nouveaux accèdent aux
+                salons sensibles.
+              </p>
+              <ul class="feature-bullets">
+                <li>Messages d’arrivée et de départ (texte ou embeds avec variables personnalisées)</li>
+                <li>Rôles attribués automatiquement à chaque nouveau membre</li>
+                <li>Vérification par bouton ou par code captcha (message privé + saisie en salon)</li>
+                <li>Les rôles d’arrivée ne sont donnés qu’après validation si la vérification est active</li>
+              </ul>
+            </motion-div>
+            <motion-div class="feature-visual mock-ui" aria-hidden="true">
+              <motion-div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span></motion-div>
+              <motion-div class="mock-row active"><span class="mock-icon"><i class="fa-solid fa-door-open"></i></span> Bienvenue {user}</motion-div>
+              <motion-div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-user-check"></i></span> Vérification captcha</motion-div>
+              <motion-div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-id-badge"></i></span> Rôle « Membre » automatique</motion-div>
+            </motion-div>
+          </article>
+
+          <article class="feature reverse">
+            <motion-div class="feature-text">
+              <span class="feature-tag">Commandes</span>
+              <h3>Vos propres commandes slash, sans programmer</h3>
+              <p class="feature-desc">
+                Répondez aux questions fréquentes, affichez vos règles ou envoyez un embed en une commande —
+                avec des droits précis par rôle et par salon.
+              </p>
+              <ul class="feature-bullets">
+                <li>Commandes personnalisées : texte, embed simple ou modèle de la bibliothèque</li>
+                <li>Réponse visible par tous ou réservée à la personne qui a demandé</li>
+                <li>Activation et restrictions pour <code>/ping</code>, <code>/sendembed</code> et le module ticket</li>
+                <li>Synchronisation automatique avec Discord à chaque modification</li>
+              </ul>
+            </motion-div>
+            <motion-div class="feature-visual mock-ui" aria-hidden="true">
+              <motion-div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span></motion-div>
+              <motion-div class="mock-row active"><span class="mock-icon"><i class="fa-solid fa-terminal"></i></span> /regles</motion-div>
+              <motion-div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-lock"></i></span> Réservé au rôle Modérateur</motion-div>
+              <motion-div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-hashtag"></i></span> Salon #informations</motion-div>
+            </motion-div>
+          </article>
+
+          <article class="feature">
+            <motion-div class="feature-text">
+              <span class="feature-tag">Templates &amp; Marketplace</span>
+              <h3>Dupliquez, partagez, inspirez-vous</h3>
+              <p class="feature-desc">
+                Sauvegardez la structure de votre serveur (rôles, catégories, salons), comparez avant
+                d’appliquer, ou importez le travail d’autres communautés.
+              </p>
+              <ul class="feature-bullets">
+                <li>Capture et application progressive de la structure du serveur</li>
+                <li>Aperçu visuel et liste des changements avant validation</li>
+                <li>Marketplace : modèles d’embeds et structures publiées par la communauté</li>
+                <li>Recherche, likes, commentaires et import en un clic dans votre serveur</li>
+              </ul>
+            </motion-div>
+            <motion-div class="feature-visual mock-ui" aria-hidden="true">
+              <motion-div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span></motion-div>
+              <motion-div class="mock-row active"><span class="mock-icon"><i class="fa-solid fa-sitemap"></i></span> Template « Support pro »</motion-div>
+              <motion-div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-store"></i></span> Marketplace communautaire</motion-div>
+              <motion-div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-download"></i></span> Importer sur mon serveur</motion-div>
+            </motion-div>
+          </article>
+
+          <article class="feature reverse">
+            <motion-div class="feature-text">
+              <span class="feature-tag">Vue d’ensemble</span>
+              <h3>Votre serveur et Vex, en un coup d’œil</h3>
+              <p class="feature-desc">
+                Statistiques du serveur, activité des tickets, nombre d’embeds et de commandes actives — et la
+                possibilité d’adapter l’apparence du bot à votre communauté.
+              </p>
+              <ul class="feature-bullets">
+                <li>Membres, salons, rôles et boosts affichés clairement</li>
+                <li>Compteurs tickets ouverts / fermés et outils actifs</li>
+                <li>Surnom, photo de profil et bannière du bot personnalisables par serveur</li>
+              </ul>
+            </motion-div>
+            <motion-div class="feature-visual mock-ui" aria-hidden="true">
+              <motion-div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span></motion-div>
+              <motion-div class="mock-row active"><span class="mock-icon"><i class="fa-solid fa-chart-simple"></i></span> 12 tickets ouverts</motion-div>
+              <motion-div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-users"></i></span> 1 240 membres</motion-div>
+              <motion-div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-robot"></i></span> Identité du bot</motion-div>
+            </motion-div>
+          </article>
+        </motion-div>
+      </section>
+
+      <section id="demarrage" class="bg-alt">
+        <motion-div class="wrap">
+          <motion-div class="section-head">
+            <h2>Démarrer en trois étapes</h2>
+            <p>Pas de configuration obscure : invitez, connectez-vous, réglez — le bot fait le reste sur Discord.</p>
+          </motion-div>
+          <motion-div class="steps">
+            <article class="step">
+              <motion-div class="step-num">1</motion-div>
+              <h3>Ajoutez Vex</h3>
+              <p>
+                Invitez le bot sur votre serveur Discord. Il apparaît dans la liste des membres et est prêt à
+                recevoir vos réglages.
+              </p>
+            </article>
+            <article class="step">
+              <motion-div class="step-num">2</motion-div>
+              <h3>Ouvrez le panel</h3>
+              <p>
+                Connectez-vous avec Discord, choisissez votre serveur (administrateur requis) et accédez à toutes
+                les sections depuis une interface unique.
+              </p>
+            </article>
+            <article class="step">
+              <motion-div class="step-num">3</motion-div>
+              <h3>Configurez à votre rythme</h3>
+              <p>
+                Activez les tickets, préparez vos embeds, règlez l’accueil : chaque changement est pris en
+                charge par le bot sur Discord.
+              </p>
+            </article>
+          </motion-div>
+        </motion-div>
+      </section>
+
+      <section>
+        <motion-div class="wrap">
+          <motion-div class="cta-block">
+            <h2>Prêt à offrir une meilleure expérience à votre communauté ?</h2>
+            <p>
+              Rejoignez les serveurs qui centralisent leur gestion avec Vex. Installation gratuite, panel
+              accessible dès que le bot est invité.
+            </p>
+            <motion-div class="cta-actions">
+              <a
+                class="btn btn-primary btn-lg"
+                href="https://discord.com/api/oauth2/authorize?client_id=1495026020473110619&amp;permissions=8&amp;scope=bot%20applications.commands"
+              >
+                <i class="fa-brands fa-discord" aria-hidden="true"></i>
+                Ajouter Vex à Discord
+              </a>
+              <a class="btn btn-ghost btn-lg" href="https://panel.vexbot.fr/">
+                Accéder au panel
+              </a>
+            </motion-div>
+          </motion-div>
+        </motion-div>
+      </section>
+    </main>
+
+    <footer>
+      <motion-div class="wrap footer-inner">
+        <p>© <span id="y"></span> Vex · Bot Discord &amp; panel de gestion</p>
+        <nav class="footer-links" aria-label="Liens utiles">
+          <a href="https://panel.vexbot.fr/">Panel</a>
+          <a href="https://discord.com/api/oauth2/authorize?client_id=1495026020473110619&amp;permissions=8&amp;scope=bot%20applications.commands">Inviter le bot</a>
+        </nav>
+      </motion-div>
+    </footer>
+    <script>
+      document.getElementById("y").textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>

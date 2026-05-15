@@ -49,6 +49,13 @@ const templateMessageSchema = z
     profileDisplayName: z.string().max(80).nullable().optional(),
     /** Remplace l’avatar du bot pour ce message (URL). */
     profileAvatarUrl: optionalHttpUrl(),
+    threadMode: z.enum(["NONE", "CREATE_NEW", "EXISTING"]).optional(),
+    threadName: z.string().max(100).nullable().optional(),
+    threadTargetId: z.string().max(40).nullable().optional(),
+    threadAutoArchiveDuration: z
+      .union([z.literal(60), z.literal(1440), z.literal(4320), z.literal(10080), z.null()])
+      .optional(),
+    threadType: z.union([z.literal("PUBLIC"), z.literal("PRIVATE"), z.null()]).optional(),
     embeds: z.array(embedPartSchema).min(1).max(10),
     componentBlocks: z.array(componentBlockSchema).max(10),
   })
@@ -64,9 +71,32 @@ const templateMessageSchema = z
     }
   });
 
+/** Doit rester aligné avec `EMBED_TEMPLATE_LIST_ICON_KEYS` du panel. */
+const EMBED_LIST_ICON_KEYS = [
+  "file-lines",
+  "layer-group",
+  "bell",
+  "star",
+  "heart",
+  "ticket",
+  "shield-halved",
+  "flag",
+  "bolt",
+  "gift",
+  "gear",
+  "envelope",
+  "users",
+  "calendar-days",
+  "megaphone",
+  "house",
+] as const;
+
 const saveTemplateSchema = z.object({
   name: z.string().min(1).max(100).trim(),
   messages: z.array(templateMessageSchema).min(1).max(10),
+  listAccentColor: z.number().int().min(0).max(0xffffff).nullable().optional(),
+  listIconColor: z.number().int().min(0).max(0xffffff).nullable().optional(),
+  listIconKey: z.enum(EMBED_LIST_ICON_KEYS).nullable().optional(),
 });
 
 export type EmbedPartDto = {
@@ -100,6 +130,11 @@ export type TemplateMessageDto = {
   messageContent: string | null;
   profileDisplayName: string | null;
   profileAvatarUrl: string | null;
+  threadMode: "NONE" | "CREATE_NEW" | "EXISTING";
+  threadName: string | null;
+  threadTargetId: string | null;
+  threadAutoArchiveDuration: 60 | 1440 | 4320 | 10080 | null;
+  threadType: "PUBLIC" | "PRIVATE" | null;
   embeds: EmbedPartDto[];
   componentBlocks: ComponentBlockDto[];
 };
@@ -108,6 +143,9 @@ export type EmbedTemplateDto = {
   id: string;
   name: string;
   messages: TemplateMessageDto[];
+  listAccentColor: number | null;
+  listIconColor: number | null;
+  listIconKey: (typeof EMBED_LIST_ICON_KEYS)[number] | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -280,7 +318,32 @@ function parseMessagesFromStoredV3(raw: unknown): TemplateMessageDto[] | null {
       profileAvatarUrl = o.profileAvatarUrl.trim().slice(0, 2048);
     }
     const componentBlocks = parseComponentBlocksFromStored(o.componentBlocks);
-    messages.push({ messageContent, profileDisplayName, profileAvatarUrl, embeds, componentBlocks });
+    const threadModeRaw = o.threadMode;
+    const threadMode =
+      threadModeRaw === "CREATE_NEW" || threadModeRaw === "EXISTING" ? threadModeRaw : "NONE";
+    const threadName = typeof o.threadName === "string" ? o.threadName.trim().slice(0, 100) || null : null;
+    const threadTargetId =
+      typeof o.threadTargetId === "string" ? o.threadTargetId.trim().slice(0, 40) || null : null;
+    const threadAutoArchiveDuration =
+      o.threadAutoArchiveDuration === 60 ||
+      o.threadAutoArchiveDuration === 1440 ||
+      o.threadAutoArchiveDuration === 4320 ||
+      o.threadAutoArchiveDuration === 10080
+        ? o.threadAutoArchiveDuration
+        : null;
+    const threadType = o.threadType === "PUBLIC" || o.threadType === "PRIVATE" ? o.threadType : null;
+    messages.push({
+      messageContent,
+      profileDisplayName,
+      profileAvatarUrl,
+      threadMode,
+      threadName,
+      threadTargetId,
+      threadAutoArchiveDuration,
+      threadType,
+      embeds,
+      componentBlocks,
+    });
   }
   return messages.length > 0 ? messages : null;
 }
@@ -318,6 +381,11 @@ function parseTemplateFromRow(row: {
           messageContent: row.messageContent,
           profileDisplayName: null,
           profileAvatarUrl: null,
+          threadMode: "NONE",
+          threadName: null,
+          threadTargetId: null,
+          threadAutoArchiveDuration: null,
+          threadType: null,
           embeds: embedsRaw.map((e) => embedPartFromStored(e)),
           componentBlocks: [{ rows: parseComponentRowsFromStored(o.componentRows) }],
         },
@@ -329,6 +397,11 @@ function parseTemplateFromRow(row: {
           messageContent: row.messageContent,
           profileDisplayName: null,
           profileAvatarUrl: null,
+          threadMode: "NONE",
+          threadName: null,
+          threadTargetId: null,
+          threadAutoArchiveDuration: null,
+          threadType: null,
           embeds: embedsRaw.map((e) => embedPartFromStored(e)),
           componentBlocks: [{ rows: [] }],
         },
@@ -340,6 +413,11 @@ function parseTemplateFromRow(row: {
       messageContent: row.messageContent,
       profileDisplayName: null,
       profileAvatarUrl: null,
+      threadMode: "NONE",
+      threadName: null,
+      threadTargetId: null,
+      threadAutoArchiveDuration: null,
+      threadType: null,
       embeds: [legacyRowToEmbedPart(row)],
       componentBlocks: [{ rows: [] }],
     },
@@ -394,6 +472,13 @@ function embedPartToPrismaData(part: EmbedPartDto): {
   };
 }
 
+function normalizeListIconKey(raw: string | null | undefined): (typeof EMBED_LIST_ICON_KEYS)[number] | null {
+  if (!raw) return null;
+  return (EMBED_LIST_ICON_KEYS as readonly string[]).includes(raw)
+    ? (raw as (typeof EMBED_LIST_ICON_KEYS)[number])
+    : null;
+}
+
 function toDto(row: {
   id: string;
   name: string;
@@ -413,6 +498,9 @@ function toDto(row: {
   fields: Prisma.JsonValue | null;
   timestampMode: EmbedTimestampMode;
   fixedAt: Date | null;
+  listAccentColor: number | null;
+  listIconColor: number | null;
+  listIconKey: string | null;
   createdAt: Date;
   updatedAt: Date;
 }): EmbedTemplateDto {
@@ -421,6 +509,9 @@ function toDto(row: {
     id: row.id,
     name: row.name,
     messages,
+    listAccentColor: row.listAccentColor ?? null,
+    listIconColor: row.listIconColor ?? null,
+    listIconKey: normalizeListIconKey(row.listIconKey),
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -433,6 +524,11 @@ function buildEmbedsJson(messages: TemplateMessageDto[]): Prisma.InputJsonValue 
       messageContent: m.messageContent,
       profileDisplayName: m.profileDisplayName,
       profileAvatarUrl: m.profileAvatarUrl,
+      threadMode: m.threadMode,
+      threadName: m.threadName,
+      threadTargetId: m.threadTargetId,
+      threadAutoArchiveDuration: m.threadAutoArchiveDuration,
+      threadType: m.threadType,
       embeds: m.embeds.map((e) => ({
         title: e.title,
         description: e.description,
@@ -471,6 +567,11 @@ function normalizeMessagesFromSave(raw: z.infer<typeof saveTemplateSchema>["mess
     messageContent: m.messageContent ?? null,
     profileDisplayName: m.profileDisplayName ?? null,
     profileAvatarUrl: m.profileAvatarUrl ?? null,
+    threadMode: m.threadMode ?? "NONE",
+    threadName: m.threadName ?? null,
+    threadTargetId: m.threadTargetId ?? null,
+    threadAutoArchiveDuration: m.threadAutoArchiveDuration ?? null,
+    threadType: m.threadType ?? null,
     embeds: m.embeds.map((e) => zodPartToDto(e)),
     componentBlocks: m.componentBlocks.map((b) => ({
       rows: b.rows.map((r) => ({
@@ -513,6 +614,9 @@ export async function createEmbedTemplate(
         name: b.name,
         messageContent: firstMsg.messageContent ?? null,
         embedsJson: buildEmbedsJson(messages),
+        listAccentColor: b.listAccentColor ?? null,
+        listIconColor: b.listIconColor ?? null,
+        listIconKey: b.listIconKey ?? null,
         ...first,
       },
     });
@@ -553,6 +657,9 @@ export async function updateEmbedTemplate(
         name: b.name,
         messageContent: firstMsg.messageContent ?? null,
         embedsJson: buildEmbedsJson(messages),
+        listAccentColor: b.listAccentColor ?? null,
+        listIconColor: b.listIconColor ?? null,
+        listIconKey: b.listIconKey ?? null,
         ...first,
       },
     });
@@ -598,6 +705,24 @@ export async function findEmbedTemplateDtoByNameCaseInsensitive(
     where: { guildId: guild.id },
   });
   const row = rows.find((r) => r.name.trim().toLowerCase() === needle);
+  if (!row) return null;
+  return toDto(row);
+}
+
+/** Modèle Embeds par id interne, pour ce serveur Discord (vérifie l’appartenance à la guild). */
+export async function findEmbedTemplateDtoById(
+  prisma: PrismaClient,
+  discordGuildId: string,
+  embedId: string,
+): Promise<EmbedTemplateDto | null> {
+  const guild = await prisma.guild.findUnique({
+    where: { discordId: discordGuildId },
+    select: { id: true },
+  });
+  if (!guild) return null;
+  const row = await prisma.embed.findFirst({
+    where: { id: embedId, guildId: guild.id },
+  });
   if (!row) return null;
   return toDto(row);
 }

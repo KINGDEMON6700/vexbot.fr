@@ -59,6 +59,21 @@ function buttonStyleBg(style: "primary" | "secondary" | "success" | "danger"): s
   }
 }
 
+function ButtonEmojiPreview({
+  emoji,
+}: {
+  emoji: NonNullable<Extract<MessageComponentTemplate, { type: "button" }>["emoji"]>;
+}) {
+  if ("id" in emoji && emoji.id) {
+    const ext = emoji.animated ? "gif" : "webp";
+    const url = `https://cdn.discordapp.com/emojis/${emoji.id}.${ext}?size=32&quality=lossless`;
+    return <img src={url} alt="" className="h-5 w-5 shrink-0 object-contain" loading="lazy" />;
+  }
+  const n = emoji && "name" in emoji ? emoji.name : "";
+  if (!n) return null;
+  return <span className="shrink-0 text-[1.05rem] leading-none">{n}</span>;
+}
+
 function ExternalLinkIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" className="h-3.5 w-3.5 shrink-0 fill-current opacity-90">
@@ -92,9 +107,10 @@ function InteractiveButtonPreview({ c }: { c: MessageComponentTemplate }) {
     <button
       type="button"
       disabled={c.disabled}
-      className="inline-flex max-h-10 min-h-[32px] max-w-full min-w-[60px] cursor-pointer items-center justify-center rounded-[3px] px-3 py-1.5 text-sm font-medium text-white transition hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50"
+      className="inline-flex max-h-10 min-h-[32px] max-w-full min-w-[60px] cursor-pointer items-center justify-center gap-1.5 rounded-[3px] px-3 py-1.5 text-sm font-medium text-white transition hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50"
       style={{ backgroundColor: buttonStyleBg(c.style) }}
     >
+      {"emoji" in c && c.emoji ? <ButtonEmojiPreview emoji={c.emoji} /> : null}
       {c.label || "Bouton"}
     </button>
   );
@@ -120,6 +136,10 @@ type Props = {
   draft: TemplateDraft;
   mentionLookup?: MentionLookup;
   messageAuthor?: MessageAuthorPreview | null;
+  /** Masque le bandeau « Aperçu Discord » (ex. modale avec son propre titre). */
+  compact?: boolean;
+  /** Classes additionnelles sur le conteneur (ex. bordures pour groupement avec d’autres blocs). */
+  className?: string;
 };
 
 function formatMessageHeaderTime(): string {
@@ -277,24 +297,34 @@ function flattenComponentRowsForPreview(m: TemplateDraft["messages"][number]): C
 }
 
 /** Aperçu : un ou plusieurs messages Discord (texte + embeds + composants). */
-export function DiscordEmbedPreview({ draft, mentionLookup = emptyLookup, messageAuthor }: Props) {
+export function DiscordEmbedPreview({
+  draft,
+  mentionLookup = emptyLookup,
+  messageAuthor,
+  compact = false,
+  className = "",
+}: Props) {
   const baseAuthor = messageAuthor ?? {
     displayName: "Vex",
     avatarUrl: null,
   };
   const headerTime = useMemo(() => formatMessageHeaderTime(), []);
 
+  const outerClass = ["rounded-xl border border-vex-border p-4 shadow-inner", className].filter(Boolean).join(" ");
+
   return (
     <div
-      className="rounded-xl border border-vex-border p-4 shadow-inner"
+      className={outerClass}
       style={{ backgroundColor: "#313338", fontFamily: "var(--font-discord-body)" }}
     >
-      <p
-        className="mb-3 text-center text-[11px] font-semibold uppercase tracking-wide"
-        style={{ color: "#949ba4" }}
-      >
-        Aperçu Discord
-      </p>
+      {!compact ? (
+        <p
+          className="mb-3 text-center text-[11px] font-semibold uppercase tracking-wide"
+          style={{ color: "#949ba4" }}
+        >
+          Aperçu Discord
+        </p>
+      ) : null}
 
       <div className="mx-auto max-w-[480px]">
         {draft.messages.map((singleMsg, mi) => {

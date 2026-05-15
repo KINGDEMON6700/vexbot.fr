@@ -2,12 +2,22 @@ import { z } from "zod";
 
 /** Format stocké côté API / panel : uniquement boutons classiques et boutons lien (pas de menus). */
 
+const buttonEmojiSchema = z.union([
+  z.object({ name: z.string().min(1).max(80) }),
+  z.object({
+    id: z.string().regex(/^\d{5,25}$/),
+    name: z.string().min(1).max(80).optional(),
+    animated: z.boolean().optional(),
+  }),
+]);
+
 const buttonSchema = z.object({
   type: z.literal("button"),
   label: z.string().min(1).max(80),
   style: z.enum(["primary", "secondary", "success", "danger"]),
   customId: z.string().min(1).max(100),
   disabled: z.boolean().optional(),
+  emoji: buttonEmojiSchema.optional(),
 });
 
 const linkButtonSchema = z.object({

@@ -1,0 +1,46 @@
+{
+  "v": 1,
+  "name": "Ticket · Accueil standard",
+  "messages": [
+    {
+      "messageContent": null,
+      "profileDisplayName": null,
+      "profileAvatarUrl": null,
+      "threadMode": "NONE",
+      "threadName": null,
+      "threadTargetId": null,
+      "threadAutoArchiveDuration": null,
+      "threadType": null,
+      "embeds": [
+        {
+          "title": "Bienvenue dans ton ticket",
+          "description": "Un membre du staff va prendre en charge ta demande. En attendant, tu peux déjà donner le maximum de détails ci-dessous (message, captures, IDs si utile).\n\n**Rappel :** reste calme et respectueux — ça aide tout le monde à aller plus vite.",
+          "color": 5793266,
+          "url": null,
+          "thumbnailUrl": null,
+          "imageUrl": null,
+          "authorName": null,
+          "authorUrl": null,
+          "authorIconUrl": null,
+          "footerText": "Ce salon est privé entre toi et l’équipe.",
+          "footerIconUrl": null,
+          "fields": [
+            {
+              "name": "Étapes",
+              "value": "1️⃣ Décris le problème\n2️⃣ Ajoute des preuves si besoin\n3️⃣ Patiente le temps qu’on lise",
+              "inline": false
+            },
+            {
+              "name": "Fermeture",
+              "value": "Quand c’est réglé, le staff pourra fermer le ticket.",
+              "inline": false
+            }
+          ],
+          "timestampMode": "NOW",
+          "fixedAt": null
+        }
+      ],
+      "componentBlocks": []
+    }
+  ]
+}

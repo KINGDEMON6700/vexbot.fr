@@ -5,6 +5,8 @@ import { toHTML } from "discord-markdown";
 export type MentionLookup = {
   channelNames: Record<string, string>;
   roleNames: Record<string, string>;
+  /** Noms affichés pour les mentions &lt;@id&gt; (aperçu). */
+  userNames?: Record<string, string>;
 };
 
 type Props = {
@@ -30,7 +32,8 @@ export function DiscordRenderedText({ text, lookup, className }: Props) {
       discordCallback: {
         channel: (node) => `#${escapeForCallback(lookup.channelNames[node.id] ?? "salon")}`,
         role: (node) => `@${escapeForCallback(lookup.roleNames[node.id] ?? "rôle")}`,
-        user: () => "@membre",
+        user: (node: { id: string }) =>
+          `@${escapeForCallback(lookup.userNames?.[node.id] ?? "membre")}`,
         everyone: () => "@everyone",
         here: () => "@here",
       },

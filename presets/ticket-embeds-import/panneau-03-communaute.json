@@ -1,0 +1,60 @@
+{
+  "v": 1,
+  "name": "Ticket · Panneau communauté",
+  "messages": [
+    {
+      "messageContent": null,
+      "profileDisplayName": null,
+      "profileAvatarUrl": null,
+      "threadMode": "NONE",
+      "threadName": null,
+      "threadTargetId": null,
+      "threadAutoArchiveDuration": null,
+      "threadType": null,
+      "embeds": [
+        {
+          "title": "Signalement & aide",
+          "description": "**Pourquoi ouvrir un ticket ?**\n• Problème avec un membre ou un message\n• Question sensible (ne pas la poster en public)\n• Partenariat, bugs, accès spéciaux\n\nLe bouton pour créer ton salon privé est affiché juste en dessous par le bot (en plus de ce message).",
+          "color": 15844367,
+          "url": null,
+          "thumbnailUrl": null,
+          "imageUrl": null,
+          "authorName": "Modération",
+          "authorUrl": null,
+          "authorIconUrl": null,
+          "footerText": "Les abus de tickets peuvent entraîner des sanctions.",
+          "footerIconUrl": null,
+          "fields": [
+            {
+              "name": "Urgence",
+              "value": "En cas de danger immédiat, privilégie aussi les outils de signalement Discord.",
+              "inline": false
+            }
+          ],
+          "timestampMode": "NONE",
+          "fixedAt": null
+        }
+      ],
+      "componentBlocks": [
+        {
+          "rows": [
+            {
+              "components": [
+                {
+                  "type": "link_button",
+                  "label": "Centre d’aide Discord",
+                  "url": "https://support.discord.com"
+                },
+                {
+                  "type": "link_button",
+                  "label": "Sécurité sur Discord",
+                  "url": "https://discord.com/safety"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

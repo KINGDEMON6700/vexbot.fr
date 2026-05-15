@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const schema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
-  PORT: z.coerce.number().default(3001),
+  PORT: z.coerce.number().default(3101),
   DATABASE_URL: z.string().min(1),
   SESSION_SECRET: z.string().min(16, "SESSION_SECRET doit faire au moins 16 caractères"),
   DISCORD_CLIENT_ID: z.string().min(1),
@@ -13,6 +13,16 @@ const schema = z.object({
     z.string().url().optional(),
   ),
   FRONTEND_URL: z.string().url(),
+  /** Affichée dans le footer des embeds tickets (ex. https://vexbot.fr). Si vide : footer « Vex » seul. */
+  VEX_BRANDING_PUBLIC_URL: z.preprocess(
+    (v) => (v === "" || v === undefined ? undefined : v),
+    z.string().url().optional(),
+  ),
+  /** Icône du footer (URL complète). Si vide : `FRONTEND_URL` + `/vex-brand-icon.png` (fichier fourni avec le panel). */
+  VEX_BRANDING_ICON_URL: z.preprocess(
+    (v) => (v === "" || v === undefined ? undefined : v),
+    z.string().url().optional(),
+  ),
   /** Même application que le bot : sert à vérifier la présence du bot sur un serveur. */
   DISCORD_BOT_TOKEN: z.string().min(1),
   /** Secret partagé bot ↔ API (commandes internes, ex. /sendembed). Min. 16 caractères. */

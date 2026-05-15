@@ -37,12 +37,20 @@ export type SingleMessageDraft = {
   profileDisplayName: string;
   /** Vide = utiliser la photo du bot dans l’aperçu. */
   profileAvatarUrl: string;
+  threadMode: "NONE" | "CREATE_NEW" | "EXISTING";
+  threadName: string;
+  threadTargetId: string;
+  threadAutoArchiveDuration: "60" | "1440" | "4320" | "10080";
+  threadType: "PUBLIC" | "PRIVATE";
   embeds: EmbedDraft[];
   componentBlocks: ComponentBlockDraft[];
 };
 
 export type TemplateDraft = {
   name: string;
+  listAccentColor: number | null;
+  listIconColor: number | null;
+  listIconKey: string | null;
   messages: SingleMessageDraft[];
 };
 
@@ -74,6 +82,11 @@ export function defaultSingleMessageDraft(): SingleMessageDraft {
     messageContent: "",
     profileDisplayName: "",
     profileAvatarUrl: "",
+    threadMode: "NONE",
+    threadName: "",
+    threadTargetId: "",
+    threadAutoArchiveDuration: "1440",
+    threadType: "PUBLIC",
     embeds: [defaultEmbedDraft()],
     componentBlocks: [],
   };
@@ -91,12 +104,20 @@ export function defaultMessageComponent(kind: MessageComponentTemplate["type"]):
 export function defaultTemplateDraft(): TemplateDraft {
   return {
     name: "Exemple",
+    listAccentColor: null,
+    listIconColor: null,
+    listIconKey: null,
     messages: [
       {
         messageContent:
           "Ce modèle te montre les principales possibilités des embeds. Tu peux tout modifier ensuite.",
         profileDisplayName: "",
         profileAvatarUrl: "",
+        threadMode: "NONE",
+        threadName: "",
+        threadTargetId: "",
+        threadAutoArchiveDuration: "1440",
+        threadType: "PUBLIC",
         embeds: [
           {
             title: "Bienvenue sur ton modèle Embed",
@@ -200,12 +221,20 @@ export function templateToDraft(t: EmbedTemplate): TemplateDraft {
           messageContent: m.messageContent ?? "",
           profileDisplayName: m.profileDisplayName ?? "",
           profileAvatarUrl: m.profileAvatarUrl ?? "",
+          threadMode: m.threadMode ?? "NONE",
+          threadName: m.threadName ?? "",
+          threadTargetId: m.threadTargetId ?? "",
+          threadAutoArchiveDuration: String(m.threadAutoArchiveDuration ?? 1440) as "60" | "1440" | "4320" | "10080",
+          threadType: m.threadType ?? "PUBLIC",
           embeds: m.embeds.length > 0 ? m.embeds.map(blockToDraft) : [defaultEmbedDraft()],
           componentBlocks: m.componentBlocks.length > 0 ? cloneBlocks(m.componentBlocks) : [],
         }))
       : [defaultSingleMessageDraft()];
   return {
     name: t.name,
+    listAccentColor: t.listAccentColor ?? null,
+    listIconColor: t.listIconColor ?? null,
+    listIconKey: t.listIconKey ?? null,
     messages,
   };
 }
@@ -246,6 +275,12 @@ export function templateDraftMessagesToApiPayload(d: TemplateDraft) {
     messageContent: emptyToNull(m.messageContent),
     profileDisplayName: emptyToNull(m.profileDisplayName),
     profileAvatarUrl: emptyToNull(m.profileAvatarUrl),
+    threadMode: m.threadMode,
+    threadName: m.threadMode === "CREATE_NEW" ? emptyToNull(m.threadName) : null,
+    threadTargetId: m.threadMode === "EXISTING" ? emptyToNull(m.threadTargetId) : null,
+    threadAutoArchiveDuration:
+      m.threadMode === "CREATE_NEW" ? (Number(m.threadAutoArchiveDuration) as 60 | 1440 | 4320 | 10080) : null,
+    threadType: m.threadMode === "CREATE_NEW" ? m.threadType : null,
     embeds: m.embeds.map((block) => singleBlockToApiPayload(block)),
     componentBlocks: m.componentBlocks.map((b) => ({
       rows: b.rows.map((row) => ({
@@ -263,6 +298,9 @@ export function templateDraftToApiPayload(d: TemplateDraft) {
   }
   return {
     name,
+    listAccentColor: d.listAccentColor ?? null,
+    listIconColor: d.listIconColor ?? null,
+    listIconKey: d.listIconKey ?? null,
     messages: templateDraftMessagesToApiPayload(d),
   };
 }

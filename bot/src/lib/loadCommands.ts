@@ -21,6 +21,8 @@ export async function loadCommands(client: VexClient, commandsDir: string): Prom
       continue;
     }
     client.commands.set(command.data.name, command);
-    console.log(`[commandes] Chargé : /${command.data.name}`);
+    console.log(
+      `[commandes] Commande chargée en mémoire : /${command.data.name} (lancez « npm run deploy -w bot » pour l’enregistrer sur Discord).`,
+    );
   }
 }

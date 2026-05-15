@@ -1,0 +1,35 @@
+{
+  "v": 1,
+  "name": "Ticket · Accueil court",
+  "messages": [
+    {
+      "messageContent": null,
+      "profileDisplayName": null,
+      "profileAvatarUrl": null,
+      "threadMode": "NONE",
+      "threadName": null,
+      "threadTargetId": null,
+      "threadAutoArchiveDuration": null,
+      "threadType": null,
+      "embeds": [
+        {
+          "title": "Ticket ouvert",
+          "description": "Explique ta demande en quelques lignes. Le staff te répondra ici.",
+          "color": 3447003,
+          "url": null,
+          "thumbnailUrl": null,
+          "imageUrl": null,
+          "authorName": null,
+          "authorUrl": null,
+          "authorIconUrl": null,
+          "footerText": null,
+          "footerIconUrl": null,
+          "fields": [],
+          "timestampMode": "NONE",
+          "fixedAt": null
+        }
+      ],
+      "componentBlocks": []
+    }
+  ]
+}

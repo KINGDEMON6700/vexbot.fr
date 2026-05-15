@@ -39,17 +39,23 @@ async function main() {
 
   const guildId = env.DISCORD_GUILD_ID;
 
+  const names = body
+    .map((c) => (c && typeof c === "object" && "name" in c ? String((c as { name: unknown }).name) : ""))
+    .filter(Boolean);
+
   if (guildId) {
-    console.log(`[deploy] Enregistrement sur le serveur ${guildId} (développement)…`);
+    console.log(`[deploy] Enregistrement sur le serveur ${guildId} (visible tout de suite sur ce serveur)…`);
     await rest.put(Routes.applicationGuildCommands(env.DISCORD_CLIENT_ID, guildId), {
       body,
     });
   } else {
-    console.log("[deploy] Enregistrement global (production, propagation jusqu’à ~1 h)…");
+    console.log(
+      "[deploy] Enregistrement global : les commandes peuvent mettre jusqu’à ~1 h à apparaître partout. Pour tester tout de suite, définissez DISCORD_GUILD_ID (ID du serveur) dans bot/.env puis relancez ce script.",
+    );
     await rest.put(Routes.applicationCommands(env.DISCORD_CLIENT_ID), { body });
   }
 
-  console.log(`[deploy] ${body.length} commande(s) enregistrée(s).`);
+  console.log(`[deploy] ${body.length} commande(s) enregistrée(s) sur l’application Discord : ${names.join(", ")}.`);
 }
 
 main().catch((err) => {

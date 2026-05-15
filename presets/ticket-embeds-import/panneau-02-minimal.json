@@ -1,0 +1,35 @@
+{
+  "v": 1,
+  "name": "Ticket · Panneau simple",
+  "messages": [
+    {
+      "messageContent": null,
+      "profileDisplayName": null,
+      "profileAvatarUrl": null,
+      "threadMode": "NONE",
+      "threadName": null,
+      "threadTargetId": null,
+      "threadAutoArchiveDuration": null,
+      "threadType": null,
+      "embeds": [
+        {
+          "title": "Tickets",
+          "description": "Ouvre un ticket pour parler au staff en privé.\n\nReste respectueux et patient : quelqu’un te répondra dès que possible.",
+          "color": 5763719,
+          "url": null,
+          "thumbnailUrl": null,
+          "imageUrl": null,
+          "authorName": null,
+          "authorUrl": null,
+          "authorIconUrl": null,
+          "footerText": null,
+          "footerIconUrl": null,
+          "fields": [],
+          "timestampMode": "NONE",
+          "fixedAt": null
+        }
+      ],
+      "componentBlocks": []
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "v": 1,
+  "name": "Ticket · Accueil détaillé",
+  "messages": [
+    {
+      "messageContent": null,
+      "profileDisplayName": null,
+      "profileAvatarUrl": null,
+      "threadMode": "NONE",
+      "threadName": null,
+      "threadTargetId": null,
+      "threadAutoArchiveDuration": null,
+      "threadType": null,
+      "embeds": [
+        {
+          "title": "Ton ticket est ouvert",
+          "description": "Merci d’avoir contacté l’équipe. Ce salon est **visible uniquement par toi et le staff**.\n\nPour qu’on t’aide efficacement, indique si possible :\n• **Quoi** : le problème ou la demande exacte\n• **Quand** : depuis quand, ou à quel moment\n• **Où** : salon, message, commande (lien ou ID)\n• **Capture** : si ça aide (masque les infos perso)",
+          "color": 1146986,
+          "url": null,
+          "thumbnailUrl": null,
+          "imageUrl": null,
+          "authorName": "Équipe support",
+          "authorUrl": null,
+          "authorIconUrl": null,
+          "footerText": "Merci de ne pas mentionner @everyone dans ce salon.",
+          "footerIconUrl": null,
+          "fields": [
+            {
+              "name": "Délais",
+              "value": "Selon l’affluence : quelques heures à 48 h.",
+              "inline": true
+            },
+            {
+              "name": "Clôture",
+              "value": "Le ticket pourra être fermé une fois traité.",
+              "inline": true
+            },
+            {
+              "name": "Comportement",
+              "value": "Insultes ou spam = sanction possible, comme sur le reste du serveur.",
+              "inline": false
+            }
+          ],
+          "timestampMode": "NOW",
+          "fixedAt": null
+        }
+      ],
+      "componentBlocks": [
+        {
+          "rows": [
+            {
+              "components": [
+                {
+                  "type": "link_button",
+                  "label": "Rappel des règles (exemple)",
+                  "url": "https://discord.com"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

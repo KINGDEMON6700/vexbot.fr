@@ -3,6 +3,7 @@ import type { DiscordGuild } from "../types/discord.js";
 import { buildBotInviteUrl, isBotMemberOfGuild } from "./eligibleGuilds.js";
 
 const DISCORD_API = "https://discord.com/api/v10";
+const OVERVIEW_DISCORD_CACHE_TTL_MS = 20_000;
 
 export function discordSnowflakeToIso(snowflake: string): string {
   const ms = Number((BigInt(snowflake) >> 22n) + 1420070400000n);
@@ -24,6 +25,7 @@ type CachedBotUser = {
 };
 
 let cachedBotUser: CachedBotUser | null = null;
+const discordJsonCache = new Map<string, { at: number; data: unknown }>();
 
 async function getBotUser(botToken: string): Promise<CachedBotUser> {
   if (cachedBotUser) return cachedBotUser;
@@ -193,14 +195,43 @@ function summarizeGuildChannels(channels: unknown[]): {
 }
 
 async function fetchJson<T>(url: string, botToken: string): Promise<T> {
-  const res = await fetch(url, {
-    headers: { Authorization: `Bot ${botToken}` },
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`${url} → ${res.status} ${text}`);
+  const cacheHit = discordJsonCache.get(url);
+  const now = Date.now();
+  if (cacheHit && now - cacheHit.at < OVERVIEW_DISCORD_CACHE_TTL_MS) {
+    return cacheHit.data as T;
   }
-  return res.json() as Promise<T>;
+
+  let lastError = "";
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bot ${botToken}` },
+    });
+    if (res.ok) {
+      const data = (await res.json()) as T;
+      discordJsonCache.set(url, { at: Date.now(), data });
+      return data;
+    }
+
+    if (res.status === 429 && attempt === 0) {
+      let retryAfterMs = 1200;
+      try {
+        const body = (await res.json()) as { retry_after?: number };
+        if (typeof body.retry_after === "number" && Number.isFinite(body.retry_after)) {
+          retryAfterMs = Math.max(250, Math.ceil(body.retry_after * 1000));
+        }
+      } catch {
+        // ignore parse error and keep default retry delay
+      }
+      await new Promise((resolve) => setTimeout(resolve, retryAfterMs));
+      continue;
+    }
+
+    const text = await res.text();
+    lastError = `${url} → ${res.status} ${text}`;
+    break;
+  }
+
+  throw new Error(lastError || `${url} → 429`);
 }
 
 export async function getVexStats(prisma: PrismaClient, discordGuildId: string): Promise<OverviewVexBlock> {

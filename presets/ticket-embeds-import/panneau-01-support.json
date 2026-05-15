@@ -1,0 +1,60 @@
+{
+  "v": 1,
+  "name": "Ticket · Panneau support",
+  "messages": [
+    {
+      "messageContent": null,
+      "profileDisplayName": null,
+      "profileAvatarUrl": null,
+      "threadMode": "NONE",
+      "threadName": null,
+      "threadTargetId": null,
+      "threadAutoArchiveDuration": null,
+      "threadType": null,
+      "embeds": [
+        {
+          "title": "Besoin d’aide ?",
+          "description": "Utilise le bouton **Ouvrir un ticket** (ajouté automatiquement sous ce message) pour créer un salon privé avec le staff.\n\nDécris ta demande clairement : contexte, captures si besoin, et ce que tu aimerais obtenir.",
+          "color": 5793266,
+          "url": null,
+          "thumbnailUrl": null,
+          "imageUrl": null,
+          "authorName": null,
+          "authorUrl": null,
+          "authorIconUrl": null,
+          "footerText": "Merci d’éviter les doublons : un ticket par sujet.",
+          "footerIconUrl": null,
+          "fields": [
+            {
+              "name": "Avant d’ouvrir",
+              "value": "Jette un œil aux salons d’annonces et d’aide publics.",
+              "inline": true
+            },
+            {
+              "name": "Délai indicatif",
+              "value": "Réponse sous 24 à 48 h selon l’équipe.",
+              "inline": true
+            }
+          ],
+          "timestampMode": "NONE",
+          "fixedAt": null
+        }
+      ],
+      "componentBlocks": [
+        {
+          "rows": [
+            {
+              "components": [
+                {
+                  "type": "link_button",
+                  "label": "Lire le règlement",
+                  "url": "https://discord.com"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

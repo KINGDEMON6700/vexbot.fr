@@ -1,0 +1,65 @@
+{
+  "v": 1,
+  "name": "Vex Community · #bienvenue",
+  "messages": [
+    {
+      "messageContent": null,
+      "profileDisplayName": null,
+      "profileAvatarUrl": null,
+      "threadMode": "NONE",
+      "threadName": null,
+      "threadTargetId": null,
+      "threadAutoArchiveDuration": null,
+      "threadType": null,
+      "embeds": [
+        {
+          "title": "Bienvenue sur Vex Community",
+          "description": "Ce serveur Discord rassemble la **communauté** autour de Vex : entraide, idées, nouveautés et support.\n\n**Comment s’y retrouver**\n• Lis les salons sous **Informations** (règles, annonces).\n• Pour une question officielle : salon **support** (un fil par sujet si demandé).\n• Pour un souci technique : salon **bug-reports** (un post = un bug).\n\nMerci de rester respectueux : tout le monde gagne du temps quand les messages restent clairs.",
+          "color": 3447003,
+          "url": null,
+          "thumbnailUrl": null,
+          "imageUrl": null,
+          "authorName": "Vex Community",
+          "authorUrl": null,
+          "authorIconUrl": null,
+          "footerText": "Remplace les liens des boutons par tes vraies URLs (panel, doc, statut) avant d’importer.",
+          "footerIconUrl": null,
+          "fields": [
+            {
+              "name": "Liens utiles",
+              "value": "Les boutons ci-dessous mènent vers le **panel**, la **documentation** et la page **statut** des services (à configurer avec tes adresses).",
+              "inline": false
+            }
+          ],
+          "timestampMode": "NONE",
+          "fixedAt": null
+        }
+      ],
+      "componentBlocks": [
+        {
+          "rows": [
+            {
+              "components": [
+                {
+                  "type": "link_button",
+                  "label": "Panel",
+                  "url": "https://example.com/vex-panel"
+                },
+                {
+                  "type": "link_button",
+                  "label": "Documentation",
+                  "url": "https://example.com/vex-docs"
+                },
+                {
+                  "type": "link_button",
+                  "label": "Statut",
+                  "url": "https://example.com/vex-status"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

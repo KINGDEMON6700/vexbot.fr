@@ -10,7 +10,39 @@ export async function fetchGuildMentionMeta(discordGuildId: string): Promise<Gui
   return res.json() as Promise<GuildMentionMeta>;
 }
 
+export type GuildMemberMentionOption = {
+  id: string;
+  displayName: string;
+  username: string;
+};
+
+/** Membres du serveur pour le sélecteur « Ping utilisateur » (nécessite l’intent membres côté bot). */
+export async function fetchGuildMembersForMention(
+  discordGuildId: string,
+  params?: { q?: string; limit?: number },
+): Promise<GuildMemberMentionOption[]> {
+  const sp = new URLSearchParams();
+  if (params?.q?.trim()) sp.set("q", params.q.trim());
+  if (params?.limit != null && Number.isFinite(params.limit)) sp.set("limit", String(params.limit));
+  const qs = sp.toString();
+  const path = `/api/guilds/${encodeURIComponent(discordGuildId)}/meta/members${qs ? `?${qs}` : ""}`;
+  const res = await apiFetch(path);
+  const data = (await res.json().catch(() => ({}))) as {
+    members?: GuildMemberMentionOption[];
+    error?: { message?: string };
+  };
+  if (!res.ok) {
+    throw new Error(data.error?.message ?? "Impossible de charger les membres.");
+  }
+  return Array.isArray(data.members) ? data.members : [];
+}
+
 export type GuildTextChannelOption = {
+  id: string;
+  name: string;
+};
+
+export type GuildThreadOption = {
   id: string;
   name: string;
 };
@@ -20,6 +52,13 @@ export async function fetchGuildTextChannels(discordGuildId: string): Promise<Gu
   if (!res.ok) throw new Error("text_channels");
   const data = (await res.json()) as { channels: GuildTextChannelOption[] };
   return data.channels;
+}
+
+export async function fetchGuildThreads(discordGuildId: string): Promise<GuildThreadOption[]> {
+  const res = await apiFetch(`/api/guilds/${encodeURIComponent(discordGuildId)}/meta/threads`);
+  if (!res.ok) throw new Error("threads");
+  const data = (await res.json()) as { threads: GuildThreadOption[] };
+  return data.threads;
 }
 
 export async function fetchEmbedTemplates(discordGuildId: string): Promise<EmbedTemplate[]> {
@@ -32,6 +71,9 @@ export async function fetchEmbedTemplates(discordGuildId: string): Promise<Embed
 export type SaveEmbedPayload = {
   name: string;
   messages: EmbedTemplate["messages"];
+  listAccentColor?: number | null;
+  listIconColor?: number | null;
+  listIconKey?: string | null;
 };
 
 export async function createEmbedTemplate(

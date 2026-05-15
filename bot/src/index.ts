@@ -14,7 +14,12 @@ async function main() {
   const env = loadEnv();
 
   const client = new VexClient({
-    intents: [GatewayIntentBits.Guilds],
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildMembers,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent,
+    ],
   });
 
   const commandsDir = path.join(__dirname, "commands");

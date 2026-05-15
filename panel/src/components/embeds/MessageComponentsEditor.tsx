@@ -29,7 +29,7 @@ function TextInput({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-lg border border-vex-border bg-vex-bg px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-vex-accent focus:outline-none focus:ring-1 focus:ring-vex-accent"
+      className="ui-input"
     />
   );
 }
@@ -80,7 +80,7 @@ function ComponentFields({
           <select
             value={c.style}
             onChange={(e) => onPatch({ ...c, style: e.target.value as ButtonStyleTemplate })}
-            className="mt-1 w-full rounded-lg border border-vex-border bg-vex-bg px-3 py-2 text-sm text-zinc-100 focus:border-vex-accent focus:outline-none"
+            className="ui-input mt-1"
           >
             <option value="primary">Violet (principal)</option>
             <option value="secondary">Gris</option>
@@ -114,6 +114,16 @@ function ComponentFields({
 export function MessageComponentsEditor({ rows, onChange }: Props) {
   const setRows = (next: ComponentRowTemplate[]) => onChange(next);
 
+  const rowTitle = (row: ComponentRowTemplate, index: number): string => {
+    const first = row.components[0];
+    if (!first) return `Ligne ${index + 1}`;
+    if (first.type === "link_button") {
+      const txt = first.label.trim() || "sans texte";
+      return `Bouton lien : ${txt}`;
+    }
+    return `Ligne ${index + 1}`;
+  };
+
   const addRow = () => {
     if (rows.length >= 5) return;
     setRows([...rows, { components: [] }]);
@@ -133,7 +143,8 @@ export function MessageComponentsEditor({ rows, onChange }: Props) {
 
   const addComponentToRow = (ri: number, kind: MessageComponentTemplate["type"]) => {
     const row = rows[ri];
-    if (!row || row.components.length >= 5) return;
+    // On limite à un seul composant par ligne pour éviter les ajouts involontaires répétés.
+    if (!row || row.components.length >= 1) return;
     const comp = defaultMessageComponent(kind);
     setRows(
       rows.map((r, i) => (i === ri ? { ...r, components: [...r.components, comp] } : r)),
@@ -144,6 +155,23 @@ export function MessageComponentsEditor({ rows, onChange }: Props) {
     setRows(updateComponent(rows, ri, ci, defaultMessageComponent(kind)));
   };
 
+  const setRowComponentType = (ri: number, value: MessageComponentTemplate["type"] | "") => {
+    const row = rows[ri];
+    if (!row) return;
+    if (value === "") {
+      // Revenir à "Choisir" vide la ligne.
+      if (row.components.length > 0) {
+        setRows(removeComponent(rows, ri, 0));
+      }
+      return;
+    }
+    if (row.components.length === 0) {
+      addComponentToRow(ri, value);
+      return;
+    }
+    replaceComponentType(ri, 0, value);
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm leading-relaxed text-zinc-500">
@@ -152,115 +180,77 @@ export function MessageComponentsEditor({ rows, onChange }: Props) {
       </p>
 
       {rows.map((row, ri) => (
-        <div key={ri} className="rounded-xl border border-vex-border bg-vex-bg/40 p-3">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-zinc-400">
-              Ligne {ri + 1} / {rows.length}
-            </span>
-            <div className="flex flex-wrap gap-1">
-              <button
-                type="button"
-                disabled={ri === 0}
-                onClick={() => moveRow(ri, -1)}
-                className="rounded border border-vex-border px-2 py-1 text-xs text-zinc-400 hover:bg-vex-surface disabled:opacity-30"
-              >
-                ↑
-              </button>
-              <button
-                type="button"
-                disabled={ri >= rows.length - 1}
-                onClick={() => moveRow(ri, 1)}
-                className="rounded border border-vex-border px-2 py-1 text-xs text-zinc-400 hover:bg-vex-surface disabled:opacity-30"
-              >
-                ↓
-              </button>
-              <button
-                type="button"
-                onClick={() => removeRow(ri)}
-                className="rounded border border-vex-border px-2 py-1 text-xs text-zinc-500 hover:bg-red-950/40 hover:text-amber-200/90"
-              >
-                Supprimer la ligne
-              </button>
+        <details
+          key={ri}
+          open
+          className="rounded-xl border border-vex-border bg-vex-bg/40 [&_summary::-webkit-details-marker]:hidden"
+        >
+          <summary className="list-none cursor-pointer">
+            <div className="flex flex-wrap items-center justify-between gap-2 p-3">
+              <span className="text-xs font-semibold text-zinc-400">
+                {rowTitle(row, ri)}
+              </span>
+              <div className="flex flex-wrap gap-1" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  disabled={ri === 0}
+                  onClick={() => moveRow(ri, -1)}
+                  className="ui-btn-secondary rounded px-2 py-1 text-xs text-zinc-400 disabled:opacity-30"
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  disabled={ri >= rows.length - 1}
+                  onClick={() => moveRow(ri, 1)}
+                  className="ui-btn-secondary rounded px-2 py-1 text-xs text-zinc-400 disabled:opacity-30"
+                >
+                  ↓
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removeRow(ri)}
+                  className="rounded border border-vex-border px-2 py-1 text-xs text-zinc-500 hover:bg-red-950/40 hover:text-amber-200/90"
+                >
+                  Supprimer la ligne
+                </button>
+              </div>
             </div>
-          </div>
+          </summary>
 
-          {row.components.length === 0 ? (
+          <div className="border-t border-vex-border/70 p-3">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
               <div className="min-w-[200px] flex-1">
-                <Label>Ajouter un bouton</Label>
+                <Label>Type de composants</Label>
                 <select
-                  defaultValue=""
-                  onChange={(e) => {
-                    const v = e.target.value as MessageComponentTemplate["type"] | "";
-                    e.target.selectedIndex = 0;
-                    if (v) addComponentToRow(ri, v);
-                  }}
-                  className="mt-1 w-full rounded-lg border border-vex-border bg-vex-bg px-3 py-2 text-sm text-zinc-100"
+                  value={row.components[0]?.type ?? ""}
+                  onChange={(e) =>
+                    setRowComponentType(ri, e.target.value as MessageComponentTemplate["type"] | "")
+                  }
+                  className="ui-input mt-1"
                 >
                   <option value="">— Choisir —</option>
-                  <option value="button">{TYPE_LABELS.button}</option>
                   <option value="link_button">{TYPE_LABELS.link_button}</option>
                 </select>
               </div>
             </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {row.components.map((comp, ci) => (
-                <div key={`${ri}-${ci}-${comp.type}`} className="rounded-lg border border-vex-border/60 bg-vex-surface/50 p-3">
-                  <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-600">
-                      {TYPE_LABELS[comp.type]}
-                    </span>
-                    <div className="flex flex-wrap gap-1">
-                      <select
-                        value={comp.type}
-                        onChange={(e) =>
-                          replaceComponentType(ri, ci, e.target.value as MessageComponentTemplate["type"])
-                        }
-                        className="rounded border border-vex-border bg-vex-bg px-2 py-1 text-[11px] text-zinc-300"
-                      >
-                        <option value="button">{TYPE_LABELS.button}</option>
-                        <option value="link_button">{TYPE_LABELS.link_button}</option>
-                      </select>
-                      <button
-                        type="button"
-                        onClick={() => setRows(removeComponent(rows, ri, ci))}
-                        className="rounded border border-vex-border px-2 py-1 text-[11px] text-zinc-500 hover:bg-red-950/30"
-                      >
-                        Retirer
-                      </button>
-                    </div>
-                  </div>
-                  <ComponentFields
-                    c={comp}
-                    onPatch={(next) => setRows(updateComponent(rows, ri, ci, next))}
-                  />
-                </div>
-              ))}
 
-              {row.components.length < 5 ? (
-                <div className="flex flex-wrap items-end gap-2">
-                  <div className="min-w-[180px] flex-1">
-                    <Label>Ajouter un bouton sur cette ligne</Label>
-                    <select
-                      defaultValue=""
-                      onChange={(e) => {
-                        const v = e.target.value as MessageComponentTemplate["type"] | "";
-                        e.target.selectedIndex = 0;
-                        if (v) addComponentToRow(ri, v);
-                      }}
-                      className="mt-1 w-full rounded-lg border border-vex-border bg-vex-bg px-3 py-2 text-sm text-zinc-100"
-                    >
-                      <option value="">— Choisir —</option>
-                      <option value="button">{TYPE_LABELS.button}</option>
-                      <option value="link_button">{TYPE_LABELS.link_button}</option>
-                    </select>
+            {row.components.length > 0 ? (
+              <div className="mt-3 flex flex-col gap-3">
+                {row.components.map((comp, ci) => (
+                  <div key={`${ri}-${ci}-${comp.type}`} className="rounded-lg border border-vex-border/60 bg-vex-surface/50 p-3">
+                    {comp.type === "link_button" ? (
+                      <ComponentFields
+                        c={comp}
+                        onPatch={(next) => setRows(updateComponent(rows, ri, ci, next))}
+                      />
+                    ) : null}
                   </div>
-                </div>
-              ) : null}
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </details>
       ))}
 
       <button

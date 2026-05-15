@@ -92,8 +92,8 @@ export function GuildSelector() {
   }
 
   return (
-    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-      <div className="relative w-full min-w-[14rem] max-w-xs sm:w-auto" ref={rootRef}>
+    <div className="flex min-w-0 flex-1 flex-row items-center gap-2 sm:flex-none sm:gap-3">
+      <div className="relative min-w-0 max-w-[min(12rem,42vw)] flex-1 sm:max-w-xs sm:flex-none sm:w-auto" ref={rootRef}>
         <label className="sr-only" htmlFor="vex-guild-trigger">
           Serveur Discord
         </label>
@@ -104,7 +104,7 @@ export function GuildSelector() {
           aria-expanded={open}
           aria-controls={listboxId}
           onClick={() => setOpen((v) => !v)}
-          className="flex w-full items-center gap-2 rounded-lg border border-vex-border bg-vex-surface px-2 py-1.5 text-left text-sm text-zinc-100 outline-none transition hover:bg-vex-bg/40 focus:border-vex-accent focus:ring-1 focus:ring-vex-accent"
+          className="flex w-full items-center gap-2 rounded-lg border border-vex-border/90 bg-vex-surface/90 px-2 py-1.5 text-left text-sm text-zinc-100 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] outline-none backdrop-blur-sm transition hover:border-indigo-500/30 hover:bg-vex-bg/60 focus:border-vex-accent focus:ring-1 focus:ring-vex-accent"
         >
           {selectedGuild ? (
             <>
@@ -113,7 +113,7 @@ export function GuildSelector() {
               {selectedGuild.botPresent ? (
                 <span
                   className="shrink-0 rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-medium text-emerald-300"
-                  title="Vex est sur ce serveur"
+                  title="Vexbot est sur ce serveur"
                 >
                   Prêt
                 </span>
@@ -167,7 +167,7 @@ export function GuildSelector() {
                     type="button"
                     role="option"
                     aria-selected={isActive}
-                    className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm transition hover:bg-vex-bg/60 ${
+                    className={`flex w-full items-start gap-2 px-3 py-2.5 text-left text-sm transition hover:bg-vex-bg/60 ${
                       isActive ? "bg-vex-bg/50" : ""
                     }`}
                     onClick={() => {
@@ -175,16 +175,18 @@ export function GuildSelector() {
                       setOpen(false);
                     }}
                   >
-                    <GuildAvatar guild={g} size={36} />
-                    <span className="min-w-0 flex-1 truncate font-medium text-zinc-100">
+                    <div className="mt-0.5 shrink-0">
+                      <GuildAvatar guild={g} size={36} />
+                    </div>
+                    <span className="min-w-0 flex-1 break-words font-medium leading-snug text-zinc-100">
                       {g.name}
                     </span>
                     {g.botPresent ? (
-                      <span className="shrink-0 rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-medium text-emerald-300">
+                      <span className="mt-0.5 shrink-0 self-start rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-medium text-emerald-300">
                         Prêt
                       </span>
                     ) : (
-                      <span className="shrink-0 text-[10px] text-zinc-500">À inviter</span>
+                      <span className="mt-0.5 shrink-0 self-start text-[10px] text-zinc-500">À inviter</span>
                     )}
                   </button>
                 </li>
@@ -199,7 +201,7 @@ export function GuildSelector() {
           href={selectedGuild.inviteUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-center text-sm font-medium text-vex-accent underline-offset-2 hover:underline"
+          className="hidden shrink-0 text-center text-sm font-medium text-vex-accent underline-offset-2 hover:underline sm:inline"
         >
           Inviter Vex sur ce serveur
         </a>

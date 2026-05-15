@@ -83,7 +83,7 @@ function TextInput({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-lg border border-vex-border bg-vex-bg px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-vex-accent focus:outline-none focus:ring-1 focus:ring-vex-accent"
+      className="ui-input"
     />
   );
 }
@@ -141,7 +141,7 @@ function EmbedBlockEditor(p: BlockProps) {
               onChange={(e) => set({ description: e.target.value })}
               rows={6}
               placeholder="Texte principal…"
-              className="w-full resize-y rounded-lg border border-vex-border bg-vex-bg px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-vex-accent focus:outline-none focus:ring-1 focus:ring-vex-accent"
+              className="ui-input resize-y"
             />
           </div>
         </div>
@@ -175,7 +175,7 @@ function EmbedBlockEditor(p: BlockProps) {
                 value={f.value}
                 onChange={(e) => p.setField(fi, { value: e.target.value })}
                 rows={3}
-                className="mt-2 w-full resize-y rounded-lg border border-vex-border bg-vex-bg px-3 py-2 text-sm text-zinc-100"
+                className="ui-input mt-2 resize-y"
               />
               <button
                 type="button"
@@ -277,7 +277,7 @@ function EmbedBlockEditor(p: BlockProps) {
                 type="datetime-local"
                 value={p.block.fixedAtLocal}
                 onChange={(e) => set({ fixedAtLocal: e.target.value })}
-                className="max-w-xs rounded-lg border border-vex-border bg-vex-bg px-3 py-2 text-sm text-zinc-100"
+                className="ui-input max-w-xs"
               />
             ) : null}
           </div>
@@ -512,7 +512,7 @@ export function DiscohookEmbedEditor({ draft, setDraft }: Props) {
                   e.stopPropagation();
                   moveMessage(mi, -1);
                 }}
-                className="rounded border border-vex-border px-2 py-1 text-xs text-zinc-400 hover:bg-vex-surface disabled:opacity-30"
+                className="ui-btn-secondary rounded px-2 py-1 text-xs text-zinc-400 disabled:opacity-30"
                 title="Monter"
               >
                 ↑
@@ -524,7 +524,7 @@ export function DiscohookEmbedEditor({ draft, setDraft }: Props) {
                   e.stopPropagation();
                   moveMessage(mi, 1);
                 }}
-                className="rounded border border-vex-border px-2 py-1 text-xs text-zinc-400 hover:bg-vex-surface disabled:opacity-30"
+                className="ui-btn-secondary rounded px-2 py-1 text-xs text-zinc-400 disabled:opacity-30"
                 title="Descendre"
               >
                 ↓
@@ -536,7 +536,7 @@ export function DiscohookEmbedEditor({ draft, setDraft }: Props) {
                   duplicateMessage(mi);
                 }}
                 disabled={draft.messages.length >= 10}
-                className="rounded border border-vex-border px-2 py-1 text-xs text-zinc-400 hover:bg-vex-surface disabled:opacity-30"
+                className="ui-btn-secondary rounded px-2 py-1 text-xs text-zinc-400 disabled:opacity-30"
                 title="Dupliquer"
               >
                 ⧉
@@ -557,33 +557,6 @@ export function DiscohookEmbedEditor({ draft, setDraft }: Props) {
           }
         >
           <div className="flex flex-col gap-3">
-            <div>
-              <Label>Contenu du message</Label>
-              <p className="mb-2 text-[11px] text-zinc-600">
-                Texte au-dessus des embeds.
-              </p>
-              <textarea
-                value={msg.messageContent}
-                onChange={(e) =>
-                  setDraft((d) => ({
-                    ...d,
-                    messages: d.messages.map((m, i) =>
-                      i === mi ? { ...m, messageContent: e.target.value } : m,
-                    ),
-                  }))
-                }
-                rows={4}
-                placeholder="Optionnel — laisse vide pour n’envoyer que des embeds."
-                className="w-full resize-y rounded-lg border border-vex-border bg-vex-bg px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-vex-accent focus:outline-none focus:ring-1 focus:ring-vex-accent"
-              />
-            </div>
-
-            <Section title="Fil de discussion">
-              <p className="text-sm text-zinc-500">
-                Réservé pour plus tard (messages dans un fil). Rien à régler ici pour l’instant.
-              </p>
-            </Section>
-
             <Section title="Profil">
               <p className="mb-3 text-[11px] leading-relaxed text-zinc-600">
                 Optionnel : tu peux choisir un nom et une photo rien que pour ce message du modèle. Si tu laisses vide,
@@ -605,7 +578,7 @@ export function DiscohookEmbedEditor({ draft, setDraft }: Props) {
                     }
                     maxLength={80}
                     placeholder="Laisse vide pour le nom du bot"
-                    className="mt-1 w-full rounded-lg border border-vex-border bg-vex-bg px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-vex-accent focus:outline-none focus:ring-1 focus:ring-vex-accent"
+                    className="ui-input mt-1"
                   />
                 </div>
                 <div>
@@ -623,11 +596,32 @@ export function DiscohookEmbedEditor({ draft, setDraft }: Props) {
                       }))
                     }
                     placeholder="Laisse vide pour la photo du bot"
-                    className="w-full rounded-lg border border-vex-border bg-vex-bg px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-vex-accent focus:outline-none focus:ring-1 focus:ring-vex-accent"
+                    className="ui-input"
                   />
                 </div>
               </div>
             </Section>
+
+            <div>
+              <Label>Contenu du message</Label>
+              <p className="mb-2 text-[11px] text-zinc-600">
+                Texte au-dessus des embeds.
+              </p>
+              <textarea
+                value={msg.messageContent}
+                onChange={(e) =>
+                  setDraft((d) => ({
+                    ...d,
+                    messages: d.messages.map((m, i) =>
+                      i === mi ? { ...m, messageContent: e.target.value } : m,
+                    ),
+                  }))
+                }
+                rows={4}
+                placeholder="Optionnel — laisse vide pour n’envoyer que des embeds."
+                className="ui-input resize-y"
+              />
+            </div>
 
             {msg.embeds.map((block, i) => (
               <SectionWithToolbar
@@ -643,7 +637,7 @@ export function DiscohookEmbedEditor({ draft, setDraft }: Props) {
                         e.stopPropagation();
                         moveEmbed(mi, i, -1);
                       }}
-                      className="rounded border border-vex-border px-2 py-1 text-xs text-zinc-400 hover:bg-vex-surface disabled:opacity-30"
+                      className="ui-btn-secondary rounded px-2 py-1 text-xs text-zinc-400 disabled:opacity-30"
                       title="Monter"
                     >
                       ↑
@@ -655,7 +649,7 @@ export function DiscohookEmbedEditor({ draft, setDraft }: Props) {
                         e.stopPropagation();
                         moveEmbed(mi, i, 1);
                       }}
-                      className="rounded border border-vex-border px-2 py-1 text-xs text-zinc-400 hover:bg-vex-surface disabled:opacity-30"
+                      className="ui-btn-secondary rounded px-2 py-1 text-xs text-zinc-400 disabled:opacity-30"
                       title="Descendre"
                     >
                       ↓
@@ -667,7 +661,7 @@ export function DiscohookEmbedEditor({ draft, setDraft }: Props) {
                         duplicateEmbed(mi, i);
                       }}
                       disabled={msg.embeds.length >= 10}
-                      className="rounded border border-vex-border px-2 py-1 text-xs text-zinc-400 hover:bg-vex-surface disabled:opacity-30"
+                      className="ui-btn-secondary rounded px-2 py-1 text-xs text-zinc-400 disabled:opacity-30"
                       title="Dupliquer"
                     >
                       ⧉
@@ -721,7 +715,7 @@ export function DiscohookEmbedEditor({ draft, setDraft }: Props) {
                         e.stopPropagation();
                         moveComponentBlock(mi, bi, -1);
                       }}
-                      className="rounded border border-vex-border px-2 py-1 text-xs text-zinc-400 hover:bg-vex-surface disabled:opacity-30"
+                      className="ui-btn-secondary rounded px-2 py-1 text-xs text-zinc-400 disabled:opacity-30"
                       title="Monter"
                     >
                       ↑
@@ -733,7 +727,7 @@ export function DiscohookEmbedEditor({ draft, setDraft }: Props) {
                         e.stopPropagation();
                         moveComponentBlock(mi, bi, 1);
                       }}
-                      className="rounded border border-vex-border px-2 py-1 text-xs text-zinc-400 hover:bg-vex-surface disabled:opacity-30"
+                      className="ui-btn-secondary rounded px-2 py-1 text-xs text-zinc-400 disabled:opacity-30"
                       title="Descendre"
                     >
                       ↓
@@ -745,7 +739,7 @@ export function DiscohookEmbedEditor({ draft, setDraft }: Props) {
                         duplicateComponentBlock(mi, bi);
                       }}
                       disabled={msg.componentBlocks.length >= 10}
-                      className="rounded border border-vex-border px-2 py-1 text-xs text-zinc-400 hover:bg-vex-surface disabled:opacity-30"
+                      className="ui-btn-secondary rounded px-2 py-1 text-xs text-zinc-400 disabled:opacity-30"
                       title="Dupliquer"
                     >
                       ⧉

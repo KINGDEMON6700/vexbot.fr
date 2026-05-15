@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { AppError } from "../lib/AppError.js";
+import type { TemplateMessageDto } from "./embedTemplateService.js";
 import { componentBlockSchema, type MessageComponentInput } from "./messageComponentsSchema.js";
 
 const DISCORD_API = "https://discord.com/api/v10";
@@ -39,6 +40,13 @@ const embedPartSchema = z.object({
 const templateMessageSchema = z
   .object({
     messageContent: z.string().max(4000).nullable().optional(),
+    threadMode: z.enum(["NONE", "CREATE_NEW", "EXISTING"]).optional(),
+    threadName: z.string().max(100).nullable().optional(),
+    threadTargetId: z.string().max(40).nullable().optional(),
+    threadAutoArchiveDuration: z
+      .union([z.literal(60), z.literal(1440), z.literal(4320), z.literal(10080), z.null()])
+      .optional(),
+    threadType: z.union([z.literal("PUBLIC"), z.literal("PRIVATE"), z.null()]).optional(),
     embeds: z.array(embedPartSchema).min(1).max(10),
     componentBlocks: z.array(componentBlockSchema).max(10),
   })
@@ -82,6 +90,7 @@ type DiscordComponent =
       label: string;
       custom_id: string;
       disabled?: boolean;
+      emoji?: { id?: string; name: string; animated?: boolean };
     }
   | {
       type: 2;
@@ -169,13 +178,25 @@ function buttonStyle(style: "primary" | "secondary" | "success" | "danger"): 1 |
 
 function toDiscordComponent(c: MessageComponentInput): DiscordComponent {
   if (c.type === "button") {
-    return {
+    const out: DiscordComponent = {
       type: 2,
       style: buttonStyle(c.style),
       label: c.label,
       custom_id: c.customId,
       disabled: c.disabled ?? false,
     };
+    if (c.emoji) {
+      if ("id" in c.emoji && c.emoji.id) {
+        out.emoji = {
+          id: c.emoji.id,
+          name: c.emoji.name ?? "emoji",
+          ...(c.emoji.animated ? { animated: true } : {}),
+        };
+      } else if ("name" in c.emoji && c.emoji.name) {
+        out.emoji = { name: c.emoji.name };
+      }
+    }
+    return out;
   }
   return {
     type: 2,
@@ -199,7 +220,7 @@ async function postMessageToChannel(
   channelId: string,
   botToken: string,
   body: { content?: string; embeds?: DiscordEmbed[]; components?: DiscordActionRow[] },
-): Promise<void> {
+): Promise<{ id: string }> {
   const res = await fetch(`${DISCORD_API}/channels/${channelId}/messages`, {
     method: "POST",
     headers: {
@@ -209,7 +230,10 @@ async function postMessageToChannel(
     body: JSON.stringify(body),
   });
 
-  if (res.ok) return;
+  if (res.ok) {
+    const data = (await res.json()) as { id: string };
+    return { id: data.id };
+  }
 
   if (res.status === 404) {
     throw new AppError(400, "Salon introuvable, ou bot absent de ce serveur.", "CHANNEL_NOT_FOUND");
@@ -226,6 +250,60 @@ async function postMessageToChannel(
   }
 
   throw new AppError(502, "Discord a refusé l’envoi du message.", "DISCORD_SEND_FAILED");
+}
+
+async function createThreadFromMessage(
+  channelId: string,
+  messageId: string,
+  botToken: string,
+  opts: { name: string; autoArchiveDuration: 60 | 1440 | 4320 | 10080 },
+): Promise<{ id: string }> {
+  const res = await fetch(`${DISCORD_API}/channels/${channelId}/messages/${messageId}/threads`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bot ${botToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: opts.name,
+      auto_archive_duration: opts.autoArchiveDuration,
+    }),
+  });
+  if (res.ok) {
+    const data = (await res.json()) as { id: string };
+    return { id: data.id };
+  }
+  if (res.status === 403) {
+    throw new AppError(400, "Le bot n’a pas la permission de créer un fil.", "THREAD_FORBIDDEN");
+  }
+  throw new AppError(502, "Impossible de créer le fil de discussion.", "THREAD_CREATE_FAILED");
+}
+
+async function createPrivateThread(
+  channelId: string,
+  botToken: string,
+  opts: { name: string; autoArchiveDuration: 60 | 1440 | 4320 | 10080 },
+): Promise<{ id: string }> {
+  const res = await fetch(`${DISCORD_API}/channels/${channelId}/threads`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bot ${botToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name: opts.name,
+      auto_archive_duration: opts.autoArchiveDuration,
+      type: 12,
+    }),
+  });
+  if (res.ok) {
+    const data = (await res.json()) as { id: string };
+    return { id: data.id };
+  }
+  if (res.status === 403) {
+    throw new AppError(400, "Le bot n’a pas la permission de créer un fil privé.", "THREAD_PRIVATE_FORBIDDEN");
+  }
+  throw new AppError(502, "Impossible de créer le fil privé.", "THREAD_PRIVATE_CREATE_FAILED");
 }
 
 async function ensureChannelBelongsToGuild(
@@ -278,11 +356,49 @@ export async function sendTemplateMessagesToChannel(
       continue;
     }
 
-    await postMessageToChannel(data.channelId, botToken, {
+    const threadMode = msg.threadMode ?? "NONE";
+    const payload = {
       content,
       embeds: embeds.length > 0 ? embeds : undefined,
       components: components.length > 0 ? components : undefined,
-    });
+    };
+
+    if (threadMode === "EXISTING") {
+      const threadId = (msg.threadTargetId ?? "").trim();
+      if (!threadId) {
+        throw new AppError(400, "Choisis un fil de discussion existant.", "THREAD_TARGET_REQUIRED");
+      }
+      await ensureChannelBelongsToGuild(threadId, discordGuildId, botToken);
+      await postMessageToChannel(threadId, botToken, payload);
+      sent += 1;
+      continue;
+    }
+
+    if (threadMode === "CREATE_NEW") {
+      const threadName = (msg.threadName ?? "").trim();
+      if (!threadName) {
+        throw new AppError(400, "Donne un nom au fil de discussion.", "THREAD_NAME_REQUIRED");
+      }
+      const autoArchiveDuration = msg.threadAutoArchiveDuration ?? 1440;
+      const threadType = msg.threadType ?? "PUBLIC";
+      if (threadType === "PRIVATE") {
+        const created = await createPrivateThread(data.channelId, botToken, {
+          name: threadName,
+          autoArchiveDuration,
+        });
+        await postMessageToChannel(created.id, botToken, payload);
+      } else {
+        const parentMessage = await postMessageToChannel(data.channelId, botToken, payload);
+        await createThreadFromMessage(data.channelId, parentMessage.id, botToken, {
+          name: threadName,
+          autoArchiveDuration,
+        });
+      }
+      sent += 1;
+      continue;
+    }
+
+    await postMessageToChannel(data.channelId, botToken, payload);
     sent += 1;
   }
 
@@ -291,4 +407,31 @@ export async function sendTemplateMessagesToChannel(
   }
 
   return { sent };
+}
+
+/** Convertit le premier message d’un modèle Embeds en champs REST Discord (un seul message). */
+export function templateMessageDtoToDiscordRestPayload(msg: TemplateMessageDto): {
+  content?: string;
+  embeds: DiscordEmbed[];
+  components: DiscordActionRow[];
+} {
+  const synthetic = {
+    messageContent: msg.messageContent,
+    threadMode: msg.threadMode ?? "NONE",
+    threadName: msg.threadName ?? null,
+    threadTargetId: msg.threadTargetId ?? null,
+    threadAutoArchiveDuration: msg.threadAutoArchiveDuration ?? null,
+    threadType: msg.threadType ?? null,
+    embeds: msg.embeds,
+    componentBlocks: msg.componentBlocks,
+  };
+  const parsed = templateMessageSchema.safeParse(synthetic);
+  if (!parsed.success) {
+    throw new AppError(400, "Ce modèle contient des données invalides pour Discord.", "INVALID_TEMPLATE_MSG");
+  }
+  const data = parsed.data;
+  const content = trimToNull(data.messageContent) ?? undefined;
+  const embeds = data.embeds.map((e) => toDiscordEmbed(e)).filter((o) => Object.keys(o).length > 0);
+  const components = toDiscordActionRows(data);
+  return { content, embeds, components };
 }

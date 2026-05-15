@@ -58,6 +58,11 @@ enum EmbedTimestampMode {
   FIXED
 }
 
+enum JoinVerificationMode {
+  CAPTCHA
+  BUTTON
+}
+
 // --- Modèles ---
 
 /// Serveur Discord : tout est rattaché à une guild.
@@ -79,12 +84,19 @@ model Guild {
 
   embeds              Embed[]
   tickets             Ticket[]
+  ticketSettings      GuildTicketSettings?
   logSettings         GuildLogSettings?
   roleGroups          RoleGroup[]
   customSlashCommands CustomSlashCommand[]
+  nativeCommandSettings NativeCommandSetting[]
   welcomeSettings     WelcomeSettings?
   moderationCases     ModerationCase[]
   panelAllowedRoles   PanelAllowedRole[]
+  serverTemplates     ServerTemplate[]
+  structureCache      GuildStructureCache?
+  joinAutoRoleSettings JoinAutoRoleSettings?
+  joinVerificationSettings JoinVerificationSettings?
+  joinVerificationCaptchas JoinVerificationCaptcha[]
 }
 
 /// Modèle d’embed réutilisable pour ce serveur (pas d’historique de versions).
@@ -95,6 +107,13 @@ model Embed {
 
   /// Nom interne unique par serveur (ex. "Bienvenue principal")
   name String
+
+  /// Couleur du badge du modèle dans la liste Embeds (0xRRGGBB). Null = style par défaut du thème.
+  listAccentColor Int?
+  /// Couleur de l’icône dans ce badge (0xRRGGBB). Null = blanc sur fond coloré, sinon couleur du thème.
+  listIconColor Int?
+  /// Clé d’icône (voir `EMBED_LIST_ICON_KEYS` côté API). Null = icône par défaut.
+  listIconKey String?
 
   /// Texte du message Discord au-dessus des embeds (markdown).
   messageContent String?
@@ -130,6 +149,8 @@ model Embed {
   welcomeSettingsAsGoodbye WelcomeSettings[]    @relation("GoodbyeEmbed")
   customSlashCommands      CustomSlashCommand[]
   tickets                  Ticket[]
+  guildTicketWelcomeFor  GuildTicketSettings[] @relation("TicketWelcomeEmbed")
+  guildTicketPanelFor    GuildTicketSettings[] @relation("TicketPanelEmbed")
 
   @@unique([guildId, name])
   @@index([guildId])
@@ -172,6 +193,51 @@ model Ticket {
   @@unique([guildId, ticketNumber])
   @@index([guildId])
   @@index([openerId])
+}
+
+/// Réglages tickets par serveur (panel + catégorie + modèle d’accueil).
+model GuildTicketSettings {
+  id      String @id @default(cuid())
+  guildId String @unique
+  guild   Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  /// Salon où est posté le message « panneau » avec le bouton Ouvrir un ticket
+  panelChannelId String?
+  /// Dernier message panneau (pour mise à jour au redémarrage du bot)
+  panelMessageId String?
+  /// Catégorie sous laquelle sont créés les salons de ticket
+  ticketCategoryId String?
+  /// Modèle Embeds (id interne) envoyé comme premier message dans le salon du ticket — optionnel (message d’accueil intégré si absent).
+  welcomeEmbedId String?
+  welcomeEmbed   Embed?  @relation("TicketWelcomeEmbed", fields: [welcomeEmbedId], references: [id], onDelete: SetNull)
+
+  /// Modèle Embeds optionnel pour le message « panneau » (bouton ou liste en plus des composants du modèle, max. 5 lignes au total)
+  panelEmbedId String?
+  panelEmbed   Embed?  @relation("TicketPanelEmbed", fields: [panelEmbedId], references: [id], onDelete: SetNull)
+
+  /// JSON : libellé du bouton, menu déroulant, textes du formulaire (modal) avant ouverture — voir ticketPanelOpenConfig côté API
+  panelOpenConfig Json?
+
+  /// Bouton « fermer le ticket » sous le message d’accueil (auteur ou équipe avec « Gérer les salons »).
+  welcomeMemberCloseButton Boolean @default(false)
+  /// Couleur Discord du bouton « fermer le ticket » : "primary" | "secondary" | "success" | "danger".
+  welcomeMemberCloseButtonStyle String @default("danger")
+
+  /// Bouton « ajouter au ticket » sous le message d’accueil (ouvre une fenêtre pour l’ID du membre).
+  welcomeMemberAddButton Boolean @default(false)
+  /// Couleur Discord du bouton « ajouter au ticket ».
+  welcomeMemberAddButtonStyle String @default("primary")
+
+  /// Texte ou mention d’emoji Discord (`<:nom:id>`) affiché devant le libellé du bouton fermer ; vide = défaut 🔒.
+  welcomeMemberCloseButtonEmoji String?
+  /// Idem pour le bouton ajouter ; vide = défaut 👥.
+  welcomeMemberAddButtonEmoji String?
+
+  /// Nombre maximum de tickets encore ouverts qu’un même membre peut avoir à la fois (1–25).
+  maxOpenTicketsPerOpener Int @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model TicketTranscript {
@@ -276,10 +342,98 @@ model CustomSlashCommand {
   ephemeral Boolean @default(false)
   enabled   Boolean @default(true)
 
+  /// Rôles autorisés à utiliser cette commande (JSON array de Discord role ids). Vide = personne (aucun accès).
+  allowedRoleIds    Json @default("[]")
+  /// Salons autorisés (JSON array de Discord channel ids). Vide = partout.
+  allowedChannelIds Json @default("[]")
+
+  /// Identifiant Discord de la commande, obtenu après POST sur l'API Discord.
+  discordCommandId String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([guildId, name])
+  @@index([guildId])
+}
+
+/// Réglages par serveur d'une commande native du bot (ping, sendembed, ticket, …).
+/// Une ligne par (guildId, commandName).
+model NativeCommandSetting {
+  id String @id @default(cuid())
+
+  guildId String
+  guild   Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  /// Nom logique de la commande native (ex: "ping", "sendembed", "ticket").
+  commandName String
+
+  enabled Boolean @default(true)
+
+  /// Rôles autorisés (JSON array). Vide = personne (aucun accès).
+  allowedRoleIds    Json @default("[]")
+  /// Salons autorisés (JSON array). Vide = partout.
+  allowedChannelIds Json @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([guildId, commandName])
+  @@index([guildId])
+}
+
+/// Rôles attribués automatiquement quand un membre rejoint (une ligne par serveur).
+model JoinAutoRoleSettings {
+  id      String @id @default(cuid())
+  guildId String @unique
+  guild   Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  moduleEnabled Boolean @default(false)
+  /// IDs Discord des rôles à ajouter à l’arrivée (JSON : tableau de chaînes), ordre conservé.
+  discordRoleIds Json @default("[]")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Vérification à l’arrivée (captcha ou bouton) avant les rôles « membre ».
+model JoinVerificationSettings {
+  id      String @id @default(cuid())
+  guildId String @unique
+  guild   Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  moduleEnabled Boolean @default(false)
+  mode          JoinVerificationMode @default(BUTTON)
+
+  /// Salon où taper le code (captcha) ou où se trouve le message avec bouton.
+  channelId String?
+  /// Rôle « pas encore vérifié » (ex. noverif), attribué à l’arrivée.
+  unverifiedRoleId String?
+
+  /// Message panneau « clique pour vérifier » (mode bouton uniquement).
+  panelMessageId String?
+
+  /// Libellé du bouton (mode bouton), max 80 caractères côté Discord.
+  buttonLabel String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Code captcha temporaire (un par membre et par serveur interne).
+model JoinVerificationCaptcha {
+  id String @id @default(cuid())
+
+  guildId String
+  guild   Guild @relation(fields: [guildId], references: [id], onDelete: Cascade)
+
+  discordUserId String
+  code          String
+  expiresAt     DateTime
+
+  createdAt DateTime @default(now())
+
+  @@unique([guildId, discordUserId])
   @@index([guildId])
 }
 
@@ -292,13 +446,27 @@ model WelcomeSettings {
 
   welcomeChannelId String?
   welcomeContent   String?
+  /// Ignoré si `welcomeEmbedId` est défini (modèle Embeds). Sinon : si true, `welcomeContent` = description d’un embed simple (couleur ci-dessous).
+  welcomeUseEmbed  Boolean @default(false)
+  /// Couleur bordure embed (0xRRGGBB). Null = couleur par défaut Discord.
+  welcomeEmbedColor Int?
   welcomeEmbedId   String?
   welcomeEmbed     Embed?  @relation("WelcomeEmbed", fields: [welcomeEmbedId], references: [id], onDelete: SetNull)
 
   goodbyeChannelId String?
   goodbyeContent   String?
+  /// Ignoré si `goodbyeEmbedId` est défini. Sinon : si true, `goodbyeContent` = description d’un embed simple.
+  goodbyeUseEmbed  Boolean @default(false)
+  goodbyeEmbedColor Int?
   goodbyeEmbedId   String?
   goodbyeEmbed     Embed?  @relation("GoodbyeEmbed", fields: [goodbyeEmbedId], references: [id], onDelete: SetNull)
+
+  /// Si false : aucun message arrivée/départ (salon ni DM) n’est envoyé par le bot.
+  moduleEnabled Boolean @default(true)
+  /// Message d’arrivée dans le salon (+ DM si activé) uniquement si true.
+  welcomeMessagesEnabled Boolean @default(true)
+  /// Message de départ dans le salon uniquement si true.
+  goodbyeMessagesEnabled Boolean @default(true)
 
   dmWelcomeEnabled Boolean @default(false)
   dmWelcomeContent String?
@@ -355,4 +523,82 @@ model PanelAllowedRole {
 
   @@unique([guildId, discordRoleId])
   @@index([guildId])
+}
+
+/// J’aime marketplace (template = id seed ou publication).
+model MarketplaceTemplateLike {
+  id            String   @id @default(cuid())
+  templateId    String
+  discordUserId String
+  createdAt     DateTime @default(now())
+
+  @@unique([templateId, discordUserId])
+  @@index([templateId])
+}
+
+/// Commentaires marketplace (auteur = compte Discord ; plusieurs messages possibles par template).
+model MarketplaceTemplateComment {
+  id               String   @id @default(cuid())
+  templateId       String
+  discordUserId    String
+  authorGlobalName String?
+  authorUsername   String
+  authorAvatar     String?
+  body             String
+  createdAt        DateTime @default(now())
+
+  @@index([templateId])
+}
+
+/// Publication marketplace (serveur, auteur = compte Discord).
+model MarketplacePublication {
+  id                    String   @id @default(cuid())
+  discordUserId         String
+  kind                  String
+  name                  String
+  shortDescription      String
+  authorGlobalName      String?
+  authorUsername        String
+  authorAvatar          String?
+  messagesJson          Json?
+  serverGuildId         String?
+  serverGuildName       String?
+  sourceEmbedTemplateId String?
+  sourceServerTemplateId String?
+  downloads             Int      @default(0)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([discordUserId])
+  @@index([createdAt])
+}
+
+/// Cache persistant de la dernière lecture Discord de la structure d'un serveur.
+/// Évite d'appeler Discord à chaque ouverture de la page Templates. Rafraîchi manuellement par l'utilisateur.
+model GuildStructureCache {
+  id        String   @id @default(cuid())
+  guildId   String   @unique
+  guild     Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  /// Même format JSON que ServerTemplate.snapshot.
+  snapshot  Json
+  capturedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Snapshot complet de la structure d'un serveur Discord (rôles, catégories, salons, permissions).
+/// Le contenu détaillé est dans `snapshot` (JSON), versionné via `snapshot.v`.
+model ServerTemplate {
+  id          String   @id @default(cuid())
+  guildId     String
+  guild       Guild    @relation(fields: [guildId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  /// Discord user id de l'auteur (créateur du snapshot dans le panel).
+  createdByDiscordUserId String
+  /// Contenu structuré du snapshot (rôles, catégories, salons, permissions).
+  snapshot    Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([guildId, createdAt])
 }

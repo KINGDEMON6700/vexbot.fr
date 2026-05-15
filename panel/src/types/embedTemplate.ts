@@ -8,6 +8,10 @@ export type EmbedFieldRow = {
 
 export type ButtonStyleTemplate = "primary" | "secondary" | "success" | "danger";
 
+export type DiscordButtonEmojiTemplate =
+  | { name: string }
+  | { id: string; name?: string; animated?: boolean };
+
 /** Un composant sous le message : uniquement bouton ou bouton lien (pas de menus). */
 export type MessageComponentTemplate =
   | {
@@ -16,6 +20,7 @@ export type MessageComponentTemplate =
       style: ButtonStyleTemplate;
       customId: string;
       disabled?: boolean;
+      emoji?: DiscordButtonEmojiTemplate;
     }
   | {
       type: "link_button";
@@ -58,6 +63,11 @@ export type TemplateMessageTemplate = {
   profileDisplayName: string | null;
   /** URL de l’avatar à la place du bot pour ce message (optionnel). */
   profileAvatarUrl: string | null;
+  threadMode: "NONE" | "CREATE_NEW" | "EXISTING";
+  threadName: string | null;
+  threadTargetId: string | null;
+  threadAutoArchiveDuration: 60 | 1440 | 4320 | 10080 | null;
+  threadType: "PUBLIC" | "PRIVATE" | null;
   embeds: EmbedBlockTemplate[];
   componentBlocks: ComponentBlockTemplate[];
 };
@@ -66,6 +76,12 @@ export type TemplateMessageTemplate = {
 export type EmbedTemplate = {
   id: string;
   name: string;
+  /** Couleur du badge dans la liste des modèles (0xRRGGBB), null = style par défaut. */
+  listAccentColor: number | null;
+  /** Couleur de l’icône dans ce badge, null = automatique (blanc sur fond coloré, sinon thème). */
+  listIconColor: number | null;
+  /** Clé d’icône pour le badge (voir liste côté panel), null = icône par défaut. */
+  listIconKey: string | null;
   messages: TemplateMessageTemplate[];
   createdAt: string;
   updatedAt: string;
