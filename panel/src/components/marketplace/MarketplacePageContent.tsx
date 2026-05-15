@@ -152,7 +152,7 @@ export function MarketplacePageContent({ discordGuildId, eligibleGuilds, user }:
       .catch(() => {
         if (!cancelled) {
           setEmbedTemplates([]);
-          showToast("Impossible de charger tes modèles d’embeds.");
+          showToast("Impossible de charger vos modèles d’embeds.");
         }
       })
       .finally(() => {
@@ -319,7 +319,7 @@ export function MarketplacePageContent({ discordGuildId, eligibleGuilds, user }:
       </div>
 
       {filteredSorted.length === 0 ? (
-        <div className="ui-empty-state">Aucune template ne correspond à ta recherche.</div>
+        <div className="ui-empty-state">Aucune template ne correspond à votre recherche.</div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {filteredSorted.map((item) => {
@@ -356,7 +356,7 @@ export function MarketplacePageContent({ discordGuildId, eligibleGuilds, user }:
                   <button
                     type="button"
                     className="ui-btn-secondary shrink-0 px-2.5 py-1 text-xs"
-                    aria-label={`Gérer ta publication : ${item.name}`}
+                    aria-label={`Gérer votre publication : ${item.name}`}
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => {
                       e.stopPropagation();

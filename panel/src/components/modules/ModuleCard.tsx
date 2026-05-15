@@ -10,6 +10,8 @@ type Props = {
   /** Si true : le formulaire reste visible même quand le module est désactivé (pour pouvoir configurer avant d’activer). */
   keepFormVisibleWhenDisabled?: boolean;
   enabledBusy?: boolean;
+  /** Si false : pas d’interrupteur (ex. apparence du bot — toujours disponible si le bot est sur le serveur). */
+  hideEnabledToggle?: boolean;
   onToggleEnabled: () => void;
   children: ReactNode;
 };
@@ -25,6 +27,7 @@ export function ModuleCard({
   enabled,
   keepFormVisibleWhenDisabled = false,
   enabledBusy = false,
+  hideEnabledToggle = false,
   onToggleEnabled,
   children,
 }: Props) {
@@ -45,37 +48,39 @@ export function ModuleCard({
             <p className="mt-1 line-clamp-3 text-xs text-zinc-400">{description}</p>
           </div>
         </div>
-        <div className="flex w-full shrink-0 flex-wrap items-center justify-end gap-2 sm:w-auto sm:justify-start">
-          <label
-            className={[
-              "inline-flex cursor-pointer items-center gap-2 rounded-full px-2 py-1 text-[11px] font-medium transition",
-              enabled ? "bg-emerald-500/15 text-emerald-300" : "bg-zinc-700/40 text-zinc-400",
-              enabledBusy ? "opacity-60" : "",
-            ].join(" ")}
-          >
-            <input
-              type="checkbox"
-              className="hidden"
-              checked={enabled}
-              onChange={() => onToggleEnabled()}
-              disabled={enabledBusy}
-            />
-            <span
+        {hideEnabledToggle ? null : (
+          <div className="flex w-full shrink-0 flex-wrap items-center justify-end gap-2 sm:w-auto sm:justify-start">
+            <label
               className={[
-                "relative inline-block h-3.5 w-7 rounded-full transition",
-                enabled ? "bg-emerald-500/70" : "bg-zinc-600",
+                "inline-flex cursor-pointer items-center gap-2 rounded-full px-2 py-1 text-[11px] font-medium transition",
+                enabled ? "bg-emerald-500/15 text-emerald-300" : "bg-zinc-700/40 text-zinc-400",
+                enabledBusy ? "opacity-60" : "",
               ].join(" ")}
             >
+              <input
+                type="checkbox"
+                className="hidden"
+                checked={enabled}
+                onChange={() => onToggleEnabled()}
+                disabled={enabledBusy}
+              />
               <span
                 className={[
-                  "absolute top-0.5 inline-block h-2.5 w-2.5 rounded-full bg-white transition",
-                  enabled ? "left-3.5" : "left-0.5",
+                  "relative inline-block h-3.5 w-7 rounded-full transition",
+                  enabled ? "bg-emerald-500/70" : "bg-zinc-600",
                 ].join(" ")}
-              />
-            </span>
-            {enabled ? "Activée" : "Désactivée"}
-          </label>
-        </div>
+              >
+                <span
+                  className={[
+                    "absolute top-0.5 inline-block h-2.5 w-2.5 rounded-full bg-white transition",
+                    enabled ? "left-3.5" : "left-0.5",
+                  ].join(" ")}
+                />
+              </span>
+              {enabled ? "Activée" : "Désactivée"}
+            </label>
+          </div>
+        )}
       </div>
 
       {enabled || keepFormVisibleWhenDisabled ? (

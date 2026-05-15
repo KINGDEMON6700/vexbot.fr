@@ -365,7 +365,7 @@ export function DiscordServerStructurePreview({ serverName, iconUrl, categories,
               <p className="mt-0.5 text-[11px] leading-snug" style={{ color: TEXT_MUTED }}>
                 {snapshot
                   ? "Schéma des salons. Le bouton « Perms » n’apparaît que s’il y a des règles spéciales sur le salon ou la catégorie ; il permet de les consulter."
-                  : "Schéma des salons (aperçu, pas une copie exacte de ton serveur)."}
+                  : "Schéma des salons (aperçu, pas une copie exacte de votre serveur)."}
               </p>
             </div>
             <div className="px-1.5 py-2">

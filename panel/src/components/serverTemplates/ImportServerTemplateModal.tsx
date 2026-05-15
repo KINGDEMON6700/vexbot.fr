@@ -66,7 +66,7 @@ export function ImportServerTemplateModal({
           Importer un template (JSON)
         </h3>
         <p className="mt-1 text-xs text-zinc-500">
-          Le fichier contient une copie de la structure (rôles, salons, permissions). Tu peux
+          Le fichier contient une copie de la structure (rôles, salons, permissions). Vous pouvez
           ajuster le nom avant de l’enregistrer sur ce serveur.
         </p>
         <p className="mt-2 rounded-md border border-vex-border/80 bg-vex-bg/50 px-2.5 py-2 text-[11px] text-zinc-400">

@@ -559,8 +559,8 @@ export function DiscohookEmbedEditor({ draft, setDraft }: Props) {
           <div className="flex flex-col gap-3">
             <Section title="Profil">
               <p className="mb-3 text-[11px] leading-relaxed text-zinc-600">
-                Optionnel : tu peux choisir un nom et une photo rien que pour ce message du modèle. Si tu laisses vide,
-                l’aperçu utilise le nom et la photo du bot (comme sur la vue d’ensemble → Apparence du bot).
+                Optionnel : vous pouvez choisir un nom et une photo rien que pour ce message du modèle. Si vous laissez vide,
+                l’aperçu utilisez le nom et la photo du bot (comme sur la vue d’ensemble → Apparence du bot).
               </p>
               <div className="flex flex-col gap-3">
                 <div>

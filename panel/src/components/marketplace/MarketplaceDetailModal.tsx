@@ -26,7 +26,7 @@ type Props = {
   importingId: string | null;
   onImport: (item: MarketplaceListItem) => void;
   onEngagementChange?: () => void;
-  /** Ouvre la popup « Gérer ta publication » (formulaire + suppression). */
+  /** Ouvre la popup « Gérer votre publication » (formulaire + suppression). */
   onManagePublication?: (publicationId: string) => void;
 };
 
@@ -161,7 +161,7 @@ export function MarketplaceDetailModal({
         onEngagementChange?.();
       })
       .catch((e) => {
-        setCommentHint(e instanceof Error ? e.message : "Envoi impossible. Réessaie.");
+        setCommentHint(e instanceof Error ? e.message : "Envoi impossible. Réessayez.");
       })
       .finally(() => {
         setCommentBusy(false);
@@ -368,14 +368,14 @@ export function MarketplaceDetailModal({
                 )}
               </div>
               <label className="mt-3 block text-xs font-medium text-zinc-400" htmlFor="marketplace-comment">
-                Ton commentaire
+                Votre commentaire
               </label>
               <textarea
                 id="marketplace-comment"
                 className="ui-input mt-1.5 min-h-[72px] resize-y text-sm"
                 value={commentDraft}
                 onChange={(e) => setCommentDraft(e.target.value)}
-                placeholder="Partage ton avis sur cette template…"
+                placeholder="Partage votre avis sur cette template…"
                 maxLength={2000}
                 disabled={commentBusy || deletingCommentId !== null}
               />

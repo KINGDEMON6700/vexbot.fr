@@ -78,7 +78,7 @@ export function GuildSelector() {
   if (loadStatus === "error") {
     return (
       <span className="text-xs text-amber-400/90">
-        Impossible de charger tes serveurs. Réessaie plus tard.
+        Impossible de charger vos serveurs. Réessayez plus tard.
       </span>
     );
   }
@@ -90,6 +90,8 @@ export function GuildSelector() {
       </span>
     );
   }
+
+  const guildsWithBot = eligibleGuilds.filter((g) => g.botPresent);
 
   return (
     <div className="flex min-w-0 flex-1 flex-row items-center gap-2 sm:flex-none sm:gap-3">
@@ -120,7 +122,7 @@ export function GuildSelector() {
               ) : (
                 <span
                   className="shrink-0 rounded-md bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-200/90"
-                  title="Invite le bot pour configurer"
+                  title="Invitez le bot pour configurer"
                 >
                   À inviter
                 </span>
@@ -159,39 +161,42 @@ export function GuildSelector() {
                 <span>Choisir plus tard</span>
               </button>
             </li>
-            {eligibleGuilds.map((g) => {
-              const isActive = g.id === selectedGuildId;
-              return (
-                <li key={g.id} role="presentation">
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={isActive}
-                    className={`flex w-full items-start gap-2 px-3 py-2.5 text-left text-sm transition hover:bg-vex-bg/60 ${
-                      isActive ? "bg-vex-bg/50" : ""
-                    }`}
-                    onClick={() => {
-                      setSelectedGuildId(g.id);
-                      setOpen(false);
-                    }}
-                  >
-                    <div className="mt-0.5 shrink-0">
-                      <GuildAvatar guild={g} size={36} />
-                    </div>
-                    <span className="min-w-0 flex-1 break-words font-medium leading-snug text-zinc-100">
-                      {g.name}
-                    </span>
-                    {g.botPresent ? (
+            {guildsWithBot.length === 0 ? (
+              <li role="presentation" className="px-3 py-3 text-xs leading-relaxed text-zinc-500">
+                Aucun serveur avec Vex pour l’instant. Utilisez « Changer de serveur » dans votre profil pour
+                inviter le bot.
+              </li>
+            ) : (
+              guildsWithBot.map((g) => {
+                const isActive = g.id === selectedGuildId;
+                return (
+                  <li key={g.id} role="presentation">
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={isActive}
+                      className={`flex w-full items-start gap-2 px-3 py-2.5 text-left text-sm transition hover:bg-vex-bg/60 ${
+                        isActive ? "bg-vex-bg/50" : ""
+                      }`}
+                      onClick={() => {
+                        setSelectedGuildId(g.id);
+                        setOpen(false);
+                      }}
+                    >
+                      <div className="mt-0.5 shrink-0">
+                        <GuildAvatar guild={g} size={36} />
+                      </div>
+                      <span className="min-w-0 flex-1 break-words font-medium leading-snug text-zinc-100">
+                        {g.name}
+                      </span>
                       <span className="mt-0.5 shrink-0 self-start rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-medium text-emerald-300">
                         Prêt
                       </span>
-                    ) : (
-                      <span className="mt-0.5 shrink-0 self-start text-[10px] text-zinc-500">À inviter</span>
-                    )}
-                  </button>
-                </li>
-              );
-            })}
+                    </button>
+                  </li>
+                );
+              })
+            )}
           </ul>
         ) : null}
       </div>

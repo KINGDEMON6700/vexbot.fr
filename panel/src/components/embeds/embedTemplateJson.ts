@@ -38,7 +38,7 @@ export function exportTemplateDraftToJsonString(d: TemplateDraft): string {
         throw new Error("Donnez un nom au modèle avant d’exporter.");
       }
       if (e.message === "fixed") {
-        throw new Error("Pour une date d’horodatage fixe, choisis une date et une heure complètes avant d’exporter.");
+        throw new Error("Pour une date d’horodatage fixe, choisissez une date et une heure complètes avant d’exporter.");
       }
     }
     throw new Error("Impossible de préparer l’export. Vérifie le contenu du modèle.");

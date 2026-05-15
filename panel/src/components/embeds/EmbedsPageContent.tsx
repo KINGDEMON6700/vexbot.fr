@@ -22,6 +22,10 @@ import {
 import { DiscohookEmbedEditor } from "./DiscohookEmbedEditor.js";
 import { DiscordEmbedPreview, type MessageAuthorPreview } from "./DiscordEmbedPreview.js";
 import { EmbedModelPicker } from "./EmbedModelPicker.js";
+import { ModalShell } from "../ui/ModalShell.js";
+import { EmbedsPageSkeleton } from "../ui/PageSkeleton.js";
+import { createPageCache } from "../../lib/pageDataCache.js";
+import { SaveChangesBar, SAVE_BAR_PAGE_PADDING } from "../ui/SaveChangesBar.js";
 import type { MentionLookup } from "./DiscordRenderedText.js";
 import {
   defaultJsonExportFilename,
@@ -33,6 +37,8 @@ import {
 type Props = {
   discordGuildId: string;
 };
+
+const embedListCache = createPageCache<EmbedTemplate[]>();
 
 type FormatActionId =
   | "bold"
@@ -86,9 +92,9 @@ type ContextMenuState = { x: number; y: number; pick?: "channel" | "role" | "use
 
 export function EmbedsPageContent({ discordGuildId }: Props) {
   const initialDraft = useMemo(() => defaultTemplateDraft(), []);
-  const [list, setList] = useState<EmbedTemplate[]>([]);
+  const [list, setList] = useState<EmbedTemplate[]>(() => embedListCache.get(discordGuildId) ?? []);
   const [loadError, setLoadError] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !(embedListCache.get(discordGuildId)?.length));
 
   const [selectedId, setSelectedId] = useState<string | "new" | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ id: string; name: string } | null>(null);
@@ -406,7 +412,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
       if (nextUrl.origin !== currentUrl.origin) return;
 
       const leave = window.confirm(
-        "Tu as des modifications non enregistrées. Quitter la page et perdre ces changements ?",
+        "Vous avez des modifications non enregistrées. Quitter la page et perdre ces changements ?",
       );
       if (!leave) {
         event.preventDefault();
@@ -510,9 +516,10 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
 
   const load = useCallback(async () => {
     setLoadError(false);
-    setLoading(true);
+    if (!embedListCache.get(discordGuildId)?.length) setLoading(true);
     try {
       const embeds = await fetchEmbedTemplates(discordGuildId);
+      embedListCache.set(discordGuildId, embeds);
       setList(embeds);
     } catch {
       setLoadError(true);
@@ -612,7 +619,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
   const confirmDiscardIfNeeded = (nextId: string | "new" | null): boolean => {
     if (!isDirty) return true;
     if (nextId === selectedId) return true;
-    return window.confirm("Tu as des modifications non enregistrées. Les ignorer et changer de modèle ?");
+    return window.confirm("Vous avez des modifications non enregistrées. Les ignorer et changer de modèle ?");
   };
 
   const applyDraftSelection = (id: string | "new" | null, nextDraft: TemplateDraft) => {
@@ -683,7 +690,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
     try {
       payload = templateDraftToApiPayload(draftToSave);
     } catch (err) {
-      setMessage("Pour une date fixe, choisis une date et une heure.");
+      setMessage("Pour une date fixe, choisissez une date et une heure.");
       return;
     }
 
@@ -716,11 +723,11 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
     } catch (e: unknown) {
       const err = e as Error & { status?: number; code?: string };
       if (err.status === 409) {
-        setMessage("Tu as déjà un modèle avec ce nom. Choisis un autre nom.");
+        setMessage("Vous avez déjà un modèle avec ce nom. Choisissez un autre nom.");
       } else if (err.message) {
         setMessage(err.message);
       } else {
-        setMessage("Impossible d’enregistrer. Réessaie dans un instant.");
+        setMessage("Impossible d’enregistrer. Réessayez dans un instant.");
       }
     } finally {
       setSaving(false);
@@ -752,7 +759,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
       }
       setMessage("Modèle supprimé.");
     } catch {
-      setMessage("Impossible de supprimer. Réessaie plus tard.");
+      setMessage("Impossible de supprimer. Réessayez plus tard.");
     } finally {
       setSaving(false);
     }
@@ -828,7 +835,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
         const text = String(reader.result ?? "");
         if (isDirtyRef.current) {
           const ok = window.confirm(
-            "Tu as des modifications non enregistrées. Les remplacer par le contenu du fichier JSON ?",
+            "Vous avez des modifications non enregistrées. Les remplacer par le contenu du fichier JSON ?",
           );
           if (!ok) return;
         }
@@ -836,7 +843,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
         setDeleteModal(null);
         setDraft(next);
         setJsonImportPending(true);
-        setMessage("Modèle importé depuis le fichier. Pense à l’enregistrer si tu veux le garder sur ce serveur.");
+        setMessage("Modèle importé depuis le fichier. Pensez à l’enregistrer si vous veux le garder sur ce serveur.");
       } catch (e: unknown) {
         setMessage(e instanceof Error ? e.message : "Import impossible.");
       }
@@ -866,7 +873,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
       if (err.message) {
         setMessage(err.message);
       } else {
-        setMessage("Impossible d’envoyer. Réessaie dans un instant.");
+        setMessage("Impossible d’envoyer. Réessayez dans un instant.");
       }
     } finally {
       setSending(false);
@@ -876,22 +883,18 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
   if (loadError) {
     return (
       <div className="ui-card-muted px-6 py-10 text-center text-sm text-zinc-400">
-        Impossible de charger tes modèles. Réessaie dans un instant.
+        Impossible de charger vos modèles. Réessayez dans un instant.
       </div>
     );
   }
 
-  if (loading) {
-    return (
-      <div className="ui-card-muted px-6 py-10 text-center text-sm text-zinc-500">
-        Chargement…
-      </div>
-    );
+  if (loading && list.length === 0) {
+    return <EmbedsPageSkeleton />;
   }
 
   return (
     <div
-      className={`flex flex-col gap-6 ${showSaveMenu ? "pb-[calc(6rem+env(safe-area-inset-bottom,0px))]" : ""}`}
+      className={`flex flex-col gap-6 ${showSaveMenu ? SAVE_BAR_PAGE_PADDING : ""}`}
     >
       <div className="flex flex-col gap-4">
         <div className="min-w-0 rounded-xl border border-vex-border bg-vex-surface/70 p-4">
@@ -998,31 +1001,34 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
             }
           />
 
-          {deleteModal ? (
-            <div className="mt-4 rounded-lg border border-red-900/55 bg-red-950/25 p-3">
-              <p className="text-sm text-zinc-200">
-                Supprimer « {deleteModal.name} » ? On ne pourra pas revenir en arrière.
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => void handleDelete()}
-                  disabled={saving}
-                  className="rounded-lg border border-red-800/70 bg-red-900/50 px-3 py-2 text-sm font-medium text-amber-50 transition hover:bg-red-900/70 disabled:opacity-50"
-                >
-                  Oui, supprimer
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeleteModal(null)}
-                  disabled={saving}
-                  className="rounded-lg border border-vex-border px-3 py-2 text-sm text-zinc-300 transition hover:bg-vex-bg/50 disabled:opacity-50"
-                >
-                  Annuler
-                </button>
-              </div>
-            </div>
-          ) : null}
+          <ModalShell
+            open={deleteModal != null}
+            onClose={() => {
+              if (!saving) setDeleteModal(null);
+            }}
+            title="Supprimer ce modèle ?"
+          >
+            {deleteModal ? (
+              <>
+                <p className="text-sm text-zinc-300">
+                  Supprimer « {deleteModal.name} » ? Cette action est définitive.
+                </p>
+                <div className="mt-4 flex flex-wrap justify-end gap-2">
+                  <button type="button" onClick={() => setDeleteModal(null)} disabled={saving} className="ui-btn-secondary">
+                    Annuler
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleDelete()}
+                    disabled={saving}
+                    className="rounded-lg border border-red-800/70 bg-red-900/50 px-3 py-2 text-sm font-medium text-amber-50 hover:bg-red-900/70 disabled:opacity-50"
+                  >
+                    Oui, supprimer
+                  </button>
+                </div>
+              </>
+            ) : null}
+          </ModalShell>
 
           {isDirty ? (
             <p className="mt-3 text-xs text-amber-300">Modifications non enregistrées.</p>
@@ -1063,28 +1069,12 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
         </p>
       ) : null}
 
-      {showSaveMenu ? (
-        <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[100] flex justify-center px-4 pb-[env(safe-area-inset-bottom,0px)]">
-          <div className="pointer-events-auto ui-card flex items-center gap-2 px-3 py-2 shadow-xl">
-            <button
-              type="button"
-              onClick={() => void handleSave()}
-              disabled={saving || sending}
-              className="ui-btn-primary"
-            >
-              {saving ? "Enregistrement…" : "Enregistrer"}
-            </button>
-            <button
-              type="button"
-              onClick={handleDiscardChanges}
-              disabled={saving || sending}
-              className="ui-btn-secondary"
-            >
-              Ne pas enregistrer
-            </button>
-          </div>
-        </div>
-      ) : null}
+      <SaveChangesBar
+        visible={showSaveMenu}
+        saving={saving}
+        onSave={() => void handleSave()}
+        onDiscard={handleDiscardChanges}
+      />
 
       {contextMenu ? (
         <div
@@ -1225,7 +1215,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
                   mentionPickerChannels.length === 0 ? (
                     <p className="px-3 py-4 text-sm text-zinc-400">
                       {mentionMeta?.channels?.length
-                        ? "Aucun salon ne correspond à ta recherche."
+                        ? "Aucun salon ne correspond à votre recherche."
                         : "Aucun salon chargé. Vérifie que le bot est bien sur le serveur."}
                     </p>
                   ) : (
@@ -1247,7 +1237,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
                 ) : mentionPickerRoles.length === 0 ? (
                   <p className="px-3 py-4 text-sm text-zinc-400">
                     {mentionMeta?.roles?.length
-                      ? "Aucun rôle ne correspond à ta recherche."
+                      ? "Aucun rôle ne correspond à votre recherche."
                       : "Aucun rôle chargé. Vérifie que le bot est bien sur le serveur."}
                   </p>
                 ) : (

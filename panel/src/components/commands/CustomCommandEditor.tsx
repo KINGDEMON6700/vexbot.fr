@@ -3,6 +3,7 @@ import type { CustomCommand, CustomCommandInput } from "../../types/commands.js"
 import type { GuildMentionMeta } from "../../types/guildMeta.js";
 import type { EmbedTemplate } from "../../types/embedTemplate.js";
 import { MultiPicker, type MultiPickerOption } from "./MultiPicker.js";
+import { SaveChangesBar, SAVE_BAR_PAGE_PADDING } from "../ui/SaveChangesBar.js";
 
 type Props = {
   command: CustomCommand;
@@ -182,7 +183,7 @@ export function CustomCommandEditor({
 
   return (
     <>
-    <div className="space-y-4">
+    <div className={`space-y-4 ${isDirty ? SAVE_BAR_PAGE_PADDING : ""}`}>
       {error ? (
         <div className="rounded-md border border-amber-700/50 bg-amber-950/30 px-3 py-2 text-xs text-amber-200">
           {error}
@@ -249,7 +250,7 @@ export function CustomCommandEditor({
             ].join(" ")}
           >
             <span className="block font-medium">Modèle d'embed</span>
-            <span className="block text-[11px] text-zinc-500">Choisis un modèle créé dans « Embeds ».</span>
+            <span className="block text-[11px] text-zinc-500">Choisissez un modèle créé dans « Embeds ».</span>
           </button>
         </div>
       </div>
@@ -288,7 +289,7 @@ export function CustomCommandEditor({
           <span className="text-[11px] uppercase tracking-wide text-zinc-500">Modèle d'embed</span>
           {embedTemplates.length === 0 ? (
             <p className="mt-1 text-xs text-amber-300/90">
-              Tu n'as encore aucun modèle d'embed. Crée-en un dans la page « Embeds » puis reviens ici.
+              Vous n'avez encore aucun modèle d'embed. Créez-en un dans la page « Embeds » puis revenez ici.
             </p>
           ) : (
             <select
@@ -297,7 +298,7 @@ export function CustomCommandEditor({
               onChange={(e) => setEmbedId(e.target.value || null)}
               disabled={busy}
             >
-              <option value="">— Choisis un modèle —</option>
+              <option value="">— Choisissez un modèle —</option>
               {embedTemplates.map((t) => (
                 <option key={t.id} value={t.id}>
                   {t.name}
@@ -405,28 +406,13 @@ export function CustomCommandEditor({
       </div>
     </div>
 
-      {isDirty ? (
-        <div className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-4">
-          <div className="pointer-events-auto ui-card flex items-center gap-2 px-3 py-2 shadow-xl">
-            <button
-              type="button"
-              className="ui-btn-primary"
-              onClick={() => void handleSave()}
-              disabled={busy}
-            >
-              {busy ? "Enregistrement…" : "Enregistrer"}
-            </button>
-            <button
-              type="button"
-              className="ui-btn-secondary"
-              onClick={handleDiscardChanges}
-              disabled={busy}
-            >
-              Ne pas enregistrer
-            </button>
-          </div>
-        </div>
-      ) : null}
+      <SaveChangesBar
+        visible={isDirty}
+        saving={busy}
+        onSave={() => void handleSave()}
+        onDiscard={handleDiscardChanges}
+        zIndexClass="z-50"
+      />
     </>
   );
 }

@@ -28,7 +28,7 @@ function cloneDraft(d: TemplateDraft): TemplateDraft {
   return JSON.parse(JSON.stringify(d)) as TemplateDraft;
 }
 
-/** Le panneau Discord n’utilise que le premier message du modèle. */
+/** Le panneau Discord n’utilisez que le premier message du modèle. */
 function firstMessageOnlyDraft(d: TemplateDraft): TemplateDraft {
   const copy = cloneDraft(d);
   if (copy.messages.length === 0) {

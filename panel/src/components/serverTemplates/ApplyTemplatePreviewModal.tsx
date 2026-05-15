@@ -197,7 +197,7 @@ export function ApplyTemplatePreviewModal({
             Aperçu des changements
           </h2>
           <p className="mt-1 text-xs text-zinc-500">
-            Voici tout ce que le bot va faire si tu appliques le template{" "}
+            Voici tout ce que le bot va faire si vous appliques le template{" "}
             <strong className="text-zinc-300">{templateName}</strong> sur ce serveur.
           </p>
         </header>

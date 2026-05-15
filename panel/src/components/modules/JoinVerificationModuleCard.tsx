@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 import {
   fetchGuildMentionMeta,
   fetchGuildTextChannels,
@@ -14,9 +14,31 @@ import { ModuleCard } from "./ModuleCard.js";
 
 type Props = {
   discordGuildId: string;
+  onFormDirtyChange?: (dirty: boolean) => void;
+  formSaveRef?: MutableRefObject<(() => Promise<void>) | null>;
+  discardSignal?: number;
 };
 
-export function JoinVerificationModuleCard({ discordGuildId }: Props) {
+function formSnapshot(
+  mode: JoinVerificationMode,
+  channelId: string,
+  unverifiedRoleId: string,
+  buttonLabel: string,
+): string {
+  return JSON.stringify({
+    mode,
+    channelId: channelId.trim(),
+    unverifiedRoleId: unverifiedRoleId.trim(),
+    buttonLabel: buttonLabel.trim(),
+  });
+}
+
+export function JoinVerificationModuleCard({
+  discordGuildId,
+  onFormDirtyChange,
+  formSaveRef,
+  discardSignal = 0,
+}: Props) {
   const [channels, setChannels] = useState<GuildTextChannelOption[]>([]);
   const [mentionMeta, setMentionMeta] = useState<GuildMentionMeta | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,6 +52,7 @@ export function JoinVerificationModuleCard({ discordGuildId }: Props) {
   const [channelId, setChannelId] = useState("");
   const [unverifiedRoleId, setUnverifiedRoleId] = useState("");
   const [buttonLabel, setButtonLabel] = useState("");
+  const [savedFormSnapshot, setSavedFormSnapshot] = useState("");
 
   const apply = useCallback((s: JoinVerificationSettings) => {
     setModuleEnabled(s.moduleEnabled);
@@ -37,6 +60,9 @@ export function JoinVerificationModuleCard({ discordGuildId }: Props) {
     setChannelId(s.channelId ?? "");
     setUnverifiedRoleId(s.unverifiedRoleId ?? "");
     setButtonLabel(s.buttonLabel ?? "");
+    setSavedFormSnapshot(
+      formSnapshot(s.mode, s.channelId ?? "", s.unverifiedRoleId ?? "", s.buttonLabel ?? ""),
+    );
   }, []);
 
   const load = useCallback(async () => {
@@ -69,18 +95,8 @@ export function JoinVerificationModuleCard({ discordGuildId }: Props) {
     setPanelWarning(null);
     try {
       if (!moduleEnabled) {
-        if (!channelId.trim() || !unverifiedRoleId.trim()) {
-          setError(
-            "Choisis un salon et un rôle « non vérifié » dans la liste, puis clique sur « Enregistrer les réglages » avant d’activer le module.",
-          );
-          return;
-        }
         const { settings, panelSyncWarning } = await patchJoinVerificationSettings(discordGuildId, {
           moduleEnabled: true,
-          mode,
-          channelId: channelId.trim() || null,
-          unverifiedRoleId: unverifiedRoleId.trim() || null,
-          buttonLabel: buttonLabel.trim() || null,
         });
         apply(settings);
         setPanelWarning(panelSyncWarning);
@@ -96,9 +112,9 @@ export function JoinVerificationModuleCard({ discordGuildId }: Props) {
     } finally {
       setFlagsSaving(false);
     }
-  }, [discordGuildId, moduleEnabled, mode, channelId, unverifiedRoleId, buttonLabel, apply]);
+  }, [discordGuildId, moduleEnabled, apply]);
 
-  async function handleSaveForm() {
+  const handleSaveForm = useCallback(async () => {
     setFormSaving(true);
     setError(null);
     setPanelWarning(null);
@@ -117,14 +133,47 @@ export function JoinVerificationModuleCard({ discordGuildId }: Props) {
     } finally {
       setFormSaving(false);
     }
-  }
+  }, [discordGuildId, moduleEnabled, mode, channelId, unverifiedRoleId, buttonLabel, apply]);
+
+  const onDirtyRef = useRef(onFormDirtyChange);
+  onDirtyRef.current = onFormDirtyChange;
+
+  useEffect(() => {
+    const snap = formSnapshot(mode, channelId, unverifiedRoleId, buttonLabel);
+    onDirtyRef.current?.(savedFormSnapshot !== "" && snap !== savedFormSnapshot);
+  }, [mode, channelId, unverifiedRoleId, buttonLabel, savedFormSnapshot]);
+
+  useEffect(() => {
+    if (!formSaveRef) return;
+    formSaveRef.current = () => handleSaveForm();
+    return () => {
+      formSaveRef.current = null;
+    };
+  }, [formSaveRef, handleSaveForm]);
+
+  useEffect(() => {
+    if (!discardSignal || !savedFormSnapshot) return;
+    try {
+      const d = JSON.parse(savedFormSnapshot) as {
+        mode: JoinVerificationMode;
+        channelId: string;
+        unverifiedRoleId: string;
+        buttonLabel: string;
+      };
+      setMode(d.mode);
+      setChannelId(d.channelId);
+      setUnverifiedRoleId(d.unverifiedRoleId);
+      setButtonLabel(d.buttonLabel);
+    } catch {
+      /* ignore */
+    }
+  }, [discardSignal, savedFormSnapshot]);
+
+  const currentFormSnapshot = formSnapshot(mode, channelId, unverifiedRoleId, buttonLabel);
+  const isFormDirty = savedFormSnapshot !== "" && currentFormSnapshot !== savedFormSnapshot;
 
   if (loading) {
-    return (
-      <div className="ui-card-muted px-5 py-6 text-center text-sm text-zinc-500">
-        Chargement de la vérification…
-      </div>
-    );
+    return <div className="ui-card min-h-[10rem]" aria-busy="true" aria-label="Chargement" />;
   }
 
   const roleOptions = (mentionMeta?.roles ?? [])
@@ -137,7 +186,6 @@ export function JoinVerificationModuleCard({ discordGuildId }: Props) {
       title="Vérification à l’arrivée"
       description="Les nouveaux reçoivent d’abord un rôle « non vérifié ». Ensuite : code en message privé + saisie dans le salon (captcha), ou un simple bouton. Les rôles du module « Rôles à l’arrivée » ne sont donnés qu’après la vérification. Qui voit quels salons : uniquement via les permissions Discord (voir ci-dessous)."
       enabled={moduleEnabled}
-      keepFormVisibleWhenDisabled
       enabledBusy={flagsSaving}
       onToggleEnabled={() => void patchFlags()}
     >
@@ -148,10 +196,17 @@ export function JoinVerificationModuleCard({ discordGuildId }: Props) {
         </div>
       ) : null}
 
-      <p className="mb-3 rounded-md border border-zinc-600/40 bg-zinc-900/40 px-3 py-2 text-[11px] leading-relaxed text-zinc-400">
-        <strong className="font-medium text-zinc-300">Étapes :</strong> choisis le mode, le salon et le rôle, clique sur «
-        Enregistrer les réglages », puis active le module avec l’interrupteur en haut à droite.
+      <p className="mb-3 text-xs text-zinc-500">
+        Active le module avec l’interrupteur pour afficher les réglages. Ensuite choisis le mode, le salon et le rôle, et
+        clique sur « Enregistrer ces réglages » (ou sur « Enregistrer » en bas de page si la barre apparaît).
       </p>
+
+      {moduleEnabled && (!channelId.trim() || !unverifiedRoleId.trim()) ? (
+        <p className="mb-3 rounded-md border border-amber-500/25 bg-amber-950/30 px-3 py-2 text-[11px] text-amber-100/95">
+          Module activé mais pas encore prêt : choisis un <strong className="font-medium">salon</strong> et un{" "}
+          <strong className="font-medium">rôle non vérifié</strong>, puis enregistre.
+        </p>
+      ) : null}
 
       {!mentionMeta ? (
         <p className="mb-3 text-xs text-amber-200/90">
@@ -161,7 +216,7 @@ export function JoinVerificationModuleCard({ discordGuildId }: Props) {
 
       <div className="mb-3 rounded-md border border-zinc-600/40 bg-zinc-900/30 px-3 py-2 text-[11px] leading-relaxed text-zinc-400">
         <strong className="font-medium text-zinc-300">Salons et catégories visibles :</strong> Vex ne peut pas « ouvrir » ou
-        « fermer » des catégories à ta place : c’est Discord qui décide selon les rôles. En pratique : sur la catégorie ou le
+        « fermer » des catégories à votre place : c’est Discord qui décide selon les rôles. En pratique : sur la catégorie ou le
         salon réservé aux non vérifiés, retire la permission « Voir le salon » à @everyone et aux membres vérifiés, et
         autorise-la pour le rôle « non vérifié ». Fais l’inverse pour le reste du serveur (les membres vérifiés voient les
         salons normaux, les nouveaux seulement le salon de vérif).
@@ -238,9 +293,18 @@ export function JoinVerificationModuleCard({ discordGuildId }: Props) {
           </label>
         ) : null}
 
-        <button type="button" className="ui-btn-primary text-sm" disabled={formSaving} onClick={() => void handleSaveForm()}>
-          {formSaving ? "Enregistrement…" : "Enregistrer les réglages"}
-        </button>
+        {isFormDirty ? (
+          <div className="mt-4 flex flex-wrap gap-2 border-t border-vex-border/50 pt-4">
+            <button
+              type="button"
+              className="ui-btn-primary text-sm"
+              disabled={formSaving}
+              onClick={() => void handleSaveForm()}
+            >
+              {formSaving ? "Enregistrement…" : "Enregistrer ces réglages"}
+            </button>
+          </div>
+        ) : null}
       </div>
     </ModuleCard>
   );

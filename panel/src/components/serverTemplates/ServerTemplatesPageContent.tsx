@@ -391,7 +391,7 @@ export function ServerTemplatesPageContent({ discordGuildId }: Props) {
               </h2>
               <p className="mt-1 text-[11px] text-zinc-500">
                 {structure
-                  ? `Lue le ${formatDate(structure.capturedAt)} — clique sur Actualiser si tu as changé des choses sur Discord depuis.`
+                  ? `Lue le ${formatDate(structure.capturedAt)} — cliquez sur Actualiser si vous as changé des choses sur Discord depuis.`
                   : "Lecture en cours…"}
               </p>
             </div>
@@ -484,7 +484,7 @@ export function ServerTemplatesPageContent({ discordGuildId }: Props) {
             ) : null}
           </div>
           <p className="mt-1 text-[11px] text-zinc-500">
-            Clique sur un template pour l’ouvrir ; reclique sur le même pour le fermer.
+            Cliquez sur un template pour l’ouvrir ; recliquez sur le même pour le fermer.
           </p>
 
           <input

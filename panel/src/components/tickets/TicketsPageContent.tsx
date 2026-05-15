@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent, MouseEvent } from "react";
-import { Link } from "react-router-dom";
 import type { EmbedTemplate } from "../../types/embedTemplate.js";
 import type { GuildTextChannelOption } from "../../lib/embedsApi.js";
 import type {
@@ -26,7 +25,10 @@ import {
   patchTicketSettings,
   type LiveChannelMessage,
 } from "../../lib/ticketsApi.js";
-import { useGuildQuerySuffix } from "../../hooks/useGuildQuerySuffix.js";
+import { TicketsPageSkeleton, TicketListRowsSkeleton } from "../ui/PageSkeleton.js";
+import { createPageCache } from "../../lib/pageDataCache.js";
+import { SaveChangesBar, SAVE_BAR_PAGE_PADDING } from "../ui/SaveChangesBar.js";
+import { UiToggle } from "../ui/UiToggle.js";
 import { discordUserAvatarUrl } from "../../lib/discordCdn.js";
 import { DiscordRenderedText, type MentionLookup } from "../embeds/DiscordRenderedText.js";
 import "../embeds/discordEmbedMd.css";
@@ -502,7 +504,7 @@ function TicketDetailContent({
           </p>
         ) : liveError ? (
           <p className="text-sm text-amber-200/90">
-            Impossible de charger les messages. Réessaie dans un instant.
+            Impossible de charger les messages. Réessayez dans un instant.
           </p>
         ) : (
           <p className="text-sm text-zinc-500">Aucun message pour l’instant.</p>
@@ -554,12 +556,20 @@ type Props = {
   discordGuildId: string;
 };
 
+type TicketMetaBundle = {
+  settings: TicketSettings;
+  textChannels: GuildTextChannelOption[];
+  categories: GuildTextChannelOption[];
+  embeds: EmbedTemplate[];
+};
+
+const ticketMetaCache = createPageCache<TicketMetaBundle>();
+
 export function TicketsPageContent({ discordGuildId }: Props) {
-  const guildQs = useGuildQuerySuffix();
-  const [settings, setSettings] = useState<TicketSettings | null>(null);
-  const [textChannels, setTextChannels] = useState<GuildTextChannelOption[]>([]);
-  const [categories, setCategories] = useState<GuildTextChannelOption[]>([]);
-  const [embeds, setEmbeds] = useState<EmbedTemplate[]>([]);
+  const [settings, setSettings] = useState<TicketSettings | null>(() => ticketMetaCache.get(discordGuildId)?.settings ?? null);
+  const [textChannels, setTextChannels] = useState<GuildTextChannelOption[]>(() => ticketMetaCache.get(discordGuildId)?.textChannels ?? []);
+  const [categories, setCategories] = useState<GuildTextChannelOption[]>(() => ticketMetaCache.get(discordGuildId)?.categories ?? []);
+  const [embeds, setEmbeds] = useState<EmbedTemplate[]>(() => ticketMetaCache.get(discordGuildId)?.embeds ?? []);
   const [metaError, setMetaError] = useState(false);
 
   const [draftPanel, setDraftPanel] = useState("");
@@ -643,6 +653,7 @@ export function TicketsPageContent({ discordGuildId }: Props) {
       setTextChannels(ch);
       setCategories(cat);
       setEmbeds(emb);
+      ticketMetaCache.set(discordGuildId, { settings: s, textChannels: ch, categories: cat, embeds: emb });
     } catch {
       setMetaError(true);
     }
@@ -892,22 +903,18 @@ export function TicketsPageContent({ discordGuildId }: Props) {
   if (metaError) {
     return (
       <div className="rounded-xl border border-vex-border bg-vex-surface/50 px-6 py-10 text-center text-sm text-zinc-400">
-        Impossible de charger tes Tickets. Réessaie dans un instant.
+        Impossible de charger vos Tickets. Réessayez dans un instant.
       </div>
     );
   }
 
   if (!settings) {
-    return (
-      <div className="rounded-xl border border-vex-border bg-vex-surface/50 px-6 py-10 text-center text-sm text-zinc-500">
-        Chargement…
-      </div>
-    );
+    return <TicketsPageSkeleton />;
   }
 
   return (
     <div
-      className={`flex flex-col gap-6 ${isDirty ? "pb-[calc(11rem+env(safe-area-inset-bottom,0px))]" : ""}`}
+      className={`flex flex-col gap-6 ${isDirty ? SAVE_BAR_PAGE_PADDING : ""}`}
     >
       <section className="overflow-hidden rounded-xl border border-vex-border bg-vex-surface/70">
         <div className="flex flex-col gap-3 border-b border-vex-border/80 bg-vex-bg/25 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6">
@@ -958,9 +965,7 @@ export function TicketsPageContent({ discordGuildId }: Props) {
         {listError ? (
           <div className="ui-empty-state mx-5 my-6 sm:mx-6">Impossible de charger la liste.</div>
         ) : listLoading ? (
-          <div className="ui-card-muted mx-5 my-6 px-6 py-10 text-center text-sm text-zinc-500 sm:mx-6">
-            Chargement…
-          </div>
+          <TicketListRowsSkeleton />
         ) : tickets.length === 0 ? (
           <div className="ui-empty-state mx-5 my-6 sm:mx-6">Aucun ticket dans cette catégorie.</div>
         ) : (
@@ -1025,7 +1030,7 @@ export function TicketsPageContent({ discordGuildId }: Props) {
         <section className="rounded-xl border border-vex-border bg-vex-surface/70 p-5 sm:p-6">
           <h2 className="text-lg font-semibold text-zinc-100">Configuration</h2>
           <p className="mt-1 text-sm text-zinc-500">
-            Choisis le salon du panneau et la catégorie où les salons ticket sont créés. En dessous, le contenu affiché
+            Choisissez le salon du panneau et la catégorie où les salons ticket sont créés. En dessous, le contenu affiché
             sur Discord pour le panneau et l’accueil.
           </p>
 
@@ -1084,9 +1089,13 @@ export function TicketsPageContent({ discordGuildId }: Props) {
           </div>
 
           <div className="mt-8 border-t border-vex-border/80 pt-6">
-            <h3 className="text-base font-semibold text-zinc-100">Panneau</h3>
+            <h3 className="text-base font-semibold text-zinc-100">Panel ticket et message d&apos;accueil</h3>
+            <p className="mt-1 text-xs text-zinc-500">
+              Panel dans le salon public ; message d&apos;accueil dans le salon du ticket.
+            </p>
 
-            <div className="mt-5 space-y-4 rounded-lg border border-vex-border/80 border-l-2 border-l-vex-accent/45 bg-vex-bg/40 p-4 pl-4 sm:p-5">
+            <div className="mt-5 grid gap-6 lg:grid-cols-2 lg:items-start">
+            <div className="space-y-4 rounded-lg border border-vex-border/80 border-l-2 border-l-vex-accent/45 bg-vex-bg/40 p-4 pl-4 sm:p-5">
             <div className="flex items-center gap-2">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-vex-accent/35 bg-vex-accent/10 text-xs font-semibold text-vex-accent">
                 1
@@ -1123,7 +1132,7 @@ export function TicketsPageContent({ discordGuildId }: Props) {
             </div>
           </div>
 
-          <div className="mt-5 space-y-4 rounded-lg border border-vex-border/80 border-l-2 border-l-vex-accent/45 bg-vex-bg/40 p-4 pl-4 sm:p-5">
+          <div className="space-y-4 rounded-lg border border-vex-border/80 border-l-2 border-l-vex-accent/45 bg-vex-bg/40 p-4 pl-4 sm:p-5">
             <div className="flex items-center gap-2">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-vex-accent/35 bg-vex-accent/10 text-xs font-semibold text-vex-accent">
                 2
@@ -1159,21 +1168,12 @@ export function TicketsPageContent({ discordGuildId }: Props) {
               </div>
             </label>
             <div className="mt-4 sm:max-w-xl">
-              <label className="flex cursor-pointer items-start gap-2 rounded-md border border-vex-border/50 bg-vex-surface/30 px-3 py-2 text-sm">
-                <input
-                  type="checkbox"
-                  className="mt-0.5"
-                  checked={draftWelcomeMemberClose}
-                  onChange={(e) => setDraftWelcomeMemberClose(e.target.checked)}
-                />
-                <span>
-                  <span className="font-medium text-zinc-200">Bouton pour fermer le ticket</span>
-                  <span className="mt-0.5 block text-xs text-zinc-500">
-                    Sous le message d’accueil : l’auteur du ticket ou un modérateur avec « Gérer les salons » peut fermer
-                    le salon (transcript enregistré comme avec la commande équipe).
-                  </span>
-                </span>
-              </label>
+              <UiToggle
+                title="Bouton pour fermer le ticket"
+                hint="Sous le message d’accueil : l’auteur du ticket ou un modérateur avec « Gérer les salons » peut fermer le salon (transcript enregistré comme avec la commande équipe)."
+                active={draftWelcomeMemberClose}
+                onToggle={() => setDraftWelcomeMemberClose((v) => !v)}
+              />
               {draftWelcomeMemberClose ? (
                 <div className="mt-3 flex flex-col gap-2 rounded-md border border-vex-border/50 bg-vex-surface/30 px-3 py-2.5">
                   <span className="text-sm text-zinc-400" id="ticket-close-btn-color-label">
@@ -1220,26 +1220,18 @@ export function TicketsPageContent({ discordGuildId }: Props) {
                     />
                   </label>
                   <p className="mt-1 text-[11px] text-zinc-600">
-                    Vide = emoji par défaut ({DEFAULT_TICKET_WELCOME_CLOSE_EMOJI}). Tu peux coller un emoji du serveur
+                    Vide = emoji par défaut ({DEFAULT_TICKET_WELCOME_CLOSE_EMOJI}). Vous pouvez coller un emoji du serveur
                     (format Discord).
                   </p>
                 </div>
               ) : null}
-              <label className="mt-4 flex cursor-pointer items-start gap-2 rounded-md border border-vex-border/50 bg-vex-surface/30 px-3 py-2 text-sm">
-                <input
-                  type="checkbox"
-                  className="mt-0.5"
-                  checked={draftWelcomeMemberAdd}
-                  onChange={(e) => setDraftWelcomeMemberAdd(e.target.checked)}
-                />
-                <span>
-                  <span className="font-medium text-zinc-200">Bouton pour ajouter quelqu’un au ticket</span>
-                  <span className="mt-0.5 block text-xs text-zinc-500">
-                    Ouvre une fenêtre pour coller l’identifiant Discord du membre (comme la commande /ticket add).
-                    L’auteur du ticket ou un modérateur avec « Gérer les salons » peut l’utiliser.
-                  </span>
-                </span>
-              </label>
+              <UiToggle
+                className="mt-4"
+                title="Bouton pour ajouter quelqu’un au ticket"
+                hint="Ouvre une fenêtre pour coller l’identifiant Discord du membre (comme la commande /ticket add). L’auteur du ticket ou un modérateur avec « Gérer les salons » peut l’utiliser."
+                active={draftWelcomeMemberAdd}
+                onToggle={() => setDraftWelcomeMemberAdd((v) => !v)}
+              />
               {draftWelcomeMemberAdd ? (
                 <div className="mt-3 flex flex-col gap-2 rounded-md border border-vex-border/50 bg-vex-surface/30 px-3 py-2.5">
                   <span className="text-sm text-zinc-400" id="ticket-add-btn-color-label">
@@ -1286,19 +1278,14 @@ export function TicketsPageContent({ discordGuildId }: Props) {
                     />
                   </label>
                   <p className="mt-1 text-[11px] text-zinc-600">
-                    Vide = emoji par défaut ({DEFAULT_TICKET_WELCOME_ADD_EMOJI}). Tu peux coller un emoji du serveur
+                    Vide = emoji par défaut ({DEFAULT_TICKET_WELCOME_ADD_EMOJI}). Vous pouvez coller un emoji du serveur
                     (format Discord).
                   </p>
                 </div>
               ) : null}
             </div>
-            <p className="mt-5 text-xs text-zinc-500">
-              Créer ou modifier les modèles :{" "}
-              <Link to={`/embeds${guildQs}`} className="text-vex-accent underline-offset-2 hover:underline">
-                Embeds
-              </Link>
-            </p>
           </div>
+            </div>
           </div>
 
           <div
@@ -1327,31 +1314,14 @@ export function TicketsPageContent({ discordGuildId }: Props) {
         </section>
       </div>
 
-      {isDirty ? (
-        <div className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-4">
-          <div
-            key={saveBarShakeTick}
-            className={`pointer-events-auto ui-card flex items-center gap-2 px-3 py-2 shadow-xl ${saveBarShakeTick > 0 ? "animate-vex-shake" : ""}`}
-          >
-            <button
-              type="button"
-              disabled={saveState === "saving"}
-              onClick={() => void onSaveSettings()}
-              className="ui-btn-primary"
-            >
-              {saveState === "saving" ? "Enregistrement…" : "Enregistrer"}
-            </button>
-            <button
-              type="button"
-              disabled={saveState === "saving"}
-              onClick={handleDiscardChanges}
-              className="ui-btn-secondary"
-            >
-              Ne pas enregistrer
-            </button>
-          </div>
-        </div>
-      ) : null}
+      <SaveChangesBar
+        visible={isDirty}
+        saving={saveState === "saving"}
+        shakeKey={saveBarShakeTick}
+        zIndexClass="z-50"
+        onSave={() => void onSaveSettings()}
+        onDiscard={handleDiscardChanges}
+      />
 
       <TicketEmbedPreviewModal
         preview={embedPreview}

@@ -125,17 +125,8 @@ export async function upsertJoinVerificationSettings(
     buttonLabel = normalizeButtonLabel(raw.buttonLabel);
   }
 
-  if (moduleEnabled) {
-    if (!channelId || !unverifiedRoleId) {
-      throw new AppError(
-        400,
-        "Pour activer la vérification : choisis un salon et le rôle « pas encore vérifié ».",
-        "JOIN_VERIFY_INCOMPLETE",
-      );
-    }
-    if (unverifiedRoleId === discordGuildId) {
-      throw new AppError(400, "Le rôle @everyone ne peut pas servir de rôle non vérifié.", "INVALID_ROLE");
-    }
+  if (unverifiedRoleId !== null && unverifiedRoleId === discordGuildId) {
+    throw new AppError(400, "Le rôle @everyone ne peut pas servir de rôle non vérifié.", "INVALID_ROLE");
   }
 
   await prisma.joinVerificationSettings.upsert({

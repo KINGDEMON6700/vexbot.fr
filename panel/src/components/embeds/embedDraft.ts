@@ -208,9 +208,24 @@ function cloneRows(rows: ComponentRowTemplate[]): ComponentRowTemplate[] {
   }));
 }
 
+/** Une ligne = un seul bouton (évite plusieurs liens sur la même ligne). */
+export function normalizeComponentRows(rows: ComponentRowTemplate[]): ComponentRowTemplate[] {
+  const flat: ComponentRowTemplate[] = [];
+  for (const row of rows) {
+    if (row.components.length === 0) {
+      flat.push({ components: [] });
+      continue;
+    }
+    for (const c of row.components) {
+      flat.push({ components: [cloneComponent(c)] });
+    }
+  }
+  return flat.slice(0, 5);
+}
+
 function cloneBlocks(blocks: ComponentBlockTemplate[]): ComponentBlockDraft[] {
   return blocks.map((b) => ({
-    rows: cloneRows(b.rows),
+    rows: normalizeComponentRows(cloneRows(b.rows)),
   }));
 }
 

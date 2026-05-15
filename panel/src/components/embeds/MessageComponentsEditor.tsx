@@ -3,7 +3,7 @@ import type {
   ComponentRowTemplate,
   ButtonStyleTemplate,
 } from "../../types/embedTemplate.js";
-import { defaultMessageComponent } from "./embedDraft.js";
+import { defaultMessageComponent, normalizeComponentRows } from "./embedDraft.js";
 
 const TYPE_LABELS: Record<MessageComponentTemplate["type"], string> = {
   button: "Bouton",
@@ -112,7 +112,7 @@ function ComponentFields({
 }
 
 export function MessageComponentsEditor({ rows, onChange }: Props) {
-  const setRows = (next: ComponentRowTemplate[]) => onChange(next);
+  const setRows = (next: ComponentRowTemplate[]) => onChange(normalizeComponentRows(next));
 
   const rowTitle = (row: ComponentRowTemplate, index: number): string => {
     const first = row.components[0];
@@ -175,8 +175,8 @@ export function MessageComponentsEditor({ rows, onChange }: Props) {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm leading-relaxed text-zinc-500">
-        Jusqu’à <span className="text-zinc-400">5 lignes</span> de boutons. Sur chaque ligne : jusqu’à{" "}
-        <span className="text-zinc-400">5 boutons</span> (classiques ou liens), comme dans Discord.
+        Jusqu’à <span className="text-zinc-400">5 lignes</span> — une ligne ={" "}
+        <span className="text-zinc-400">un seul bouton lien</span>.
       </p>
 
       {rows.map((row, ri) => (
@@ -235,18 +235,14 @@ export function MessageComponentsEditor({ rows, onChange }: Props) {
               </div>
             </div>
 
-            {row.components.length > 0 ? (
-              <div className="mt-3 flex flex-col gap-3">
-                {row.components.map((comp, ci) => (
-                  <div key={`${ri}-${ci}-${comp.type}`} className="rounded-lg border border-vex-border/60 bg-vex-surface/50 p-3">
-                    {comp.type === "link_button" ? (
-                      <ComponentFields
-                        c={comp}
-                        onPatch={(next) => setRows(updateComponent(rows, ri, ci, next))}
-                      />
-                    ) : null}
-                  </div>
-                ))}
+            {row.components[0] ? (
+              <div className="mt-3 rounded-lg border border-vex-border/60 bg-vex-surface/50 p-3">
+                {row.components[0] && row.components[0].type === "link_button" ? (
+                  <ComponentFields
+                    c={row.components[0]}
+                    onPatch={(next) => setRows(updateComponent(rows, ri, 0, next))}
+                  />
+                ) : null}
               </div>
             ) : null}
           </div>

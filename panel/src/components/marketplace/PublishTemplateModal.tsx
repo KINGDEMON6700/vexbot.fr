@@ -150,7 +150,7 @@ export function PublishTemplateModal({
     }
     if (kind === "embed") {
       if (!isEdit && !embedId.trim()) {
-        onToast("Choisis un modèle d’embed à publier.");
+        onToast("Choisissez un modèle d’embed à publier.");
         return;
       }
       let messages = publicationToEdit?.messages as EmbedTemplate["messages"] | undefined;
@@ -165,7 +165,7 @@ export function PublishTemplateModal({
         messages = publicationToEdit?.messages as EmbedTemplate["messages"] | undefined;
       }
       if (!messages?.length) {
-        onToast("Choisis un modèle d’embed (ou change de modèle) : aucun contenu à enregistrer.");
+        onToast("Choisissez un modèle d’embed (ou change de modèle) : aucun contenu à enregistrer.");
         return;
       }
       setSubmitting(true);
@@ -225,7 +225,7 @@ export function PublishTemplateModal({
         }
         return;
       }
-      onToast("Choisis un template sauvegardé dans l’onglet Templates.");
+      onToast("Choisissez un template sauvegardé dans l’onglet Templates.");
       return;
     }
 
@@ -299,12 +299,12 @@ export function PublishTemplateModal({
       >
         <div className="border-b border-vex-border pb-4">
           <h2 id="marketplace-publish-title" className="text-lg font-semibold text-zinc-100">
-            {isEdit ? "Gérer ta publication" : "Publier un template"}
+            {isEdit ? "Gérer votre publication" : "Publier un template"}
           </h2>
           <p className="mt-1 text-sm text-zinc-500">
             {isEdit
               ? "Modifie les infos ci-dessous ou supprime la publication."
-              : "Renseigne les champs pour ajouter ta template à la liste du marketplace."}
+              : "Renseignez les champs pour ajouter votre template à la liste du marketplace."}
           </p>
         </div>
 

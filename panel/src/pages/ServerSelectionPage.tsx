@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { PanelPageHeader } from "../components/ui/PanelPageHeader.js";
 import { useGuild } from "../contexts/GuildContext.js";
 import { guildIconUrl } from "../lib/guildIconUrl.js";
 
@@ -39,8 +40,8 @@ export function ServerSelectionPage() {
 
   if (loadStatus === "idle" || loadStatus === "loading") {
     return (
-      <section className="space-y-3">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-100">Sélection du serveur</h1>
+      <section className="flex flex-col gap-6">
+        <PanelPageHeader title="Sélection du serveur" description="Chargement de votre liste de serveurs…" />
         <div className="ui-card-muted px-8 py-12 text-center text-sm text-zinc-500">Chargement…</div>
       </section>
     );
@@ -48,10 +49,10 @@ export function ServerSelectionPage() {
 
   if (loadStatus === "error") {
     return (
-      <section className="space-y-3">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-100">Sélection du serveur</h1>
+      <section className="flex flex-col gap-6">
+        <PanelPageHeader title="Sélection du serveur" description="Choisissez un serveur pour continuer dans le panel." />
         <div className="ui-card-muted px-8 py-12 text-center text-sm text-amber-200/90">
-          Impossible de charger tes serveurs. Réessaie dans un instant.
+          Impossible de charger vos serveurs. Réessayez dans un instant.
         </div>
       </section>
     );
@@ -59,8 +60,8 @@ export function ServerSelectionPage() {
 
   if (eligibleGuilds.length === 0) {
     return (
-      <section className="space-y-3">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-100">Sélection du serveur</h1>
+      <section className="flex flex-col gap-6">
+        <PanelPageHeader title="Sélection du serveur" description="Choisissez un serveur pour continuer dans le panel." />
         <div className="ui-empty-state">
           Aucun serveur disponible. Il faut être propriétaire ou administrateur d’un serveur Discord.
         </div>
@@ -69,13 +70,8 @@ export function ServerSelectionPage() {
   }
 
   return (
-    <section className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-100">Sélection du serveur</h1>
-        <p className="mt-1 text-sm text-zinc-400">
-          Choisis un serveur pour continuer dans le panel.
-        </p>
-      </header>
+    <section className="flex flex-col gap-6">
+      <PanelPageHeader title="Sélection du serveur" description="Choisissez un serveur pour continuer dans le panel." />
 
       <div className="grid gap-3">
         {eligibleGuilds.map((guild) => {
@@ -96,17 +92,21 @@ export function ServerSelectionPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2 sm:justify-end">
                   {ready ? (
                     <button
                       type="button"
-                      className="ui-btn-primary bg-emerald-600 hover:bg-emerald-500"
+                      className="group flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/[0.08] bg-zinc-900/40 text-indigo-200/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm transition duration-200 hover:border-indigo-500/35 hover:bg-indigo-500/15 hover:text-indigo-50 hover:shadow-[0_0_28px_rgba(99,102,241,0.22)] active:scale-[0.96] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-vex-bg"
+                      aria-label={`Ouvrir « ${guild.name} » dans le panel`}
                       onClick={() => {
                         setSelectedGuildId(guild.id);
                         void navigate(`/?guild=${encodeURIComponent(guild.id)}`, { replace: true });
                       }}
                     >
-                      Sélectionner ce serveur
+                      <span
+                        className="fa-solid fa-chevron-right translate-x-[1px] text-[15px] font-semibold transition duration-200 group-hover:translate-x-1 group-hover:text-white"
+                        aria-hidden
+                      />
                     </button>
                   ) : null}
 

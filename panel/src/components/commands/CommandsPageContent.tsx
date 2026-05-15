@@ -11,6 +11,9 @@ import { fetchGuildMentionMeta, fetchEmbedTemplates } from "../../lib/embedsApi.
 import type { CustomCommand, CustomCommandInput, NativeCommandSetting } from "../../types/commands.js";
 import type { GuildMentionMeta } from "../../types/guildMeta.js";
 import type { EmbedTemplate } from "../../types/embedTemplate.js";
+import { CommandsPageSkeleton } from "../ui/PageSkeleton.js";
+import { createPageCache } from "../../lib/pageDataCache.js";
+import { SaveChangesBar, SAVE_BAR_PAGE_PADDING } from "../ui/SaveChangesBar.js";
 import { NativeCommandCard } from "./NativeCommandCard.js";
 import { CustomCommandEditor } from "./CustomCommandEditor.js";
 import { CreateCustomCommandModal } from "./CreateCustomCommandModal.js";
@@ -19,20 +22,36 @@ type Props = {
   discordGuildId: string;
 };
 
-export function CommandsPageContent({ discordGuildId }: Props) {
-  const [natives, setNatives] = useState<NativeCommandSetting[]>([]);
-  const [customs, setCustoms] = useState<CustomCommand[]>([]);
-  const [meta, setMeta] = useState<GuildMentionMeta | null>(null);
-  const [embedTemplates, setEmbedTemplates] = useState<EmbedTemplate[]>([]);
+type CommandsBundle = {
+  natives: NativeCommandSetting[];
+  customs: CustomCommand[];
+  meta: GuildMentionMeta | null;
+  embedTemplates: EmbedTemplate[];
+};
 
-  const [loading, setLoading] = useState(true);
+const commandsCache = createPageCache<CommandsBundle>();
+
+export function CommandsPageContent({ discordGuildId }: Props) {
+  const [natives, setNatives] = useState<NativeCommandSetting[]>(() => commandsCache.get(discordGuildId)?.natives ?? []);
+  const [customs, setCustoms] = useState<CustomCommand[]>(() => commandsCache.get(discordGuildId)?.customs ?? []);
+  const [meta, setMeta] = useState<GuildMentionMeta | null>(() => commandsCache.get(discordGuildId)?.meta ?? null);
+  const [embedTemplates, setEmbedTemplates] = useState<EmbedTemplate[]>(() => commandsCache.get(discordGuildId)?.embedTemplates ?? []);
+
+  const [loading, setLoading] = useState(() => !commandsCache.get(discordGuildId));
   const [error, setError] = useState<string | null>(null);
   const [selectedCustomId, setSelectedCustomId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [createBusy, setCreateBusy] = useState(false);
+  const [nativePermDrafts, setNativePermDrafts] = useState<
+    Record<string, { allowedRoleIds: string[]; allowedChannelIds: string[] }>
+  >({});
+  const [nativePermSaving, setNativePermSaving] = useState(false);
+  const [nativeDiscardSignal, setNativeDiscardSignal] = useState(0);
+
+  const nativePermissionsDirty = Object.keys(nativePermDrafts).length > 0;
 
   const load = useCallback(async () => {
-    setLoading(true);
+    if (!commandsCache.get(discordGuildId)) setLoading(true);
     setError(null);
     try {
       const [n, c, m, e] = await Promise.all([
@@ -45,6 +64,7 @@ export function CommandsPageContent({ discordGuildId }: Props) {
       setCustoms(c);
       setMeta(m);
       setEmbedTemplates(e);
+      commandsCache.set(discordGuildId, { natives: n, customs: c, meta: m, embedTemplates: e });
       setSelectedCustomId((cur) => {
         if (cur && c.some((x) => x.id === cur)) return cur;
         return c[0]?.id ?? null;
@@ -108,8 +128,47 @@ export function CommandsPageContent({ discordGuildId }: Props) {
 
   const selectedCustom = customs.find((c) => c.id === selectedCustomId) ?? null;
 
+  const handleNativePermissionsDirty = useCallback(
+    (
+      commandName: string,
+      dirty: boolean,
+      payload: { allowedRoleIds: string[]; allowedChannelIds: string[] } | null,
+    ) => {
+      setNativePermDrafts((prev) => {
+        const next = { ...prev };
+        if (!dirty || !payload) delete next[commandName];
+        else next[commandName] = payload;
+        return next;
+      });
+    },
+    [],
+  );
+
+  async function saveAllNativePermissions() {
+    const entries = Object.entries(nativePermDrafts);
+    if (entries.length === 0) return;
+    setNativePermSaving(true);
+    try {
+      for (const [commandName, body] of entries) {
+        await handleNativeUpdate(commandName, body);
+      }
+      setNativePermDrafts({});
+    } finally {
+      setNativePermSaving(false);
+    }
+  }
+
+  if (loading && natives.length === 0 && customs.length === 0) {
+    return <CommandsPageSkeleton />;
+  }
+
+  function discardNativePermissions() {
+    setNativePermDrafts({});
+    setNativeDiscardSignal((n) => n + 1);
+  }
+
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${nativePermissionsDirty ? SAVE_BAR_PAGE_PADDING : ""}`}>
       {error ? (
         <div className="ui-card p-4 text-sm text-amber-200">{error}</div>
       ) : null}
@@ -119,26 +178,26 @@ export function CommandsPageContent({ discordGuildId }: Props) {
         <header className="mb-3">
           <h2 className="text-base font-semibold text-zinc-100">Commandes natives</h2>
           <p className="mt-1 text-xs text-zinc-500">
-            Active ou désactive les commandes du bot sur ce serveur. Tu peux aussi restreindre qui peut les utiliser
+            Active ou désactive les commandes du bot sur ce serveur. Vous pouvez aussi restreindre qui peut les utiliser
             et dans quels salons.
           </p>
         </header>
 
-        {loading && natives.length === 0 ? (
-          <p className="py-6 text-center text-sm text-zinc-500">Chargement…</p>
-        ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {natives.map((cmd) => (
               <div key={cmd.commandName} className="min-w-0">
                 <NativeCommandCard
                   command={cmd}
                   meta={meta}
+                  discardSignal={nativeDiscardSignal}
+                  onPermissionsDirty={(dirty, payload) =>
+                    handleNativePermissionsDirty(cmd.commandName, dirty, payload)
+                  }
                   onChange={(body) => handleNativeUpdate(cmd.commandName, body)}
                 />
               </div>
             ))}
           </div>
-        )}
       </section>
 
       {/* Section B : commandes personnalisées */}
@@ -164,11 +223,9 @@ export function CommandsPageContent({ discordGuildId }: Props) {
           </button>
         </header>
 
-        {loading && customs.length === 0 ? (
-          <p className="py-6 text-center text-sm text-zinc-500">Chargement…</p>
-        ) : customs.length === 0 ? (
+        {customs.length === 0 ? (
           <div className="ui-card p-6 text-center">
-            <p className="text-sm text-zinc-400">Tu n'as encore aucune commande personnalisée.</p>
+            <p className="text-sm text-zinc-400">Vous n'avez encore aucune commande personnalisée.</p>
             <button
               type="button"
               className="ui-btn-primary mt-3 text-sm"
@@ -242,6 +299,14 @@ export function CommandsPageContent({ discordGuildId }: Props) {
           onSubmit={handleCreate}
         />
       ) : null}
+
+      <SaveChangesBar
+        visible={nativePermissionsDirty}
+        saving={nativePermSaving}
+        onSave={() => void saveAllNativePermissions()}
+        onDiscard={discardNativePermissions}
+        zIndexClass="z-50"
+      />
     </div>
   );
 }

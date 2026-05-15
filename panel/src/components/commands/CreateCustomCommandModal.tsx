@@ -43,7 +43,7 @@ export function CreateCustomCommandModal({ busy, onCancel, onSubmit }: Props) {
       >
         <h3 className="text-base font-semibold text-zinc-100">Nouvelle commande personnalisée</h3>
         <p className="mt-1 text-xs text-zinc-500">
-          On commence par le nom et la description. Tu pourras configurer la réponse juste après.
+          On commence par le nom et la description. Vous pourras configurer la réponse juste après.
         </p>
 
         {error ? (

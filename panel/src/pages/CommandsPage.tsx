@@ -10,7 +10,11 @@ function CommandsInner() {
 
 export function CommandsPage() {
   return (
-    <AuthenticatedSection title="Commandes" wrapContent={false}>
+    <AuthenticatedSection
+      title="Commandes"
+      description="Paramétrez les commandes natives du bot (tickets, embeds…) et créez vos propres commandes slash : activation, salons et rôles autorisés pour chacune."
+      wrapContent={false}
+    >
       <CommandsInner />
     </AuthenticatedSection>
   );

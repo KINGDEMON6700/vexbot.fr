@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { SaveChangesBar } from "../ui/SaveChangesBar.js";
 import { patchBotMember } from "../../lib/overviewApi.js";
 import type { OverviewResponse } from "../../types/overview.js";
 
@@ -81,11 +82,11 @@ export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
     e.target.value = "";
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setMessage("Choisis une image (PNG, JPEG, GIF ou WebP).");
+      setMessage("Choisissez une image (PNG, JPEG, GIF ou WebP).");
       return;
     }
     if (file.size > MAX_BYTES) {
-      setMessage("L’image fait plus de 8 Mo. Choisis un fichier plus léger.");
+      setMessage("L’image fait plus de 8 Mo. Choisissez un fichier plus léger.");
       return;
     }
     try {
@@ -103,11 +104,11 @@ export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
     e.target.value = "";
     if (!file) return;
     if (!file.type.startsWith("image/")) {
-      setMessage("Choisis une image (PNG, JPEG, GIF ou WebP).");
+      setMessage("Choisissez une image (PNG, JPEG, GIF ou WebP).");
       return;
     }
     if (file.size > MAX_BYTES) {
-      setMessage("L’image fait plus de 8 Mo. Choisis un fichier plus léger.");
+      setMessage("L’image fait plus de 8 Mo. Choisissez un fichier plus léger.");
       return;
     }
     try {
@@ -119,6 +120,33 @@ export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
       setMessage("Impossible de lire ce fichier.");
     }
   };
+
+  const isDirty = useMemo(() => {
+    const nickResolved = nicknameForApi(nickDraft, bot.accountUsername);
+    const nickChanged = nickResolved !== (bot.nickname ?? null);
+    const avatarChanged = pendingAvatar !== null || (removeAvatar && Boolean(bot.guildAvatarUrl));
+    const bannerChanged = pendingBanner !== null || (removeBanner && Boolean(bot.guildBannerUrl));
+    return nickChanged || avatarChanged || bannerChanged;
+  }, [
+    nickDraft,
+    bot.nickname,
+    bot.accountUsername,
+    bot.guildAvatarUrl,
+    bot.guildBannerUrl,
+    pendingAvatar,
+    pendingBanner,
+    removeAvatar,
+    removeBanner,
+  ]);
+
+  function handleDiscard() {
+    setNickDraft(effectiveNicknameDisplay(bot));
+    setPendingAvatar(null);
+    setPendingBanner(null);
+    setRemoveAvatar(false);
+    setRemoveBanner(false);
+    setMessage(null);
+  }
 
   const handleSave = async () => {
     setSaving(true);
@@ -171,8 +199,8 @@ export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
   return (
     <div className="mt-4 flex flex-col gap-5">
       <p className="text-sm leading-relaxed text-zinc-400">
-        Tout ce qui suit ne s’applique qu’à <span className="text-zinc-300">ce serveur</span> : photo,
-        bannière et nom affiché dans la liste des membres.
+        Photo, bannière et nom affichés sur <span className="text-zinc-300">ce serveur</span> uniquement — comme le
+        profil du bot sur Discord.
       </p>
 
       <div>
@@ -196,7 +224,6 @@ export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
                 src={previewAvatar}
                 alt=""
                 className="h-full w-full object-cover"
-                loading="lazy"
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-lg font-semibold text-zinc-600">
@@ -242,7 +269,6 @@ export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
                 src={previewBanner}
                 alt=""
                 className="h-full w-full object-cover"
-                loading="lazy"
               />
             ) : (
               <div className="flex h-full items-center justify-center text-xs text-zinc-600">
@@ -284,17 +310,16 @@ export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          disabled={saving}
-          onClick={() => void handleSave()}
-          className="ui-btn-primary"
-        >
-          {saving ? "Enregistrement…" : "Enregistrer les changements"}
-        </button>
-        {message ? <span className="text-sm text-zinc-400">{message}</span> : null}
-      </div>
+      {message ? <p className="text-sm text-zinc-400">{message}</p> : null}
+
+      <SaveChangesBar
+        visible={isDirty}
+        saving={saving}
+        onSave={() => void handleSave()}
+        onDiscard={handleDiscard}
+        zIndexClass="z-50"
+      />
     </div>
   );
 }
+

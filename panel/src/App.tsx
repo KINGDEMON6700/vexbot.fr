@@ -8,7 +8,6 @@ import { MarketplacePage } from "./pages/MarketplacePage.js";
 import { OverviewPage } from "./pages/OverviewPage.js";
 import { ServerSelectionPage } from "./pages/ServerSelectionPage.js";
 import { ServerTemplatesPage } from "./pages/ServerTemplatesPage.js";
-import { PatchnotesPage } from "./pages/PatchnotesPage.js";
 import { TicketsPage } from "./pages/TicketsPage.js";
 
 export default function App() {
@@ -24,7 +23,6 @@ export default function App() {
         <Route path="commands" element={<CommandsPage />} />
         <Route path="modules" element={<ModulesPage />} />
         <Route path="select-server" element={<ServerSelectionPage />} />
-        <Route path="patchnotes" element={<PatchnotesPage />} />
       </Route>
     </Routes>
   );

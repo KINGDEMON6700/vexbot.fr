@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { UiToggle } from "../ui/UiToggle.js";
 import { DISCORD_TICKET_PANEL_BUTTON_SWATCHES } from "../../lib/discordTicketPanelButtonSwatches.js";
 import { normalizeSelectConfigClient } from "../../lib/migrateTicketPanelSelect.js";
 import type {
@@ -13,7 +14,7 @@ function defaultOption(): TicketPanelOpenOption {
     description: "",
     requireModal: true,
     modalTitle: "Nouveau ticket",
-    modalInputLabel: "Décris ta demande",
+    modalInputLabel: "Décris votre demande",
     modalInputPlaceholder: "",
     modalInputStyle: "paragraph",
   };
@@ -41,7 +42,7 @@ export function defaultTicketPanelOpen(): Extract<TicketPanelOpenConfig, { style
     discordButtonStyle: "primary",
     requireModal: false,
     modalTitle: "Ouvrir un ticket",
-    modalInputLabel: "Explique ta demande",
+    modalInputLabel: "Explique votre demande",
     modalInputPlaceholder: "",
     modalInputStyle: "paragraph",
   };
@@ -80,7 +81,7 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
         discordButtonStyle: "primary",
         requireModal: rm,
         modalTitle: rm ? (first?.modalTitle ?? "Ouvrir un ticket") : null,
-        modalInputLabel: rm ? (first?.modalInputLabel ?? "Ta demande") : null,
+        modalInputLabel: rm ? (first?.modalInputLabel ?? "Votre demande") : null,
         modalInputPlaceholder: rm ? (first?.modalInputPlaceholder ?? "") : null,
         modalInputStyle: rm ? (first?.modalInputStyle ?? "paragraph") : "paragraph",
       });
@@ -91,7 +92,7 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
     onChange({
       v: 1,
       style: "select",
-      selectPlaceholder: "Choisis un type de demande",
+      selectPlaceholder: "Choisissez un type de demande",
       options: rm
         ? [
             {
@@ -99,7 +100,7 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
               description: "",
               requireModal: true,
               modalTitle: valueNorm.modalTitle ?? "Nouveau ticket",
-              modalInputLabel: valueNorm.modalInputLabel ?? "Décris ta demande",
+              modalInputLabel: valueNorm.modalInputLabel ?? "Décris votre demande",
               modalInputPlaceholder: valueNorm.modalInputPlaceholder ?? "",
               modalInputStyle: valueNorm.modalInputStyle ?? "paragraph",
             },
@@ -124,7 +125,7 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
         ...valueNorm,
         requireModal: true,
         modalTitle: valueNorm.modalTitle ?? "Ouvrir un ticket",
-        modalInputLabel: valueNorm.modalInputLabel ?? "Explique ta demande",
+        modalInputLabel: valueNorm.modalInputLabel ?? "Explique votre demande",
         modalInputPlaceholder: valueNorm.modalInputPlaceholder ?? "",
         modalInputStyle: valueNorm.modalInputStyle ?? "paragraph",
       });
@@ -203,21 +204,13 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
             </div>
             <span className="text-xs text-zinc-500">Ce sont les seules couleurs possibles sur Discord.</span>
           </div>
-          <label className="flex cursor-pointer items-start gap-2 rounded-md border border-vex-border/50 bg-vex-surface/30 px-3 py-2 text-sm sm:col-span-2">
-            <input
-              type="checkbox"
-              className="mt-0.5"
-              checked={valueNorm.requireModal}
-              onChange={(e) => setRequireModal(e.target.checked)}
-            />
-            <span>
-              <span className="font-medium text-zinc-200">Demander une saisie texte</span>
-              <span className="mt-0.5 block text-xs text-zinc-500">
-                Si coché, Discord ouvre une petite fenêtre pour que le membre détaille sa demande avant
-                l’ouverture du ticket. Si décoché, le ticket s’ouvre tout de suite.
-              </span>
-            </span>
-          </label>
+          <UiToggle
+            className="sm:col-span-2"
+            title="Demander une saisie texte"
+            hint="Si activé, Discord ouvre une fenêtre pour détailler la demande avant l’ouverture du ticket. Si désactivé, le ticket s’ouvre tout de suite."
+            active={valueNorm.requireModal}
+            onToggle={() => setRequireModal(!valueNorm.requireModal)}
+          />
           {valueNorm.requireModal ? (
             <>
               <label className="mt-4 flex flex-col gap-1.5 text-sm sm:col-span-2">
@@ -351,21 +344,13 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
                           onChange={(e) => updateSelectOption(i, { description: e.target.value || null })}
                         />
                       </label>
-                      <label className="flex cursor-pointer items-start gap-2 rounded-md border border-vex-border/50 bg-vex-bg/30 px-3 py-2 text-sm sm:col-span-2">
-                        <input
-                          type="checkbox"
-                          className="mt-0.5"
-                          checked={opt.requireModal}
-                          onChange={(e) => updateSelectOption(i, { requireModal: e.target.checked })}
-                        />
-                        <span>
-                          <span className="font-medium text-zinc-200">Demander une saisie texte</span>
-                          <span className="mt-0.5 block text-xs text-zinc-500">
-                            Si coché, une fenêtre demande le détail après le choix de cette option. Si décoché, le
-                            ticket s’ouvre tout de suite avec ce type.
-                          </span>
-                        </span>
-                      </label>
+                      <UiToggle
+                        className="sm:col-span-2"
+                        title="Demander une saisie texte"
+                        hint="Si activé, une fenêtre demande le détail après le choix de cette option. Si désactivé, le ticket s’ouvre tout de suite avec ce type."
+                        active={opt.requireModal}
+                        onToggle={() => updateSelectOption(i, { requireModal: !opt.requireModal })}
+                      />
                       {opt.requireModal ? (
                         <>
                           <label className="flex flex-col gap-1 text-sm sm:col-span-2">

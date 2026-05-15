@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   fetchEmbedTemplates,
   fetchGuildMentionMeta,
@@ -7,12 +7,17 @@ import {
 } from "../../lib/embedsApi.js";
 import type { EmbedTemplate } from "../../types/embedTemplate.js";
 import type { GuildMentionMeta } from "../../types/guildMeta.js";
+import { fetchGuildOverview } from "../../lib/overviewApi.js";
 import { fetchJoinAutoRoleSettings, patchJoinAutoRoleSettings } from "../../lib/modulesJoinAutoRolesApi.js";
 import { fetchWelcomeGoodbyeSettings, patchWelcomeGoodbyeSettings } from "../../lib/modulesWelcomeApi.js";
 import type { JoinAutoRoleSettings } from "../../types/joinAutoRoles.js";
+import type { OverviewResponse } from "../../types/overview.js";
 import type { WelcomeGoodbyeSettings } from "../../types/welcomeGoodbye.js";
 import { MultiPicker, type MultiPickerOption } from "../commands/MultiPicker.js";
+import { ModulesPageSkeleton } from "../ui/PageSkeleton.js";
+import { SaveChangesBar, SAVE_BAR_PAGE_PADDING } from "../ui/SaveChangesBar.js";
 import { ModuleCard } from "./ModuleCard.js";
+import { BotAppearanceModuleCard } from "./BotAppearanceModuleCard.js";
 import { JoinVerificationModuleCard } from "./JoinVerificationModuleCard.js";
 
 type Props = {
@@ -56,8 +61,8 @@ type WelcomeGoodbyeDraft = {
   goodbyeEmbedId: string;
 };
 
-const PLACEHOLDER_HELP =
-  "{user} · {user.mention} · {user.name} · {user.id} · {server} ou {guild} · {memberCount} (aussi dans les modèles d’embeds)";
+const PLACEHOLDER_VARS =
+  "{user} · {user.mention} · {user.name} · {user.id} · {server} ou {guild} · {memberCount}";
 
 function SubModuleToggle({
   title,
@@ -113,6 +118,9 @@ export function ModulesPageContent({ discordGuildId }: Props) {
   const [flagsSaving, setFlagsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedOk, setSavedOk] = useState(false);
+  const [joinVerifyDirty, setJoinVerifyDirty] = useState(false);
+  const [joinVerifyDiscardSignal, setJoinVerifyDiscardSignal] = useState(0);
+  const joinVerifySaveRef = useRef<(() => Promise<void>) | null>(null);
 
   const [moduleEnabled, setModuleEnabled] = useState(true);
   const [welcomeMessagesEnabled, setWelcomeMessagesEnabled] = useState(true);
@@ -138,6 +146,16 @@ export function ModulesPageContent({ discordGuildId }: Props) {
   const [joinRolesSaving, setJoinRolesSaving] = useState(false);
 
   const [savedDraftSnapshot, setSavedDraftSnapshot] = useState("");
+  const [guildOverview, setGuildOverview] = useState<OverviewResponse | null>(null);
+
+  const refreshGuildOverview = useCallback(async () => {
+    try {
+      const o = await fetchGuildOverview(discordGuildId);
+      setGuildOverview(o);
+    } catch {
+      setGuildOverview(null);
+    }
+  }, [discordGuildId]);
 
   const applySettingsToForm = useCallback((s: WelcomeGoodbyeSettings) => {
     setModuleEnabled(s.moduleEnabled);
@@ -167,18 +185,20 @@ export function ModulesPageContent({ discordGuildId }: Props) {
     setError(null);
     setSavedOk(false);
     try {
-      const [ch, tpl, s, join, meta] = await Promise.all([
+      const [ch, tpl, s, join, meta, ov] = await Promise.all([
         fetchGuildTextChannels(discordGuildId),
         fetchEmbedTemplates(discordGuildId).catch(() => [] as EmbedTemplate[]),
         fetchWelcomeGoodbyeSettings(discordGuildId),
         fetchJoinAutoRoleSettings(discordGuildId),
         fetchGuildMentionMeta(discordGuildId).catch(() => null),
+        fetchGuildOverview(discordGuildId).catch(() => null),
       ]);
       setChannels(ch);
       setEmbedTemplates(tpl);
       applySettingsToForm(s);
       applyJoinFromSettings(join);
       setMentionMeta(meta);
+      setGuildOverview(ov);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Chargement impossible.");
     } finally {
@@ -254,6 +274,7 @@ export function ModulesPageContent({ discordGuildId }: Props) {
   );
 
   const isDraftDirty = savedDraftSnapshot !== "" && currentDraftSnapshot !== savedDraftSnapshot;
+  const showSaveBar = isDraftDirty || joinVerifyDirty;
 
   const joinRolesDirty = useMemo(
     () => joinRoleSnapshot !== JSON.stringify(joinRoleIds),
@@ -284,6 +305,7 @@ export function ModulesPageContent({ discordGuildId }: Props) {
     } catch {
       void load();
     }
+    setJoinVerifyDiscardSignal((n) => n + 1);
   }
 
   async function handleSave() {
@@ -320,6 +342,9 @@ export function ModulesPageContent({ discordGuildId }: Props) {
         goodbyeEmbedId: useGoodbyeTemplate ? goodbyeEmbedId.trim() || null : null,
       });
       applySettingsToForm(next);
+      if (joinVerifyDirty && joinVerifySaveRef.current) {
+        await joinVerifySaveRef.current();
+      }
       setSavedOk(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Enregistrement impossible.");
@@ -345,13 +370,11 @@ export function ModulesPageContent({ discordGuildId }: Props) {
   }
 
   if (loading) {
-    return (
-      <div className="ui-card-muted px-5 py-10 text-center text-sm text-zinc-500">Chargement des réglages…</div>
-    );
+    return <ModulesPageSkeleton />;
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${showSaveBar ? SAVE_BAR_PAGE_PADDING : ""}`}>
       {error ? <div className="ui-card p-4 text-sm text-amber-200">{error}</div> : null}
       {savedOk ? (
         <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/40 px-4 py-2 text-sm text-emerald-100/95">
@@ -364,13 +387,13 @@ export function ModulesPageContent({ discordGuildId }: Props) {
           <ModuleCard
             icon="user-plus"
             title="Arrivées et départs"
-            description={`Messages quand un membre rejoint ou quitte le serveur. Variables : ${PLACEHOLDER_HELP}.`}
+            description="Messages quand un membre rejoint ou quitte le serveur."
             enabled={moduleEnabled}
             enabledBusy={flagsSaving}
             onToggleEnabled={() => void patchFlags({ moduleEnabled: !moduleEnabled })}
           >
             <p className="mb-4 text-xs text-zinc-500">
-              Choisis un salon texte, puis un <strong className="font-medium text-zinc-400">embed simple</strong> ici ou un{" "}
+              Choisissez un salon texte, puis un <strong className="font-medium text-zinc-400">embed simple</strong> ici ou un{" "}
               <strong className="font-medium text-zinc-400">modèle</strong> créé dans la page{" "}
               <strong className="font-medium text-zinc-400">Embeds</strong> (plusieurs messages, couleurs, boutons, etc.).
             </p>
@@ -458,9 +481,10 @@ export function ModulesPageContent({ discordGuildId }: Props) {
                             ))}
                           </select>
                         </label>
+                        <p className="mt-1.5 text-[11px] text-zinc-500">Variables : {PLACEHOLDER_VARS}</p>
                         {embedTemplates.length === 0 ? (
                           <p className="text-[11px] text-amber-200/90">
-                            Aucun modèle sur ce serveur. Crée-en un dans la page Embeds.
+                            Aucun modèle sur ce serveur. Créez-en un dans la page Embeds.
                           </p>
                         ) : null}
                       </div>
@@ -563,9 +587,10 @@ export function ModulesPageContent({ discordGuildId }: Props) {
                             ))}
                           </select>
                         </label>
+                        <p className="mt-1.5 text-[11px] text-zinc-500">Variables : {PLACEHOLDER_VARS}</p>
                         {embedTemplates.length === 0 ? (
                           <p className="text-[11px] text-amber-200/90">
-                            Aucun modèle sur ce serveur. Crée-en un dans la page Embeds.
+                            Aucun modèle sur ce serveur. Créez-en un dans la page Embeds.
                           </p>
                         ) : null}
                       </div>
@@ -589,6 +614,12 @@ export function ModulesPageContent({ discordGuildId }: Props) {
           </ModuleCard>
         </div>
 
+        <BotAppearanceModuleCard
+          discordGuildId={discordGuildId}
+          overview={guildOverview}
+          onRefresh={refreshGuildOverview}
+        />
+
         <div className="min-w-0 lg:col-span-2 xl:col-span-3">
           <ModuleCard
             icon="id-badge"
@@ -604,7 +635,7 @@ export function ModulesPageContent({ discordGuildId }: Props) {
               </p>
             ) : null}
             <p className="mb-3 text-xs text-zinc-500">
-              Choisis un ou plusieurs rôles ci-dessous, puis clique sur « Enregistrer la sélection ». Tu peux laisser le module activé sans rôle : dans ce cas, rien ne sera ajouté.
+              Choisissez un ou plusieurs rôles ci-dessous, puis cliquez sur « Enregistrer la sélection ». Vous pouvez laisser le module activé sans rôle : dans ce cas, rien ne sera ajouté.
             </p>
             <MultiPicker
               options={joinRolePickerOptions}
@@ -630,22 +661,22 @@ export function ModulesPageContent({ discordGuildId }: Props) {
         </div>
 
         <div className="min-w-0 lg:col-span-2 xl:col-span-3">
-          <JoinVerificationModuleCard discordGuildId={discordGuildId} />
+          <JoinVerificationModuleCard
+            discordGuildId={discordGuildId}
+            onFormDirtyChange={setJoinVerifyDirty}
+            formSaveRef={joinVerifySaveRef}
+            discardSignal={joinVerifyDiscardSignal}
+          />
         </div>
       </div>
 
-      {isDraftDirty ? (
-        <div className="pointer-events-none fixed inset-x-0 bottom-4 z-50 flex justify-center px-4">
-          <div className="pointer-events-auto ui-card flex items-center gap-2 px-3 py-2 shadow-xl">
-            <button type="button" className="ui-btn-primary" disabled={saving} onClick={() => void handleSave()}>
-              {saving ? "Enregistrement…" : "Enregistrer"}
-            </button>
-            <button type="button" className="ui-btn-secondary" disabled={saving} onClick={handleDiscardDraft}>
-              Ne pas enregistrer
-            </button>
-          </div>
-        </div>
-      ) : null}
+      <SaveChangesBar
+        visible={showSaveBar}
+        saving={saving}
+        onSave={() => void handleSave()}
+        onDiscard={handleDiscardDraft}
+        zIndexClass="z-50"
+      />
     </div>
   );
 }

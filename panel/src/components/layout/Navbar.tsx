@@ -26,7 +26,7 @@ const navClass = ({ isActive }: { isActive: boolean }) =>
   ].join(" ");
 
 export function Navbar() {
-  const { status, user, startDiscordLogin, logout } = useAuth();
+  const { status, user, logout } = useAuth();
   const qs = useGuildQuerySuffix();
 
   return (
@@ -53,17 +53,9 @@ export function Navbar() {
               <GuildSelector />
               <UserAccountMenu user={user} onLogout={logout} />
             </div>
-          ) : (
-            <div className="flex flex-wrap items-center gap-2">
-              {status === "ready" ? (
-                <button type="button" onClick={startDiscordLogin} className="ui-btn-primary py-1.5">
-                  Se connecter avec Discord
-                </button>
-              ) : (
-                <span className="text-sm text-zinc-500">Chargement…</span>
-              )}
-            </div>
-          )}
+          ) : status === "loading" ? (
+            <span className="text-sm text-zinc-500">Chargement…</span>
+          ) : null}
         </div>
       </div>
 

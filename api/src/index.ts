@@ -35,7 +35,8 @@ app.use(notFound);
 app.use(errorHandler(env));
 
 const port = env.PORT;
+const host = env.HOST;
 
-app.listen(port, () => {
-  console.log(`API Vex : http://localhost:${port}`);
+app.listen(port, host, () => {
+  console.log(`API Vex : http://${host === "0.0.0.0" ? "localhost" : host}:${port}`);
 });

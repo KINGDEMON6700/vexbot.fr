@@ -12,7 +12,7 @@ export function ModulesPage() {
   return (
     <AuthenticatedSection
       title="Modules"
-      description="Options du bot qui ne sont pas des commandes slash : messages automatiques, embeds d’accueil, etc."
+      description="Options du bot hors commandes slash : messages automatiques, arrivées/départs, apparence du bot sur ce serveur, etc."
       wrapContent={false}
     >
       <ModulesInner />

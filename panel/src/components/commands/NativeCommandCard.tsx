@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { NativeCommandSetting } from "../../types/commands.js";
 import type { GuildMentionMeta } from "../../types/guildMeta.js";
 import { MultiPicker, type MultiPickerOption } from "./MultiPicker.js";
@@ -7,9 +7,15 @@ type Props = {
   command: NativeCommandSetting;
   meta: GuildMentionMeta | null;
   onChange: (next: Partial<Pick<NativeCommandSetting, "enabled" | "allowedRoleIds" | "allowedChannelIds">>) => Promise<void>;
+  /** Réinitialise le brouillon des restrictions (barre « Ne pas enregistrer » globale). */
+  discardSignal?: number;
+  onPermissionsDirty?: (
+    dirty: boolean,
+    payload: { allowedRoleIds: string[]; allowedChannelIds: string[] } | null,
+  ) => void;
 };
 
-export function NativeCommandCard({ command, meta, onChange }: Props) {
+export function NativeCommandCard({ command, meta, onChange, discardSignal = 0, onPermissionsDirty }: Props) {
   const [busy, setBusy] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [draftRoles, setDraftRoles] = useState<string[]>(command.allowedRoleIds);
@@ -20,7 +26,20 @@ export function NativeCommandCard({ command, meta, onChange }: Props) {
     setDraftRoles(command.allowedRoleIds);
     setDraftChannels(command.allowedChannelIds);
     setDirty(false);
-  }, [command.allowedRoleIds, command.allowedChannelIds]);
+  }, [command.allowedRoleIds, command.allowedChannelIds, discardSignal]);
+
+  const onPermissionsDirtyRef = useRef(onPermissionsDirty);
+  onPermissionsDirtyRef.current = onPermissionsDirty;
+
+  useEffect(() => {
+    const notify = onPermissionsDirtyRef.current;
+    if (!notify) return;
+    if (!dirty) {
+      notify(false, null);
+      return;
+    }
+    notify(true, { allowedRoleIds: draftRoles, allowedChannelIds: draftChannels });
+  }, [dirty, draftRoles, draftChannels]);
 
   const roleOptions: MultiPickerOption[] = (meta?.roles ?? []).map((r) => ({
     id: r.id,
@@ -166,16 +185,22 @@ export function NativeCommandCard({ command, meta, onChange }: Props) {
                   disabled={busy}
                 />
               </div>
-              <div className="md:col-span-2 flex justify-end">
-                <button
-                  type="button"
-                  className="ui-btn-primary text-xs"
-                  onClick={() => void handleSavePermissions()}
-                  disabled={!dirty || busy}
-                >
-                  {busy ? "Enregistrement…" : "Enregistrer les restrictions"}
-                </button>
-              </div>
+              {onPermissionsDirty ? (
+                <p className="md:col-span-2 text-[11px] text-zinc-500">
+                  Utilise la barre « Enregistrer » en bas de la page pour sauvegarder les restrictions.
+                </p>
+              ) : (
+                <div className="md:col-span-2 flex justify-end">
+                  <button
+                    type="button"
+                    className="ui-btn-primary text-xs"
+                    onClick={() => void handleSavePermissions()}
+                    disabled={!dirty || busy}
+                  >
+                    {busy ? "Enregistrement…" : "Enregistrer les restrictions"}
+                  </button>
+                </div>
+              )}
             </div>
           ) : null}
         </div>

@@ -3,6 +3,11 @@ import { z } from "zod";
 const schema = z.object({
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
   PORT: z.coerce.number().default(3101),
+  /**
+   * Adresse d’écoute HTTP. Par défaut : uniquement cette machine (Apache en proxy sur 127.0.0.1).
+   * Mettez `0.0.0.0` dans `.env` pour accepter les connexions depuis le réseau (déconseillé en production).
+   */
+  HOST: z.string().min(1).default("127.0.0.1"),
   DATABASE_URL: z.string().min(1),
   SESSION_SECRET: z.string().min(16, "SESSION_SECRET doit faire au moins 16 caractères"),
   DISCORD_CLIENT_ID: z.string().min(1),

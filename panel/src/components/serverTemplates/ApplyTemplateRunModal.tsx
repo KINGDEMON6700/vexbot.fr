@@ -149,7 +149,7 @@ export function ApplyTemplateRunModal({
               <p className="flex items-start gap-2">
                 <span className="mt-0.5 fa-solid fa-triangle-exclamation" aria-hidden />
                 <span>
-                  <strong>Cette action va restructurer ton serveur.</strong> Les salons supprimés et
+                  <strong>Cette action va restructurer votre serveur.</strong> Les salons supprimés et
                   leur historique de messages seront perdus définitivement.{" "}
                   <strong>Cette action est irréversible.</strong>
                 </span>

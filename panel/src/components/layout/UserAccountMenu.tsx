@@ -78,15 +78,6 @@ export function UserAccountMenu({ user, onLogout }: Props) {
           <div className="flex flex-col p-1">
             <Link
               role="menuitem"
-              to={`/patchnotes${qs}`}
-              className="rounded-lg px-3 py-2 text-sm text-zinc-300 transition hover:bg-vex-bg/70 hover:text-zinc-100"
-              onClick={() => setOpen(false)}
-            >
-              <span className="fa-solid fa-scroll mr-2 w-4 text-center text-zinc-500" aria-hidden />
-              Patchnotes
-            </Link>
-            <Link
-              role="menuitem"
               to={`/select-server${qs}`}
               className="rounded-lg px-3 py-2 text-sm text-zinc-300 transition hover:bg-vex-bg/70 hover:text-zinc-100"
               onClick={() => setOpen(false)}
