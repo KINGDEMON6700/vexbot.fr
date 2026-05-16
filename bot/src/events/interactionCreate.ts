@@ -1,4 +1,4 @@
-import { Events, type Interaction } from "discord.js";
+import { Events, MessageFlags, type Interaction } from "discord.js";
 import type { VexClient } from "../client.js";
 import {
   handleTicketWelcomeMemberClose,
@@ -28,7 +28,12 @@ import {
 import { loadEnv } from "../config/env.js";
 import {
   handleJoinVerifyButton,
+  handleJoinVerifyCaptchaModal,
+  handleJoinVerifyOpenModal,
+  isBenignInteractionConsumeError,
   JOIN_VERIFY_BUTTON_CUSTOM_ID,
+  JOIN_VERIFY_MODAL_CUSTOM_ID,
+  JOIN_VERIFY_OPEN_MODAL_CUSTOM_ID,
 } from "../features/joinVerification.js";
 
 const MODAL_TICKET_PREFIX = "vex_tkm:";
@@ -38,6 +43,29 @@ export default {
   once: false,
   async execute(client: VexClient, ...args: unknown[]) {
     const interaction = args[0] as Interaction;
+
+    if (interaction.isModalSubmit() && interaction.customId === JOIN_VERIFY_MODAL_CUSTOM_ID) {
+      try {
+        await handleJoinVerifyCaptchaModal(interaction);
+      } catch (err) {
+        if (!isBenignInteractionConsumeError(err)) {
+          console.error("[interaction] Modal captcha vérification arrivée", err);
+        }
+        try {
+          if (interaction.deferred || interaction.replied) {
+            await interaction.editReply({ content: "Une erreur s’est produite." });
+          } else {
+            await interaction.reply({
+              content: "Une erreur s’est produite.",
+              flags: MessageFlags.Ephemeral,
+            });
+          }
+        } catch {
+          // ignore
+        }
+      }
+      return;
+    }
 
     if (interaction.isModalSubmit() && interaction.customId.startsWith(TICKET_WELCOME_ADD_MODAL_PREFIX)) {
       try {
@@ -187,16 +215,42 @@ export default {
       return;
     }
 
+    if (interaction.isButton() && interaction.customId === JOIN_VERIFY_OPEN_MODAL_CUSTOM_ID) {
+      try {
+        await handleJoinVerifyOpenModal(interaction);
+      } catch (err) {
+        if (!isBenignInteractionConsumeError(err)) {
+          console.error("[interaction] Bouton ouvrir modal vérification arrivée", err);
+        }
+        try {
+          if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({
+              content: "Impossible d’ouvrir la fenêtre de saisie. Réessaie ou contacte un modérateur.",
+              flags: MessageFlags.Ephemeral,
+            });
+          }
+        } catch {
+          // ignore
+        }
+      }
+      return;
+    }
+
     if (interaction.isButton() && interaction.customId === JOIN_VERIFY_BUTTON_CUSTOM_ID) {
       try {
         await handleJoinVerifyButton(interaction);
       } catch (err) {
-        console.error("[interaction] Bouton vérification arrivée", err);
+        if (!isBenignInteractionConsumeError(err)) {
+          console.error("[interaction] Bouton vérification arrivée", err);
+        }
         try {
           if (interaction.deferred || interaction.replied) {
             await interaction.editReply({ content: "Une erreur s’est produite." });
           } else {
-            await interaction.reply({ content: "Une erreur s’est produite.", ephemeral: true });
+            await interaction.reply({
+              content: "Une erreur s’est produite.",
+              flags: MessageFlags.Ephemeral,
+            });
           }
         } catch {
           // ignore

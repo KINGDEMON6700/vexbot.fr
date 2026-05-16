@@ -104,6 +104,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
   const [jsonImportPending, setJsonImportPending] = useState(false);
   const [saving, setSaving] = useState(false);
   const [sending, setSending] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
   const [message, setMessage] = useState<string | null>(null);
   const [sendChannels, setSendChannels] = useState<Array<{ id: string; name: string }>>([]);
   const [threadOptions, setThreadOptions] = useState<Array<{ id: string; name: string }>>([]);
@@ -162,6 +163,9 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
   useEffect(() => {
     isDirtyRef.current = isDirty;
   }, [isDirty]);
+  useEffect(() => {
+    if (isDirty && saveStatus === "saved") setSaveStatus("idle");
+  }, [isDirty, saveStatus]);
   const showSaveMenu = isDirty || selectedId === "new";
 
   const setNativeInputValue = (el: TextTarget, value: string) => {
@@ -624,6 +628,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
 
   const applyDraftSelection = (id: string | "new" | null, nextDraft: TemplateDraft) => {
     setMessage(null);
+    setSaveStatus("idle");
     setDeleteModal(null);
     setJsonImportPending(false);
     setSelectedId(id);
@@ -695,6 +700,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
     }
 
     setSaving(true);
+    setSaveStatus("idle");
     try {
       if (selectedId === "new" || selectedId === null) {
         const created = await createEmbedTemplate(discordGuildId, payload);
@@ -704,7 +710,8 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
         setDraft(nextDraft);
         setSavedSnapshot(JSON.stringify(nextDraft));
         setJsonImportPending(false);
-        setMessage("C’est enregistré.");
+        setMessage(null);
+        setSaveStatus("saved");
       } else {
         const updated = await updateEmbedTemplate(discordGuildId, selectedId, payload);
         const nextDraft = templateToDraft(updated);
@@ -718,7 +725,8 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
         setDraft(nextDraft);
         setSavedSnapshot(JSON.stringify(nextDraft));
         setJsonImportPending(false);
-        setMessage("C’est enregistré.");
+        setMessage(null);
+        setSaveStatus("saved");
       }
     } catch (e: unknown) {
       const err = e as Error & { status?: number; code?: string };
@@ -894,7 +902,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
 
   return (
     <div
-      className={`flex flex-col gap-6 ${showSaveMenu ? SAVE_BAR_PAGE_PADDING : ""}`}
+      className={`flex flex-col gap-6 ${showSaveMenu || saveStatus === "saved" ? SAVE_BAR_PAGE_PADDING : ""}`}
     >
       <div className="flex flex-col gap-4">
         <div className="min-w-0 rounded-xl border border-vex-border bg-vex-surface/70 p-4">
@@ -1030,12 +1038,6 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
             ) : null}
           </ModalShell>
 
-          {isDirty ? (
-            <p className="mt-3 text-xs text-amber-300">Modifications non enregistrées.</p>
-          ) : (
-            <p className="mt-3 text-xs text-zinc-500">Tout est enregistré.</p>
-          )}
-
           <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,400px)] lg:items-start">
             <div
               ref={editorRootRef}
@@ -1070,8 +1072,9 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
       ) : null}
 
       <SaveChangesBar
-        visible={showSaveMenu}
+        visible={showSaveMenu || saveStatus === "saved"}
         saving={saving}
+        status={saveStatus === "saved" && !showSaveMenu ? "saved" : "dirty"}
         onSave={() => void handleSave()}
         onDiscard={handleDiscardChanges}
       />

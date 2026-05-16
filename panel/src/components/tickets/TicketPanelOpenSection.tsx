@@ -59,11 +59,17 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
 
   /** `true` = section développée pour l’option d’index `i`. */
   const [optionExpanded, setOptionExpanded] = useState<boolean[]>([]);
+  const [buttonModalDetailsOpen, setButtonModalDetailsOpen] = useState(true);
+  const [optionModalExpanded, setOptionModalExpanded] = useState<boolean[]>([]);
 
   useEffect(() => {
     if (value.style !== "select") return;
     const n = value.options.length;
     setOptionExpanded((prev) => {
+      if (prev.length === n) return prev;
+      return Array.from({ length: n }, (_, i) => prev[i] ?? true);
+    });
+    setOptionModalExpanded((prev) => {
       if (prev.length === n) return prev;
       return Array.from({ length: n }, (_, i) => prev[i] ?? true);
     });
@@ -121,6 +127,7 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
         modalInputStyle: "paragraph",
       });
     } else {
+      setButtonModalDetailsOpen(true);
       onChange({
         ...valueNorm,
         requireModal: true,
@@ -202,16 +209,17 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
                 );
               })}
             </div>
-            <span className="text-xs text-zinc-500">Ce sont les seules couleurs possibles sur Discord.</span>
           </div>
           <UiToggle
             className="sm:col-span-2"
-            title="Demander une saisie texte"
+            title="Question/réponse avant ouverture"
             hint="Si activé, Discord ouvre une fenêtre pour détailler la demande avant l’ouverture du ticket. Si désactivé, le ticket s’ouvre tout de suite."
             active={valueNorm.requireModal}
+            detailsExpanded={buttonModalDetailsOpen}
+            onToggleDetails={() => setButtonModalDetailsOpen((v) => !v)}
             onToggle={() => setRequireModal(!valueNorm.requireModal)}
           />
-          {valueNorm.requireModal ? (
+          {valueNorm.requireModal && buttonModalDetailsOpen ? (
             <>
               <label className="mt-4 flex flex-col gap-1.5 text-sm sm:col-span-2">
                 <span className="text-zinc-400">Titre de la fenêtre Discord (45 caractères max.)</span>
@@ -346,12 +354,32 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
                       </label>
                       <UiToggle
                         className="sm:col-span-2"
-                        title="Demander une saisie texte"
+                        title="Question/réponse avant ouverture"
                         hint="Si activé, une fenêtre demande le détail après le choix de cette option. Si désactivé, le ticket s’ouvre tout de suite avec ce type."
                         active={opt.requireModal}
-                        onToggle={() => updateSelectOption(i, { requireModal: !opt.requireModal })}
+                        detailsExpanded={optionModalExpanded[i] !== false}
+                        onToggleDetails={() =>
+                          setOptionModalExpanded((prev) => {
+                            const next = [...prev];
+                            while (next.length <= i) next.push(true);
+                            next[i] = next[i] === false;
+                            return next;
+                          })
+                        }
+                        onToggle={() => {
+                          const nextRequireModal = !opt.requireModal;
+                          if (nextRequireModal) {
+                            setOptionModalExpanded((prev) => {
+                              const next = [...prev];
+                              while (next.length <= i) next.push(true);
+                              next[i] = true;
+                              return next;
+                            });
+                          }
+                          updateSelectOption(i, { requireModal: nextRequireModal });
+                        }}
                       />
-                      {opt.requireModal ? (
+                      {opt.requireModal && optionModalExpanded[i] !== false ? (
                         <>
                           <label className="flex flex-col gap-1 text-sm sm:col-span-2">
                             <span className="text-zinc-400">Titre de la fenêtre après le choix</span>

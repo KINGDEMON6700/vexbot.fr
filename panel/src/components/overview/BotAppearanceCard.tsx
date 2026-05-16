@@ -41,6 +41,7 @@ type Props = {
 export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
   const [nickDraft, setNickDraft] = useState(() => effectiveNicknameDisplay(bot));
   const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
   const [message, setMessage] = useState<string | null>(null);
 
   const [pendingAvatar, setPendingAvatar] = useState<string | null>(null);
@@ -139,17 +140,23 @@ export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
     removeBanner,
   ]);
 
+  useEffect(() => {
+    if (isDirty && saveStatus === "saved") setSaveStatus("idle");
+  }, [isDirty, saveStatus]);
+
   function handleDiscard() {
     setNickDraft(effectiveNicknameDisplay(bot));
     setPendingAvatar(null);
     setPendingBanner(null);
     setRemoveAvatar(false);
     setRemoveBanner(false);
+    setSaveStatus("idle");
     setMessage(null);
   }
 
   const handleSave = async () => {
     setSaving(true);
+    setSaveStatus("idle");
     setMessage(null);
     try {
       const patch: {
@@ -181,7 +188,8 @@ export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
       }
 
       await patchBotMember(discordGuildId, patch);
-      setMessage("C’est enregistré.");
+      setMessage(null);
+      setSaveStatus("saved");
       setPendingAvatar(null);
       setPendingBanner(null);
       setRemoveAvatar(false);
@@ -313,8 +321,9 @@ export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
       {message ? <p className="text-sm text-zinc-400">{message}</p> : null}
 
       <SaveChangesBar
-        visible={isDirty}
+        visible={isDirty || saveStatus === "saved"}
         saving={saving}
+        status={saveStatus === "saved" && !isDirty ? "saved" : "dirty"}
         onSave={() => void handleSave()}
         onDiscard={handleDiscard}
         zIndexClass="z-50"

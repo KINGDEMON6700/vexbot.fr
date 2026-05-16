@@ -181,8 +181,7 @@ export async function createCustomSlashCommand(
   }
   const input = parsed.data;
 
-  checkResponseConsistency(input.responseType, input.responseText ?? null, input.embedId ?? null);
-
+  // Brouillon : le panel crée nom + description puis l’éditeur remplit la réponse (`checkResponseConsistency` sur update).
   const guildId = await ensureGuildForDiscord(prisma, discordGuildId, guildNameHint);
 
   if (input.embedId) {

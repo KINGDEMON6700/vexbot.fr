@@ -276,6 +276,10 @@ export function ModulesPageContent({ discordGuildId }: Props) {
   const isDraftDirty = savedDraftSnapshot !== "" && currentDraftSnapshot !== savedDraftSnapshot;
   const showSaveBar = isDraftDirty || joinVerifyDirty;
 
+  useEffect(() => {
+    if (showSaveBar && savedOk) setSavedOk(false);
+  }, [showSaveBar, savedOk]);
+
   const joinRolesDirty = useMemo(
     () => joinRoleSnapshot !== JSON.stringify(joinRoleIds),
     [joinRoleSnapshot, joinRoleIds],
@@ -374,16 +378,11 @@ export function ModulesPageContent({ discordGuildId }: Props) {
   }
 
   return (
-    <div className={`space-y-6 ${showSaveBar ? SAVE_BAR_PAGE_PADDING : ""}`}>
+    <div className={`space-y-6 ${showSaveBar || savedOk ? SAVE_BAR_PAGE_PADDING : ""}`}>
       {error ? <div className="ui-card p-4 text-sm text-amber-200">{error}</div> : null}
-      {savedOk ? (
-        <div className="rounded-lg border border-emerald-500/30 bg-emerald-950/40 px-4 py-2 text-sm text-emerald-100/95">
-          Modifications enregistrées.
-        </div>
-      ) : null}
 
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="min-w-0 lg:col-span-2 xl:col-span-3">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6 lg:items-start">
+        <div className="min-w-0">
           <ModuleCard
             icon="user-plus"
             title="Arrivées et départs"
@@ -398,7 +397,7 @@ export function ModulesPageContent({ discordGuildId }: Props) {
               <strong className="font-medium text-zinc-400">Embeds</strong> (plusieurs messages, couleurs, boutons, etc.).
             </p>
 
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid grid-cols-1 gap-6">
               <div className="min-w-0 space-y-3 rounded-md border border-vex-border/40 bg-vex-bg/20 p-3">
                 <SubModuleToggle
                   title="Messages d’arrivée"
@@ -424,32 +423,36 @@ export function ModulesPageContent({ discordGuildId }: Props) {
                         ))}
                       </select>
                     </label>
-                    <fieldset className="space-y-2">
-                      <legend className="text-xs font-medium text-zinc-400">Format du message dans le salon</legend>
-                      <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-300">
-                        <input
-                          type="radio"
-                          name="welcomeFmt"
-                          checked={welcomeKind === "simple"}
-                          onChange={() => {
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-zinc-400">Format du message dans le salon</p>
+                      <div className="inline-flex rounded-full border border-vex-border bg-vex-bg/40 p-1 text-xs font-medium">
+                        <button
+                          type="button"
+                          className={[
+                            "rounded-full px-3 py-1.5 transition",
+                            welcomeKind === "simple" ? "bg-vex-accent text-white" : "text-zinc-400 hover:text-zinc-200",
+                          ].join(" ")}
+                          onClick={() => {
                             setWelcomeKind("simple");
                             setWelcomeEmbedId("");
                           }}
-                        />
-                        Embed simple (description + couleur, max. 4096 caractères)
-                      </label>
-                      <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-300">
-                        <input
-                          type="radio"
-                          name="welcomeFmt"
-                          checked={welcomeKind === "template"}
-                          onChange={() => {
+                        >
+                          Message simple
+                        </button>
+                        <button
+                          type="button"
+                          className={[
+                            "rounded-full px-3 py-1.5 transition",
+                            welcomeKind === "template" ? "bg-vex-accent text-white" : "text-zinc-400 hover:text-zinc-200",
+                          ].join(" ")}
+                          onClick={() => {
                             setWelcomeKind("template");
                           }}
-                        />
-                        Modèle d’embed (page Embeds)
-                      </label>
-                    </fieldset>
+                        >
+                          Modèle du message
+                        </button>
+                      </div>
+                    </div>
                     {welcomeKind === "simple" ? (
                       <label className="block text-xs font-medium text-zinc-400">
                         Couleur de la barre latérale
@@ -530,32 +533,36 @@ export function ModulesPageContent({ discordGuildId }: Props) {
                         ))}
                       </select>
                     </label>
-                    <fieldset className="space-y-2">
-                      <legend className="text-xs font-medium text-zinc-400">Format du message dans le salon</legend>
-                      <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-300">
-                        <input
-                          type="radio"
-                          name="goodbyeFmt"
-                          checked={goodbyeKind === "simple"}
-                          onChange={() => {
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-zinc-400">Format du message dans le salon</p>
+                      <div className="inline-flex rounded-full border border-vex-border bg-vex-bg/40 p-1 text-xs font-medium">
+                        <button
+                          type="button"
+                          className={[
+                            "rounded-full px-3 py-1.5 transition",
+                            goodbyeKind === "simple" ? "bg-vex-accent text-white" : "text-zinc-400 hover:text-zinc-200",
+                          ].join(" ")}
+                          onClick={() => {
                             setGoodbyeKind("simple");
                             setGoodbyeEmbedId("");
                           }}
-                        />
-                        Embed simple (description + couleur, max. 4096 caractères)
-                      </label>
-                      <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-300">
-                        <input
-                          type="radio"
-                          name="goodbyeFmt"
-                          checked={goodbyeKind === "template"}
-                          onChange={() => {
+                        >
+                          Message simple
+                        </button>
+                        <button
+                          type="button"
+                          className={[
+                            "rounded-full px-3 py-1.5 transition",
+                            goodbyeKind === "template" ? "bg-vex-accent text-white" : "text-zinc-400 hover:text-zinc-200",
+                          ].join(" ")}
+                          onClick={() => {
                             setGoodbyeKind("template");
                           }}
-                        />
-                        Modèle d’embed (page Embeds)
-                      </label>
-                    </fieldset>
+                        >
+                          Modèle du message
+                        </button>
+                      </div>
+                    </div>
                     {goodbyeKind === "simple" ? (
                       <label className="block text-xs font-medium text-zinc-400">
                         Couleur de la barre latérale
@@ -614,13 +621,15 @@ export function ModulesPageContent({ discordGuildId }: Props) {
           </ModuleCard>
         </div>
 
-        <BotAppearanceModuleCard
-          discordGuildId={discordGuildId}
-          overview={guildOverview}
-          onRefresh={refreshGuildOverview}
-        />
+        <div className="min-w-0">
+          <BotAppearanceModuleCard
+            discordGuildId={discordGuildId}
+            overview={guildOverview}
+            onRefresh={refreshGuildOverview}
+          />
+        </div>
 
-        <div className="min-w-0 lg:col-span-2 xl:col-span-3">
+        <div className="min-w-0">
           <ModuleCard
             icon="id-badge"
             title="Rôles à l’arrivée"
@@ -660,7 +669,7 @@ export function ModulesPageContent({ discordGuildId }: Props) {
           </ModuleCard>
         </div>
 
-        <div className="min-w-0 lg:col-span-2 xl:col-span-3">
+        <div className="min-w-0">
           <JoinVerificationModuleCard
             discordGuildId={discordGuildId}
             onFormDirtyChange={setJoinVerifyDirty}
@@ -671,8 +680,9 @@ export function ModulesPageContent({ discordGuildId }: Props) {
       </div>
 
       <SaveChangesBar
-        visible={showSaveBar}
+        visible={showSaveBar || savedOk}
         saving={saving}
+        status={savedOk && !showSaveBar ? "saved" : "dirty"}
         onSave={() => void handleSave()}
         onDiscard={handleDiscardDraft}
         zIndexClass="z-50"

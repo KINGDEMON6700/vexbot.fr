@@ -10,6 +10,7 @@
     "deploy": "tsx src/deploy-commands.ts"
   },
   "dependencies": {
+    "@napi-rs/canvas": "^0.1.100",
     "discord.js": "^14.25.1",
     "dotenv": "^16.4.7",
     "zod": "^3.24.2"

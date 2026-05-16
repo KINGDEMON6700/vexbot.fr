@@ -16,7 +16,7 @@ function buildVerifyPanelPayload(buttonLabel: string): Record<string, unknown> {
       {
         title: "Vérification",
         description:
-          "Clique sur le bouton ci-dessous pour accéder au reste du serveur. (Tu dois avoir le rôle « non vérifié ».)",
+          "Cliquez sur le bouton : une fenêtre privée pour vous affiche une image avec un code à retaper pour accéder au reste du serveur. Il faut avoir le rôle « non vérifié ».",
         color: 0x5865f2,
       },
     ],
@@ -64,23 +64,6 @@ export async function syncJoinVerificationPanelDiscord(
   const settings = await getJoinVerificationSettings(prisma, discordGuildId);
 
   if (!settings.moduleEnabled || !settings.channelId) {
-    if (settings.panelMessageId) {
-      const row = await prisma.joinVerificationSettings.findFirst({
-        where: { guild: { discordId: discordGuildId } },
-        select: { channelId: true, panelMessageId: true },
-      });
-      if (row?.channelId && row.panelMessageId) {
-        await deleteDiscordMessage(row.channelId, row.panelMessageId, botToken);
-      }
-      await prisma.joinVerificationSettings.updateMany({
-        where: { guild: { discordId: discordGuildId } },
-        data: { panelMessageId: null },
-      });
-    }
-    return { ok: true };
-  }
-
-  if (settings.mode !== "BUTTON") {
     if (settings.panelMessageId) {
       const row = await prisma.joinVerificationSettings.findFirst({
         where: { guild: { discordId: discordGuildId } },

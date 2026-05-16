@@ -40,6 +40,32 @@ import {
 } from "./TicketPanelOpenSection.js";
 
 const emptyMentionLookup: MentionLookup = { channelNames: {}, roleNames: {} };
+const TICKET_EMOJI_PICKER_STORAGE_KEY = "vex-ticket-emoji-picker-custom";
+const DEFAULT_TICKET_EMOJI_CHOICES = ["🔒", "✅", "❌", "➕", "👤", "🎫"];
+
+function readStoredTicketEmojis(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(TICKET_EMOJI_PICKER_STORAGE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((v): v is string => typeof v === "string" && v.trim().length > 0);
+  } catch {
+    return [];
+  }
+}
+
+function saveStoredTicketEmojis(emojis: string[]) {
+  try {
+    window.localStorage.setItem(TICKET_EMOJI_PICKER_STORAGE_KEY, JSON.stringify(emojis));
+  } catch {
+    // Si le navigateur bloque le stockage, le choix reste disponible pendant la session.
+  }
+}
+
+function uniqueTicketEmojis(emojis: string[]): string[] {
+  return Array.from(new Set(emojis.map((emoji) => emoji.trim()).filter(Boolean)));
+}
 
 function discordAvatarHue(name: string): number {
   let h = 0;
@@ -584,6 +610,10 @@ export function TicketsPageContent({ discordGuildId }: Props) {
     useState<DiscordTicketPanelButtonStyle>("primary");
   const [draftWelcomeMemberCloseEmoji, setDraftWelcomeMemberCloseEmoji] = useState("");
   const [draftWelcomeMemberAddEmoji, setDraftWelcomeMemberAddEmoji] = useState("");
+  const [customTicketEmojis, setCustomTicketEmojis] = useState<string[]>(() => readStoredTicketEmojis());
+  const [openEmojiPicker, setOpenEmojiPicker] = useState<"close" | "add" | null>(null);
+  const [welcomeCloseDetailsOpen, setWelcomeCloseDetailsOpen] = useState(true);
+  const [welcomeAddDetailsOpen, setWelcomeAddDetailsOpen] = useState(true);
   const [draftMaxOpenTicketsPerOpener, setDraftMaxOpenTicketsPerOpener] = useState(1);
   const [draftPanelOpen, setDraftPanelOpen] = useState<TicketPanelOpenConfig>(() => defaultTicketPanelOpen());
   const [savedSnapshot, setSavedSnapshot] = useState("");
@@ -619,6 +649,29 @@ export function TicketsPageContent({ discordGuildId }: Props) {
     }, 2500);
   }, []);
 
+  const ticketEmojiChoices = useMemo(
+    () =>
+      uniqueTicketEmojis([
+        ...DEFAULT_TICKET_EMOJI_CHOICES,
+        draftWelcomeMemberCloseEmoji,
+        draftWelcomeMemberAddEmoji,
+        ...customTicketEmojis,
+      ]),
+    [customTicketEmojis, draftWelcomeMemberAddEmoji, draftWelcomeMemberCloseEmoji],
+  );
+
+  const addCustomTicketEmoji = useCallback(() => {
+    const value = window.prompt("Emoji à ajouter");
+    const emoji = value?.trim();
+    if (!emoji) return;
+
+    setCustomTicketEmojis((prev) => {
+      const next = uniqueTicketEmojis([...prev, emoji]);
+      saveStoredTicketEmojis(next);
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     return () => {
       if (copyFeedbackTimerRef.current != null) {
@@ -626,6 +679,19 @@ export function TicketsPageContent({ discordGuildId }: Props) {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!openEmojiPicker) return;
+
+    const closePicker = (event: PointerEvent) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest("[data-ticket-emoji-picker]")) return;
+      setOpenEmojiPicker(null);
+    };
+
+    window.addEventListener("pointerdown", closePicker);
+    return () => window.removeEventListener("pointerdown", closePicker);
+  }, [openEmojiPicker]);
 
   const loadMeta = useCallback(async () => {
     setMetaError(false);
@@ -886,12 +952,10 @@ export function TicketsPageContent({ discordGuildId }: Props) {
       setSaveBarShakeTick(0);
       if (panelSyncWarning) {
         setSaveMessage(
-          `Réglages enregistrés. En revanche, le message panneau sur Discord n’a pas pu être mis à jour : ${panelSyncWarning}`,
+          `Le message panneau sur Discord n’a pas pu être mis à jour : ${panelSyncWarning}`,
         );
-      } else if (draftPanel) {
-        setSaveMessage("Réglages enregistrés. Le message panneau sur Discord a été mis à jour automatiquement.");
       } else {
-        setSaveMessage("Réglages enregistrés.");
+        setSaveMessage(null);
       }
     } catch (e) {
       setSaveState("err");
@@ -914,7 +978,7 @@ export function TicketsPageContent({ discordGuildId }: Props) {
 
   return (
     <div
-      className={`flex flex-col gap-6 ${isDirty ? SAVE_BAR_PAGE_PADDING : ""}`}
+      className={`flex flex-col gap-6 ${isDirty || saveState === "ok" ? SAVE_BAR_PAGE_PADDING : ""}`}
     >
       <section className="overflow-hidden rounded-xl border border-vex-border bg-vex-surface/70">
         <div className="flex flex-col gap-3 border-b border-vex-border/80 bg-vex-bg/25 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6">
@@ -1103,7 +1167,7 @@ export function TicketsPageContent({ discordGuildId }: Props) {
               <h4 className="text-sm font-semibold text-zinc-300">Panel ticket</h4>
             </div>
             <label className="flex flex-col gap-1.5 text-sm sm:max-w-xl">
-              <span className="text-zinc-400">Modèle du message du Panel ticket</span>
+              <span className="text-zinc-400">Modèle du message</span>
               <div className="flex gap-2">
                 <select
                   className="ui-input min-w-0 flex-1"
@@ -1140,10 +1204,7 @@ export function TicketsPageContent({ discordGuildId }: Props) {
               <h4 className="text-sm font-semibold text-zinc-300">Message d’accueil</h4>
             </div>
             <label className="flex flex-col gap-1.5 text-sm sm:max-w-xl">
-              <span className="text-zinc-400">
-                Modèle à envoyer dans le salon du ticket (optionnel — sans choix, message d’accueil simple comme l’aperçu
-                « sans modèle »)
-              </span>
+              <span className="text-zinc-400">Modèle du message</span>
               <div className="flex gap-2">
                 <select
                   className="ui-input min-w-0 flex-1"
@@ -1170,11 +1231,19 @@ export function TicketsPageContent({ discordGuildId }: Props) {
             <div className="mt-4 sm:max-w-xl">
               <UiToggle
                 title="Bouton pour fermer le ticket"
-                hint="Sous le message d’accueil : l’auteur du ticket ou un modérateur avec « Gérer les salons » peut fermer le salon (transcript enregistré comme avec la commande équipe)."
+                hint="Sous le message d'accueil"
                 active={draftWelcomeMemberClose}
-                onToggle={() => setDraftWelcomeMemberClose((v) => !v)}
+                detailsExpanded={welcomeCloseDetailsOpen}
+                onToggleDetails={() => setWelcomeCloseDetailsOpen((v) => !v)}
+                onToggle={() => {
+                  setDraftWelcomeMemberClose((v) => {
+                    const next = !v;
+                    if (next) setWelcomeCloseDetailsOpen(true);
+                    return next;
+                  });
+                }}
               />
-              {draftWelcomeMemberClose ? (
+              {draftWelcomeMemberClose && welcomeCloseDetailsOpen ? (
                 <div className="mt-3 flex flex-col gap-2 rounded-md border border-vex-border/50 bg-vex-surface/30 px-3 py-2.5">
                   <span className="text-sm text-zinc-400" id="ticket-close-btn-color-label">
                     Couleur du bouton sur Discord
@@ -1205,34 +1274,64 @@ export function TicketsPageContent({ discordGuildId }: Props) {
                       );
                     })}
                   </div>
-                  <span className="text-xs text-zinc-500">Ce sont les seules couleurs possibles sur Discord.</span>
-                  <label className="mt-3 block text-xs font-medium text-zinc-400">
-                    Emoji devant « Fermer ce ticket »
+                  <div className="relative mt-3 block text-xs font-medium text-zinc-400" data-ticket-emoji-picker>
+                    <label htmlFor="ticket-close-emoji">Emoji</label>
                     <input
+                      id="ticket-close-emoji"
                       type="text"
                       className="ui-input mt-1.5 w-full text-sm"
                       value={draftWelcomeMemberCloseEmoji}
                       onChange={(e) => setDraftWelcomeMemberCloseEmoji(e.target.value)}
+                      onClick={() => setOpenEmojiPicker("close")}
+                      onFocus={() => setOpenEmojiPicker("close")}
                       maxLength={100}
                       placeholder={DEFAULT_TICKET_WELCOME_CLOSE_EMOJI}
                       title="Emoji simple, ou emoji du serveur au format <:nom:id>"
                       disabled={!draftWelcomeMemberClose}
                     />
-                  </label>
-                  <p className="mt-1 text-[11px] text-zinc-600">
-                    Vide = emoji par défaut ({DEFAULT_TICKET_WELCOME_CLOSE_EMOJI}). Vous pouvez coller un emoji du serveur
-                    (format Discord).
-                  </p>
+                    {openEmojiPicker === "close" ? (
+                      <div className="absolute left-0 top-full z-30 mt-2 flex max-w-xs flex-wrap gap-1.5 rounded-xl border border-vex-border bg-vex-surface p-2 shadow-xl shadow-black/30">
+                        {ticketEmojiChoices.map((emoji) => (
+                          <button
+                            key={`close-${emoji}`}
+                            type="button"
+                            className="rounded-md border border-vex-border/70 bg-vex-bg/70 px-2.5 py-1.5 text-base hover:border-vex-accent/70 hover:bg-vex-accent/10"
+                            onClick={() => {
+                              setDraftWelcomeMemberCloseEmoji(emoji);
+                              setOpenEmojiPicker(null);
+                            }}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          className="rounded-md border border-dashed border-vex-accent/60 bg-vex-accent/10 px-2.5 py-1.5 text-sm text-vex-accent hover:bg-vex-accent/15"
+                          onClick={addCustomTicketEmoji}
+                        >
+                          +
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               ) : null}
               <UiToggle
                 className="mt-4"
                 title="Bouton pour ajouter quelqu’un au ticket"
-                hint="Ouvre une fenêtre pour coller l’identifiant Discord du membre (comme la commande /ticket add). L’auteur du ticket ou un modérateur avec « Gérer les salons » peut l’utiliser."
+                hint="Ouvre une fenêtre pour coller l’identifiant d'un membre Discord"
                 active={draftWelcomeMemberAdd}
-                onToggle={() => setDraftWelcomeMemberAdd((v) => !v)}
+                detailsExpanded={welcomeAddDetailsOpen}
+                onToggleDetails={() => setWelcomeAddDetailsOpen((v) => !v)}
+                onToggle={() => {
+                  setDraftWelcomeMemberAdd((v) => {
+                    const next = !v;
+                    if (next) setWelcomeAddDetailsOpen(true);
+                    return next;
+                  });
+                }}
               />
-              {draftWelcomeMemberAdd ? (
+              {draftWelcomeMemberAdd && welcomeAddDetailsOpen ? (
                 <div className="mt-3 flex flex-col gap-2 rounded-md border border-vex-border/50 bg-vex-surface/30 px-3 py-2.5">
                   <span className="text-sm text-zinc-400" id="ticket-add-btn-color-label">
                     Couleur du bouton « Ajouter » sur Discord
@@ -1263,24 +1362,46 @@ export function TicketsPageContent({ discordGuildId }: Props) {
                       );
                     })}
                   </div>
-                  <span className="text-xs text-zinc-500">Ce sont les seules couleurs possibles sur Discord.</span>
-                  <label className="mt-3 block text-xs font-medium text-zinc-400">
-                    Emoji devant « Ajouter au ticket »
+                  <div className="relative mt-3 block text-xs font-medium text-zinc-400" data-ticket-emoji-picker>
+                    <label htmlFor="ticket-add-emoji">Emoji devant « Ajouter au ticket »</label>
                     <input
+                      id="ticket-add-emoji"
                       type="text"
                       className="ui-input mt-1.5 w-full text-sm"
                       value={draftWelcomeMemberAddEmoji}
                       onChange={(e) => setDraftWelcomeMemberAddEmoji(e.target.value)}
+                      onClick={() => setOpenEmojiPicker("add")}
+                      onFocus={() => setOpenEmojiPicker("add")}
                       maxLength={100}
                       placeholder={DEFAULT_TICKET_WELCOME_ADD_EMOJI}
                       title="Emoji simple, ou emoji du serveur au format <:nom:id>"
                       disabled={!draftWelcomeMemberAdd}
                     />
-                  </label>
-                  <p className="mt-1 text-[11px] text-zinc-600">
-                    Vide = emoji par défaut ({DEFAULT_TICKET_WELCOME_ADD_EMOJI}). Vous pouvez coller un emoji du serveur
-                    (format Discord).
-                  </p>
+                    {openEmojiPicker === "add" ? (
+                      <div className="absolute left-0 top-full z-30 mt-2 flex max-w-xs flex-wrap gap-1.5 rounded-xl border border-vex-border bg-vex-surface p-2 shadow-xl shadow-black/30">
+                        {ticketEmojiChoices.map((emoji) => (
+                          <button
+                            key={`add-${emoji}`}
+                            type="button"
+                            className="rounded-md border border-vex-border/70 bg-vex-bg/70 px-2.5 py-1.5 text-base hover:border-vex-accent/70 hover:bg-vex-accent/10"
+                            onClick={() => {
+                              setDraftWelcomeMemberAddEmoji(emoji);
+                              setOpenEmojiPicker(null);
+                            }}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          className="rounded-md border border-dashed border-vex-accent/60 bg-vex-accent/10 px-2.5 py-1.5 text-sm text-vex-accent hover:bg-vex-accent/15"
+                          onClick={addCustomTicketEmoji}
+                        >
+                          +
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               ) : null}
             </div>
@@ -1297,14 +1418,9 @@ export function TicketsPageContent({ discordGuildId }: Props) {
                 : undefined
             }
           >
-            {isDirty ? (
-              <p className="text-xs font-medium text-amber-200/90">Modifications non enregistrées</p>
-            ) : (
-              <p className="text-xs text-zinc-500">Réglages enregistrés</p>
-            )}
             {saveMessage ? (
               <p
-                className={`mt-1 text-sm ${saveState === "err" ? "text-amber-200/90" : saveState === "ok" ? "text-emerald-300/90" : "text-zinc-400"}`}
+                className={`text-sm ${saveState === "err" ? "text-amber-200/90" : saveState === "ok" ? "text-amber-200/90" : "text-zinc-400"}`}
                 role="status"
               >
                 {saveMessage}
@@ -1315,8 +1431,9 @@ export function TicketsPageContent({ discordGuildId }: Props) {
       </div>
 
       <SaveChangesBar
-        visible={isDirty}
+        visible={isDirty || saveState === "ok"}
         saving={saveState === "saving"}
+        status={saveState === "ok" && !isDirty ? "saved" : "dirty"}
         shakeKey={saveBarShakeTick}
         zIndexClass="z-50"
         onSave={() => void onSaveSettings()}

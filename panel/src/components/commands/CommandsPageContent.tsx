@@ -284,7 +284,7 @@ export function CommandsPageContent({ discordGuildId }: Props) {
                 />
               ) : (
                 <p className="py-8 text-center text-sm text-zinc-500">
-                  Sélectionne une commande dans la liste, ou créé-en une nouvelle.
+                  Sélectionnez une commande dans la liste, ou créez-en une nouvelle.
                 </p>
               )}
             </div>

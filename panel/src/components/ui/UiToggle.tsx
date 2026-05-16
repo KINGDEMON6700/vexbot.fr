@@ -5,10 +5,21 @@ type Props = {
   busy?: boolean;
   onToggle: () => void;
   className?: string;
+  detailsExpanded?: boolean;
+  onToggleDetails?: () => void;
 };
 
 /** Interrupteur activer / désactiver (même style que les cartes modules). */
-export function UiToggle({ title, hint, active, busy = false, onToggle, className = "" }: Props) {
+export function UiToggle({
+  title,
+  hint,
+  active,
+  busy = false,
+  onToggle,
+  className = "",
+  detailsExpanded,
+  onToggleDetails,
+}: Props) {
   return (
     <div
       className={[
@@ -22,36 +33,49 @@ export function UiToggle({ title, hint, active, busy = false, onToggle, classNam
         <p className="text-sm font-medium text-zinc-200">{title}</p>
         {hint ? <p className="mt-0.5 text-xs text-zinc-500">{hint}</p> : null}
       </div>
-      <label
-        className={[
-          "inline-flex shrink-0 cursor-pointer items-center gap-2 rounded-full px-2 py-1 text-[11px] font-medium transition sm:self-auto",
-          active ? "bg-emerald-500/15 text-emerald-300" : "bg-zinc-700/40 text-zinc-400",
-          busy ? "pointer-events-none opacity-60" : "",
-        ].join(" ")}
-        aria-label={active ? `Désactiver : ${title}` : `Activer : ${title}`}
-      >
-        <input
-          type="checkbox"
-          className="hidden"
-          checked={active}
-          onChange={() => onToggle()}
-          disabled={busy}
-        />
-        <span
+      <div className="inline-flex shrink-0 items-center gap-2 sm:self-auto">
+        {active && onToggleDetails ? (
+          <button
+            type="button"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-vex-border/70 bg-vex-bg/60 text-xs text-zinc-300 transition hover:border-vex-accent/70 hover:text-vex-accent"
+            aria-label={detailsExpanded ? `Replier : ${title}` : `Déplier : ${title}`}
+            aria-expanded={detailsExpanded}
+            onClick={onToggleDetails}
+          >
+            {detailsExpanded ? "▼" : "▶"}
+          </button>
+        ) : null}
+        <label
           className={[
-            "relative inline-block h-3.5 w-7 rounded-full transition",
-            active ? "bg-emerald-500/70" : "bg-zinc-600",
+            "inline-flex cursor-pointer items-center gap-2 rounded-full px-2 py-1 text-[11px] font-medium transition",
+            active ? "bg-emerald-500/15 text-emerald-300" : "bg-zinc-700/40 text-zinc-400",
+            busy ? "pointer-events-none opacity-60" : "",
           ].join(" ")}
+          aria-label={active ? `Désactiver : ${title}` : `Activer : ${title}`}
         >
+          <input
+            type="checkbox"
+            className="hidden"
+            checked={active}
+            onChange={() => onToggle()}
+            disabled={busy}
+          />
           <span
             className={[
-              "absolute top-0.5 inline-block h-2.5 w-2.5 rounded-full bg-white transition",
-              active ? "left-3.5" : "left-0.5",
+              "relative inline-block h-3.5 w-7 rounded-full transition",
+              active ? "bg-emerald-500/70" : "bg-zinc-600",
             ].join(" ")}
-          />
-        </span>
-        {active ? "Activé" : "Désactivé"}
-      </label>
+          >
+            <span
+              className={[
+                "absolute top-0.5 inline-block h-2.5 w-2.5 rounded-full bg-white transition",
+                active ? "left-3.5" : "left-0.5",
+              ].join(" ")}
+            />
+          </span>
+          {active ? "Activé" : "Désactivé"}
+        </label>
+      </div>
     </div>
   );
 }

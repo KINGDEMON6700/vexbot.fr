@@ -1,15 +1,17 @@
-import type { JoinVerificationMode, PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 import { AppError } from "../lib/AppError.js";
 import { ensureGuildForDiscord } from "./ensureGuild.js";
 
 export type JoinVerificationSettingsDto = {
   moduleEnabled: boolean;
-  mode: JoinVerificationMode;
   channelId: string | null;
   unverifiedRoleId: string | null;
   panelMessageId: string | null;
   buttonLabel: string | null;
+  verifiedRoleIds: string[];
 };
+
+const MAX_VERIFIED_ROLES = 40;
 
 function normalizeDiscordId(v: unknown, field: string): string | null {
   if (v === null || v === undefined) return null;
@@ -29,11 +31,6 @@ function normalizeBool(v: unknown): boolean {
   return v;
 }
 
-function normalizeMode(v: unknown): JoinVerificationMode {
-  if (v === "CAPTCHA" || v === "BUTTON") return v;
-  throw new AppError(400, "Mode invalide (CAPTCHA ou BUTTON).", "INVALID_FIELD");
-}
-
 function normalizeButtonLabel(v: unknown): string | null {
   if (v === null || v === undefined) return null;
   if (typeof v !== "string") return null;
@@ -42,33 +39,53 @@ function normalizeButtonLabel(v: unknown): string | null {
   return s.slice(0, 80);
 }
 
+/** IDs Discord depuis JSON (réglages / panel). */
+function normalizeVerifiedRoleIds(v: unknown): string[] {
+  if (!Array.isArray(v)) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const x of v) {
+    if (typeof x !== "string") continue;
+    const id = x.trim();
+    if (!/^\d{5,25}$/.test(id)) continue;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    out.push(id);
+    if (out.length >= MAX_VERIFIED_ROLES) break;
+  }
+  return out;
+}
+
 function mapRow(
-  row: {
-    moduleEnabled: boolean;
-    mode: JoinVerificationMode;
-    channelId: string | null;
-    unverifiedRoleId: string | null;
-    panelMessageId: string | null;
-    buttonLabel: string | null;
-  } | null,
+  row:
+    | {
+        moduleEnabled: boolean;
+        channelId: string | null;
+        unverifiedRoleId: string | null;
+        panelMessageId: string | null;
+        buttonLabel: string | null;
+        verifiedRoleIds: unknown;
+      }
+    | undefined
+    | null,
 ): JoinVerificationSettingsDto {
   if (!row) {
     return {
       moduleEnabled: false,
-      mode: "BUTTON",
       channelId: null,
       unverifiedRoleId: null,
       panelMessageId: null,
       buttonLabel: null,
+      verifiedRoleIds: [],
     };
   }
   return {
     moduleEnabled: row.moduleEnabled,
-    mode: row.mode,
     channelId: row.channelId,
     unverifiedRoleId: row.unverifiedRoleId,
     panelMessageId: row.panelMessageId,
     buttonLabel: row.buttonLabel,
+    verifiedRoleIds: normalizeVerifiedRoleIds(row.verifiedRoleIds),
   };
 }
 
@@ -83,8 +100,16 @@ export async function getJoinVerificationSettings(
   if (!guild) return mapRow(null);
   const row = await prisma.joinVerificationSettings.findUnique({
     where: { guildId: guild.id },
+    select: {
+      moduleEnabled: true,
+      channelId: true,
+      unverifiedRoleId: true,
+      panelMessageId: true,
+      buttonLabel: true,
+      verifiedRoleIds: true,
+    },
   });
-  return mapRow(row);
+  return mapRow(row ?? null);
 }
 
 export async function upsertJoinVerificationSettings(
@@ -98,17 +123,14 @@ export async function upsertJoinVerificationSettings(
   const existing = await prisma.joinVerificationSettings.findUnique({ where: { guildId } });
 
   let moduleEnabled = existing?.moduleEnabled ?? false;
-  let mode: JoinVerificationMode = existing?.mode ?? "BUTTON";
   let channelId = existing?.channelId ?? null;
   let unverifiedRoleId = existing?.unverifiedRoleId ?? null;
   let panelMessageId = existing?.panelMessageId ?? null;
   let buttonLabel = existing?.buttonLabel ?? null;
+  let verifiedRoleIds = normalizeVerifiedRoleIds(existing?.verifiedRoleIds);
 
   if (Object.prototype.hasOwnProperty.call(raw, "moduleEnabled")) {
     moduleEnabled = normalizeBool(raw.moduleEnabled);
-  }
-  if (Object.prototype.hasOwnProperty.call(raw, "mode")) {
-    mode = normalizeMode(raw.mode);
   }
   if (Object.prototype.hasOwnProperty.call(raw, "channelId")) {
     channelId = normalizeDiscordId(raw.channelId, "Salon");
@@ -124,9 +146,20 @@ export async function upsertJoinVerificationSettings(
   if (Object.prototype.hasOwnProperty.call(raw, "buttonLabel")) {
     buttonLabel = normalizeButtonLabel(raw.buttonLabel);
   }
+  if (Object.prototype.hasOwnProperty.call(raw, "verifiedRoleIds")) {
+    verifiedRoleIds = normalizeVerifiedRoleIds(raw.verifiedRoleIds);
+  }
 
   if (unverifiedRoleId !== null && unverifiedRoleId === discordGuildId) {
     throw new AppError(400, "Le rôle @everyone ne peut pas servir de rôle non vérifié.", "INVALID_ROLE");
+  }
+
+  if (unverifiedRoleId !== null && verifiedRoleIds.includes(unverifiedRoleId)) {
+    throw new AppError(
+      400,
+      "Le rôle « non vérifié » ne doit pas être dans les rôles attribués après validation.",
+      "INVALID_ROLE_LIST",
+    );
   }
 
   await prisma.joinVerificationSettings.upsert({
@@ -134,19 +167,19 @@ export async function upsertJoinVerificationSettings(
     create: {
       guildId,
       moduleEnabled,
-      mode,
       channelId,
       unverifiedRoleId,
       panelMessageId,
       buttonLabel,
+      verifiedRoleIds,
     },
     update: {
       moduleEnabled,
-      mode,
       channelId,
       unverifiedRoleId,
       panelMessageId,
       buttonLabel,
+      verifiedRoleIds,
     },
   });
 
@@ -182,8 +215,8 @@ export async function issueJoinVerificationCaptcha(
   const settings = await prisma.joinVerificationSettings.findUnique({
     where: { guildId: guild.id },
   });
-  if (!settings?.moduleEnabled || settings.mode !== "CAPTCHA") {
-    return { ok: false, reason: "Captcha non activé." };
+  if (!settings?.moduleEnabled) {
+    return { ok: false, reason: "Module de vérification désactivé." };
   }
   if (!settings.channelId || !settings.unverifiedRoleId) {
     return { ok: false, reason: "Réglages incomplets." };

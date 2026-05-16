@@ -1,11 +1,9 @@
 import { Events, type Message } from "discord.js";
 import type { VexClient } from "../client.js";
-import { handleJoinVerifyCaptchaMessage } from "../features/joinVerification.js";
 
+/** Réservé à d’éventuelles fonctionnalités basées messages ; la vérification passe par bouton + modal. */
 export default {
   name: Events.MessageCreate,
   once: false,
-  async execute(_client: VexClient, message: Message) {
-    await handleJoinVerifyCaptchaMessage(message);
-  },
+  execute(_client: VexClient, _message: Message) {},
 };

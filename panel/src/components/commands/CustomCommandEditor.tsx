@@ -4,6 +4,7 @@ import type { GuildMentionMeta } from "../../types/guildMeta.js";
 import type { EmbedTemplate } from "../../types/embedTemplate.js";
 import { MultiPicker, type MultiPickerOption } from "./MultiPicker.js";
 import { SaveChangesBar, SAVE_BAR_PAGE_PADDING } from "../ui/SaveChangesBar.js";
+import { UiToggle } from "../ui/UiToggle.js";
 
 type Props = {
   command: CustomCommand;
@@ -310,36 +311,20 @@ export function CustomCommandEditor({
       )}
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="ui-card flex cursor-pointer items-center justify-between gap-3 p-3 text-sm">
-          <div>
-            <span className="block font-medium text-zinc-200">Commande activée</span>
-            <span className="block text-[11px] text-zinc-500">
-              Si désactivée, elle disparaît de Discord.
-            </span>
-          </div>
-          <input
-            type="checkbox"
-            className="accent-vex-accent"
-            checked={enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
-            disabled={busy}
-          />
-        </label>
-        <label className="ui-card flex cursor-pointer items-center justify-between gap-3 p-3 text-sm">
-          <div>
-            <span className="block font-medium text-zinc-200">Réponse privée</span>
-            <span className="block text-[11px] text-zinc-500">
-              Visible uniquement par la personne qui a tapé la commande.
-            </span>
-          </div>
-          <input
-            type="checkbox"
-            className="accent-vex-accent"
-            checked={ephemeral}
-            onChange={(e) => setEphemeral(e.target.checked)}
-            disabled={busy}
-          />
-        </label>
+        <UiToggle
+          title="Commande activée"
+          hint="Si désactivée, elle disparaît de Discord."
+          active={enabled}
+          busy={busy}
+          onToggle={() => setEnabled((v) => !v)}
+        />
+        <UiToggle
+          title="Réponse privée"
+          hint="Visible uniquement par la personne qui a tapé la commande."
+          active={ephemeral}
+          busy={busy}
+          onToggle={() => setEphemeral((v) => !v)}
+        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

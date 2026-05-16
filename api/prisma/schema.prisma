@@ -58,12 +58,6 @@ enum EmbedTimestampMode {
   FIXED
 }
 
-enum JoinVerificationMode {
-  CAPTCHA
-  BUTTON
-}
-
-// --- Modèles ---
 
 /// Serveur Discord : tout est rattaché à une guild.
 model Guild {
@@ -396,25 +390,27 @@ model JoinAutoRoleSettings {
   updatedAt DateTime @updatedAt
 }
 
-/// Vérification à l’arrivée (captcha ou bouton) avant les rôles « membre ».
+/// Vérification à l’arrivée : bouton dans le salon, captcha image, puis attribution des rôles choisis.
 model JoinVerificationSettings {
   id      String @id @default(cuid())
   guildId String @unique
   guild   Guild  @relation(fields: [guildId], references: [id], onDelete: Cascade)
 
   moduleEnabled Boolean @default(false)
-  mode          JoinVerificationMode @default(BUTTON)
 
-  /// Salon où taper le code (captcha) ou où se trouve le message avec bouton.
+  /// Salon où se trouve le panneau (bouton) et où le flux peut s’afficher à l’utilisateur.
   channelId String?
-  /// Rôle « pas encore vérifié » (ex. noverif), attribué à l’arrivée.
+  /// Rôle « pas encore vérifié », attribué à l’arrivée jusqu’à validation.
   unverifiedRoleId String?
 
-  /// Message panneau « clique pour vérifier » (mode bouton uniquement).
+  /// Message Discord du panneau (bouton de vérification).
   panelMessageId String?
 
-  /// Libellé du bouton (mode bouton), max 80 caractères côté Discord.
+  /// Libellé du bouton, max 80 caractères côté Discord.
   buttonLabel String?
+
+  /// Rôles à ajouter après vérification réussie (tableau JSON d’IDs Discord).
+  verifiedRoleIds Json @default("[]")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
