@@ -1,5 +1,7 @@
 import type { PrismaClient } from "@prisma/client";
 import { getJoinVerificationSettings } from "./joinVerificationSettingsService.js";
+import { findEmbedTemplateDtoById } from "./embedTemplateService.js";
+import { templateMessageDtoToDiscordRestPayload } from "./embedSendService.js";
 
 const DISCORD_API = "https://discord.com/api/v10";
 
@@ -7,33 +9,105 @@ const DISCORD_API = "https://discord.com/api/v10";
 export const JOIN_VERIFY_BUTTON_CUSTOM_ID = "vex_join_verify";
 
 const DEFAULT_BUTTON_LABEL = "Je ne suis pas un robot";
+const DEFAULT_PANEL_DESCRIPTION =
+  "Cliquez sur le bouton : une fenêtre privée vous affiche une image avec un code à retaper pour accéder au reste du serveur. Il faut avoir le rôle « non vérifié ».";
+const DEFAULT_PANEL_COLOR = 0x5865f2;
+
+type DiscordActionRow = {
+  type: 1;
+  components: Array<{
+    type: 2;
+    style: 1 | 2 | 3 | 4 | 5;
+    label: string;
+    custom_id?: string;
+    url?: string;
+    disabled?: boolean;
+  }>;
+};
+
+function buildVerifyButtonRow(buttonLabel: string): DiscordActionRow {
+  const label = (buttonLabel.trim() || DEFAULT_BUTTON_LABEL).slice(0, 80);
+  return {
+    type: 1,
+    components: [
+      {
+        type: 2,
+        style: 3,
+        label,
+        custom_id: JOIN_VERIFY_BUTTON_CUSTOM_ID,
+        disabled: false,
+      },
+    ],
+  };
+}
 
 function buildVerifyPanelPayload(buttonLabel: string): Record<string, unknown> {
-  const label = (buttonLabel.trim() || DEFAULT_BUTTON_LABEL).slice(0, 80);
   return {
     content: null,
     embeds: [
       {
         title: "Vérification",
-        description:
-          "Cliquez sur le bouton : une fenêtre privée pour vous affiche une image avec un code à retaper pour accéder au reste du serveur. Il faut avoir le rôle « non vérifié ».",
-        color: 0x5865f2,
+        description: DEFAULT_PANEL_DESCRIPTION,
+        color: DEFAULT_PANEL_COLOR,
       },
     ],
-    components: [
-      {
-        type: 1,
-        components: [
-          {
-            type: 2,
-            style: 3,
-            label,
-            custom_id: JOIN_VERIFY_BUTTON_CUSTOM_ID,
-            disabled: false,
-          },
-        ],
-      },
-    ],
+    components: [buildVerifyButtonRow(buttonLabel)],
+  };
+}
+
+async function buildVerifyPanelPayloadFromSettings(
+  prisma: PrismaClient,
+  discordGuildId: string,
+  settings: Awaited<ReturnType<typeof getJoinVerificationSettings>>,
+): Promise<Record<string, unknown>> {
+  const buttonRow = buildVerifyButtonRow(settings.buttonLabel ?? DEFAULT_BUTTON_LABEL);
+
+  if (settings.panelEmbedId) {
+    const dto = await findEmbedTemplateDtoById(prisma, discordGuildId, settings.panelEmbedId);
+    const first = dto?.messages[0];
+    if (first) {
+      try {
+        const p = templateMessageDtoToDiscordRestPayload(first);
+        const hasContent = p.content != null && String(p.content).trim() !== "";
+        const contentOut: string | null = hasContent ? String(p.content) : null;
+        let embedsOut: typeof p.embeds;
+        if (p.embeds.length > 0) {
+          embedsOut = p.embeds;
+        } else if (!hasContent) {
+          embedsOut = [{ title: "Vérification", description: DEFAULT_PANEL_DESCRIPTION, color: DEFAULT_PANEL_COLOR }];
+        } else {
+          embedsOut = [];
+        }
+        return {
+          content: contentOut,
+          embeds: embedsOut,
+          components: [...p.components.slice(0, 4), buttonRow],
+        };
+      } catch {
+        return buildVerifyPanelPayload(settings.buttonLabel ?? DEFAULT_BUTTON_LABEL);
+      }
+    }
+  }
+
+  const text = settings.panelContent?.trim() || DEFAULT_PANEL_DESCRIPTION;
+  if (settings.panelUseEmbed) {
+    return {
+      content: null,
+      embeds: [
+        {
+          title: "Vérification",
+          description: text,
+          color: settings.panelEmbedColor ?? DEFAULT_PANEL_COLOR,
+        },
+      ],
+      components: [buttonRow],
+    };
+  }
+
+  return {
+    content: text,
+    embeds: [],
+    components: [buttonRow],
   };
 }
 
@@ -89,7 +163,7 @@ export async function syncJoinVerificationPanelDiscord(
     };
   }
 
-  const payload = buildVerifyPanelPayload(settings.buttonLabel ?? DEFAULT_BUTTON_LABEL);
+  const payload = await buildVerifyPanelPayloadFromSettings(prisma, discordGuildId, settings);
   const channelId = settings.channelId;
 
   if (settings.panelMessageId) {

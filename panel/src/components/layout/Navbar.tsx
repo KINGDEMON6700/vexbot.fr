@@ -18,7 +18,7 @@ const links = [
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
   [
-    "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium whitespace-nowrap transition duration-200",
+    "inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium whitespace-nowrap transition duration-200",
     isActive
       ? "ui-nav-link-active"
       : "border-transparent text-zinc-400 hover:border-vex-border hover:bg-vex-surface/70 hover:text-zinc-200 [&_.nav-icon]:text-zinc-400",
@@ -31,14 +31,14 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-vex-border/60 bg-vex-surface/40 shadow-[0_4px_24px_rgba(0,0,0,0.18)] backdrop-blur-xl">
-      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 sm:px-6 sm:py-4">
+      <div className="mx-auto flex max-w-6xl flex-col gap-3 px-3 py-3 sm:px-6 sm:py-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex min-w-0 items-center gap-3">
+          <div className="flex min-w-0 items-center justify-between gap-3 lg:justify-start">
             <NavLink to={`/${qs}`} className="flex min-w-0 items-center gap-2.5">
               <img
                 src={vexLogoFav}
                 alt=""
-                className="h-9 w-9 shrink-0 rounded-lg object-contain ring-1 ring-white/10"
+                className="h-8 w-8 shrink-0 rounded-lg object-contain ring-1 ring-white/10 sm:h-9 sm:w-9"
                 width={36}
                 height={36}
               />
@@ -49,7 +49,7 @@ export function Navbar() {
           </div>
 
           {status === "ready" && user ? (
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <div className="flex w-full min-w-0 flex-row items-center justify-between gap-2 sm:gap-4 lg:w-auto lg:justify-end">
               <GuildSelector />
               <UserAccountMenu user={user} onLogout={logout} />
             </div>
@@ -60,7 +60,7 @@ export function Navbar() {
       </div>
 
       <nav className="ui-nav-bar">
-        <div className="ui-nav-scroll vex-scrollbar mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="ui-nav-scroll vex-scrollbar mx-auto max-w-6xl px-3 sm:px-6">
           <div className="ui-nav-pills ui-nav-track">
             {links.map(({ to, label, icon }) => (
               <NavLink key={to} to={`${to}${qs}`} className={navClass} end={to === "/"}>

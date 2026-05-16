@@ -13,6 +13,7 @@ import {
 import { fetchGuildOverview } from "../../lib/overviewApi.js";
 import type { EmbedTemplate } from "../../types/embedTemplate.js";
 import {
+  defaultExampleTemplateDraft,
   defaultTemplateDraft,
   templateDraftMessagesToApiPayload,
   templateDraftToApiPayload,
@@ -39,6 +40,27 @@ type Props = {
 };
 
 const embedListCache = createPageCache<EmbedTemplate[]>();
+const EMBED_EXAMPLE_SUPPRESSED_STORAGE_PREFIX = "vex-embed-example-suppressed:";
+
+function embedExampleSuppressedStorageKey(discordGuildId: string): string {
+  return `${EMBED_EXAMPLE_SUPPRESSED_STORAGE_PREFIX}${discordGuildId}`;
+}
+
+function isExampleAutoCreationSuppressed(discordGuildId: string): boolean {
+  try {
+    return window.localStorage.getItem(embedExampleSuppressedStorageKey(discordGuildId)) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function suppressExampleAutoCreation(discordGuildId: string) {
+  try {
+    window.localStorage.setItem(embedExampleSuppressedStorageKey(discordGuildId), "1");
+  } catch {
+    // Si le stockage local est indisponible, la suppression reste valable pendant la session.
+  }
+}
 
 type FormatActionId =
   | "bold"
@@ -92,6 +114,7 @@ type ContextMenuState = { x: number; y: number; pick?: "channel" | "role" | "use
 
 export function EmbedsPageContent({ discordGuildId }: Props) {
   const initialDraft = useMemo(() => defaultTemplateDraft(), []);
+  const exampleCreationAttemptedRef = useRef<string | null>(null);
   const [list, setList] = useState<EmbedTemplate[]>(() => embedListCache.get(discordGuildId) ?? []);
   const [loadError, setLoadError] = useState(false);
   const [loading, setLoading] = useState(() => !(embedListCache.get(discordGuildId)?.length));
@@ -512,7 +535,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
       const restored = JSON.parse(savedSnapshot) as TemplateDraft;
       setDraft(restored);
       setJsonImportPending(false);
-      setMessage("Modifications annulées.");
+      setMessage(null);
     } catch {
       setMessage("Impossible de restaurer les modifications.");
     }
@@ -655,14 +678,45 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
   useEffect(() => {
     if (loading) return;
     if (list.length === 0) {
-      if (selectedId === null) {
-        const nextDraft = defaultTemplateDraft();
-        setSelectedId("new");
-        setDraft(nextDraft);
-        setSavedSnapshot(JSON.stringify(nextDraft));
-        setJsonImportPending(false);
+      if (isExampleAutoCreationSuppressed(discordGuildId)) {
+        if (selectedId === null) {
+          const nextDraft = defaultTemplateDraft();
+          setSelectedId("new");
+          setDraft(nextDraft);
+          setSavedSnapshot(JSON.stringify(nextDraft));
+          setJsonImportPending(false);
+        }
+        return;
       }
-      return;
+      if (exampleCreationAttemptedRef.current === discordGuildId) return;
+      exampleCreationAttemptedRef.current = discordGuildId;
+      const exampleDraft = defaultExampleTemplateDraft();
+      let cancelled = false;
+      void (async () => {
+        try {
+          const created = await createEmbedTemplate(discordGuildId, templateDraftToApiPayload(exampleDraft));
+          if (cancelled) return;
+          const nextDraft = templateToDraft(created);
+          setList([created]);
+          embedListCache.set(discordGuildId, [created]);
+          setSelectedId(created.id);
+          setDraft(nextDraft);
+          setSavedSnapshot(JSON.stringify(nextDraft));
+          setJsonImportPending(false);
+          setMessage(null);
+        } catch {
+          if (cancelled) return;
+          const nextDraft = defaultTemplateDraft();
+          setSelectedId("new");
+          setDraft(nextDraft);
+          setSavedSnapshot(JSON.stringify(nextDraft));
+          setJsonImportPending(false);
+          setMessage("Impossible de créer le modèle Exemple automatiquement.");
+        }
+      })();
+      return () => {
+        cancelled = true;
+      };
     }
     if (selectedId === null) {
       const first = list[0];
@@ -674,13 +728,13 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
         setJsonImportPending(false);
       }
     }
-  }, [loading, list, selectedId]);
+  }, [discordGuildId, loading, list, selectedId]);
 
   const handleSave = async () => {
     setMessage(null);
     const buildUniqueName = (baseName: string) => {
       const existing = new Set(list.map((t) => t.name.trim().toLowerCase()));
-      const base = baseName.trim() || "Exemple";
+      const base = baseName.trim() || "Nouveau modèle";
       if (!existing.has(base.toLowerCase())) return base;
       let i = 2;
       while (existing.has(`${base} ${i}`.toLowerCase())) i += 1;
@@ -688,7 +742,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
     };
     const nextName =
       selectedId === "new" || selectedId === null
-        ? buildUniqueName(draft.name.trim() || "Exemple")
+        ? buildUniqueName(draft.name.trim() || "Nouveau modèle")
         : draft.name.trim() || `Modèle ${new Date().toLocaleDateString("fr-FR")} ${Date.now().toString().slice(-4)}`;
     const draftToSave = { ...draft, name: nextName };
     let payload;
@@ -751,8 +805,11 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
       await deleteEmbedTemplate(discordGuildId, id);
       const nextList = list.filter((e) => e.id !== id);
       setList(nextList);
+      embedListCache.set(discordGuildId, nextList);
       setDeleteModal(null);
       if (nextList.length === 0) {
+        suppressExampleAutoCreation(discordGuildId);
+        exampleCreationAttemptedRef.current = discordGuildId;
         const nextDraft = defaultTemplateDraft();
         setSelectedId("new");
         setDraft(nextDraft);
@@ -905,7 +962,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
       className={`flex flex-col gap-6 ${showSaveMenu || saveStatus === "saved" ? SAVE_BAR_PAGE_PADDING : ""}`}
     >
       <div className="flex flex-col gap-4">
-        <div className="min-w-0 rounded-xl border border-vex-border bg-vex-surface/70 p-4">
+        <div className="min-w-0 rounded-xl border border-vex-border bg-vex-surface/70 p-3 sm:p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-4">
             <div className="min-w-0 flex-1 flex flex-col gap-1.5">
               <label className="text-xs font-medium text-zinc-500" htmlFor="send-destination">
@@ -957,14 +1014,14 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
               type="button"
               onClick={() => void handleSendTestDiscord()}
               disabled={sending || !sendTarget}
-              className="ui-btn-primary shrink-0 px-4 py-2 font-medium"
+              className="ui-btn-primary w-full shrink-0 px-4 py-2 font-medium sm:w-auto"
             >
               {sending ? "Envoi…" : "Envoyer"}
             </button>
           </div>
         </div>
 
-        <div className="min-w-0 rounded-xl border border-vex-border bg-vex-surface/70 p-4">
+        <div className="min-w-0 rounded-xl border border-vex-border bg-vex-surface/70 p-3 sm:p-4">
           <input
             ref={importJsonInputRef}
             type="file"
@@ -982,7 +1039,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
             onDeleteTemplate={openDeleteModal}
             disabled={saving || sending}
             toolbarRight={
-              <span className="flex items-center gap-1">
+              <span className="flex flex-wrap items-center justify-end gap-1">
                 <button
                   type="button"
                   title="Télécharger ce modèle au format JSON"
@@ -1038,7 +1095,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
             ) : null}
           </ModalShell>
 
-          <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,400px)] lg:items-start">
+          <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(280px,400px)] xl:items-start">
             <div
               ref={editorRootRef}
               className="min-w-0 space-y-4"
@@ -1058,7 +1115,7 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
             >
               <DiscohookEmbedEditor draft={draft} setDraft={setDraft} />
             </div>
-            <div className="space-y-4 lg:sticky lg:top-4">
+            <div className="min-w-0 space-y-4 xl:sticky xl:top-4">
               <DiscordEmbedPreview draft={draft} mentionLookup={mentionLookup} messageAuthor={messageAuthor} />
             </div>
           </div>
@@ -1083,9 +1140,12 @@ export function EmbedsPageContent({ discordGuildId }: Props) {
         <div
           ref={contextMenuRef}
           className={`fixed z-[120] flex max-h-[min(22rem,calc(100vh-1rem))] flex-col overflow-hidden rounded-lg border border-vex-border bg-vex-surface shadow-2xl ${
-            contextMenu.pick ? "w-[min(22rem,calc(100vw-1.5rem))]" : "w-60"
+            contextMenu.pick ? "w-[min(22rem,calc(100vw-1.5rem))]" : "w-[min(15rem,calc(100vw-1.5rem))]"
           }`}
-          style={{ left: contextMenu.x, top: contextMenu.y }}
+          style={{
+            left: Math.max(8, Math.min(contextMenu.x, window.innerWidth - (contextMenu.pick ? 352 : 240) - 8)),
+            top: Math.max(8, Math.min(contextMenu.y, window.innerHeight - 352 - 8)),
+          }}
           onMouseDown={(event) => event.stopPropagation()}
           onWheel={(event) => event.stopPropagation()}
         >

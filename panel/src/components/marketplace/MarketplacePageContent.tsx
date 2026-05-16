@@ -55,7 +55,7 @@ function publicationDtoToListItem(p: MarketplacePublicationDto): MarketplaceList
 const TYPE_OPTIONS: { id: MarketplaceTypeFilterId; label: string }[] = [
   { id: "all", label: "Tous" },
   { id: "embed", label: "Embeds" },
-  { id: "server", label: "Templates structure" },
+  { id: "server", label: "Templates serveur" },
 ];
 
 const SORT_OPTIONS: { id: MarketplaceSortId; label: string }[] = [
@@ -217,7 +217,7 @@ export function MarketplacePageContent({ discordGuildId, eligibleGuilds, user }:
   const onImport = async (item: MarketplaceListItem) => {
     if (item.kind === "server") {
       showToast(
-        "L’import d’un template de structure depuis le marketplace sera disponible dans une prochaine version.",
+        "L’import d’un template serveur depuis le marketplace sera disponible dans une prochaine version.",
       );
       return;
     }
@@ -267,19 +267,19 @@ export function MarketplacePageContent({ discordGuildId, eligibleGuilds, user }:
         </div>
       ) : null}
 
-      <div className="ui-card flex flex-col gap-3 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4">
-        <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
+      <div className="ui-card flex flex-col gap-3 p-3 sm:p-4 lg:flex-row lg:flex-wrap lg:items-center lg:justify-between lg:gap-4">
+        <div className="flex min-w-0 flex-1 flex-col gap-3 lg:flex-row lg:items-center lg:gap-3">
           <input
             type="search"
-            className="ui-input min-w-[12rem] flex-1 sm:max-w-xs"
+            className="ui-input flex-1 lg:max-w-xs"
             placeholder="Rechercher une template…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Rechercher une template"
           />
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:flex lg:flex-wrap lg:items-center">
             <select
-              className="ui-input w-auto min-w-[8.5rem]"
+              className="ui-input lg:w-auto lg:min-w-[8.5rem]"
               value={typeFilter}
               onChange={(e) => setTypeFilter(e.target.value as MarketplaceTypeFilterId)}
               aria-label="Filtrer par type"
@@ -291,7 +291,7 @@ export function MarketplacePageContent({ discordGuildId, eligibleGuilds, user }:
               ))}
             </select>
             <select
-              className="ui-input w-auto min-w-[9.5rem]"
+              className="ui-input lg:w-auto lg:min-w-[9.5rem]"
               value={sort}
               onChange={(e) => setSort(e.target.value as MarketplaceSortId)}
               aria-label="Trier"
@@ -304,16 +304,16 @@ export function MarketplacePageContent({ discordGuildId, eligibleGuilds, user }:
             </select>
           </div>
         </div>
-        <div className="flex shrink-0 justify-end sm:ml-auto">
+        <div className="flex shrink-0 justify-stretch sm:justify-end lg:ml-auto">
           <button
             type="button"
-            className="ui-btn-primary"
+            className="ui-btn-primary w-full sm:w-auto"
             onClick={() => {
               setPublicationToEdit(null);
               setPublishOpen(true);
             }}
           >
-            Publier une template
+            Publier un modèle
           </button>
         </div>
       </div>

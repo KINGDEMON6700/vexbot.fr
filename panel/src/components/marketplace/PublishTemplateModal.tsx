@@ -248,7 +248,7 @@ export function PublishTemplateModal({
           messages: detail.snapshot,
           sourceServerTemplateId: serverTemplateId,
         });
-        onToast("Template de structure publié sur le marketplace.");
+        onToast("Template serveur publié sur le marketplace.");
       }
       onPublished();
       onClose();
@@ -284,14 +284,14 @@ export function PublishTemplateModal({
 
   return (
     <div
-      className="fixed inset-0 z-[110] flex items-center justify-center bg-black/65 p-4"
+      className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-black/65 p-2 py-4 sm:p-4"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className="ui-card w-full max-w-lg p-5 shadow-2xl"
+        className="ui-card max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto p-4 shadow-2xl sm:p-5"
         role="dialog"
         aria-modal="true"
         aria-labelledby="marketplace-publish-title"
@@ -299,7 +299,7 @@ export function PublishTemplateModal({
       >
         <div className="border-b border-vex-border pb-4">
           <h2 id="marketplace-publish-title" className="text-lg font-semibold text-zinc-100">
-            {isEdit ? "Gérer votre publication" : "Publier un template"}
+            {isEdit ? "Gérer votre publication" : "Publier un modèle"}
           </h2>
           <p className="mt-1 text-sm text-zinc-500">
             {isEdit
@@ -318,7 +318,7 @@ export function PublishTemplateModal({
               disabled={isEdit}
             >
               <option value="embed">Embed</option>
-              <option value="server">Template de structure</option>
+              <option value="server">Template serveur</option>
             </select>
           </label>
 

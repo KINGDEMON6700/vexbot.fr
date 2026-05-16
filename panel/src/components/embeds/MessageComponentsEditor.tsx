@@ -220,7 +220,7 @@ export function MessageComponentsEditor({ rows, onChange }: Props) {
 
           <div className="border-t border-vex-border/70 p-3">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-              <div className="min-w-[200px] flex-1">
+              <div className="min-w-0 flex-1 sm:min-w-[200px]">
                 <Label>Type de composants</Label>
                 <select
                   value={row.components[0]?.type ?? ""}

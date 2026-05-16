@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 type Props = {
   /** Nom d’icône Font Awesome (sans préfixe), ex. `user-plus`. */
@@ -31,6 +31,13 @@ export function ModuleCard({
   onToggleEnabled,
   children,
 }: Props) {
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const canShowBody = enabled || keepFormVisibleWhenDisabled;
+
+  useEffect(() => {
+    if (!canShowBody) setDetailsOpen(false);
+  }, [canShowBody]);
+
   return (
     <div
       className={[
@@ -38,18 +45,29 @@ export function ModuleCard({
         enabled ? "opacity-100" : "opacity-70",
       ].join(" ")}
     >
-      <div className="flex flex-wrap items-start justify-between gap-2 p-3 sm:gap-3">
+      <div className="flex items-start justify-between gap-2 p-3 sm:gap-3">
         <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
           <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-vex-surface text-zinc-300">
             <span className={`fa-solid fa-${icon}`} aria-hidden />
           </div>
           <div className="min-w-0">
-            <h3 className="line-clamp-2 text-sm font-semibold text-zinc-100">{title}</h3>
+            <h3 className="truncate text-sm font-semibold text-zinc-100">{title}</h3>
             <p className="mt-1 line-clamp-3 text-xs text-zinc-400">{description}</p>
           </div>
         </div>
         {hideEnabledToggle ? null : (
-          <div className="flex w-full shrink-0 flex-wrap items-center justify-end gap-2 sm:w-auto sm:justify-start">
+          <div className="flex shrink-0 items-center justify-end gap-2">
+            {canShowBody ? (
+              <button
+                type="button"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-vex-border/70 bg-vex-bg/60 text-xs text-zinc-300 transition hover:border-vex-accent/70 hover:text-vex-accent"
+                aria-label={detailsOpen ? `Replier : ${title}` : `Déplier : ${title}`}
+                aria-expanded={detailsOpen}
+                onClick={() => setDetailsOpen((v) => !v)}
+              >
+                {detailsOpen ? "▼" : "▶"}
+              </button>
+            ) : null}
             <label
               className={[
                 "inline-flex cursor-pointer items-center gap-2 rounded-full px-2 py-1 text-[11px] font-medium transition",
@@ -83,7 +101,7 @@ export function ModuleCard({
         )}
       </div>
 
-      {enabled || keepFormVisibleWhenDisabled ? (
+      {canShowBody && detailsOpen ? (
         <div className="border-t border-vex-border/60 bg-vex-surface/20 p-3 sm:p-4">{children}</div>
       ) : null}
     </div>

@@ -29,14 +29,14 @@ export function CreateCustomCommandModal({ busy, onCancel, onSubmit }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4"
+      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/65 p-2 py-4 sm:p-4"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !busy) onCancel();
       }}
     >
       <div
-        className="ui-card w-full max-w-md p-5 shadow-2xl"
+        className="ui-card w-full max-w-md p-4 shadow-2xl sm:p-5"
         role="dialog"
         aria-modal="true"
         onMouseDown={(e) => e.stopPropagation()}
@@ -90,7 +90,7 @@ export function CreateCustomCommandModal({ busy, onCancel, onSubmit }: Props) {
           </label>
         </div>
 
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-5 flex flex-col-reverse justify-end gap-2 sm:flex-row">
           <button
             type="button"
             className="ui-btn-secondary text-sm"

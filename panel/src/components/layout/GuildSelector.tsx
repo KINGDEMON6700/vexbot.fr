@@ -95,7 +95,10 @@ export function GuildSelector() {
 
   return (
     <div className="flex min-w-0 flex-1 flex-row items-center gap-2 sm:flex-none sm:gap-3">
-      <div className="relative min-w-0 max-w-[min(12rem,42vw)] flex-1 sm:max-w-xs sm:flex-none sm:w-auto" ref={rootRef}>
+      <div
+        className="relative min-w-0 flex-1 sm:w-[18rem] sm:max-w-xs sm:flex-none"
+        ref={rootRef}
+      >
         <label className="sr-only" htmlFor="vex-guild-trigger">
           Serveur Discord
         </label>
@@ -106,7 +109,7 @@ export function GuildSelector() {
           aria-expanded={open}
           aria-controls={listboxId}
           onClick={() => setOpen((v) => !v)}
-          className="flex w-full items-center gap-2 rounded-lg border border-vex-border/90 bg-vex-surface/90 px-2 py-1.5 text-left text-sm text-zinc-100 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] outline-none backdrop-blur-sm transition hover:border-indigo-500/30 hover:bg-vex-bg/60 focus:border-vex-accent focus:ring-1 focus:ring-vex-accent"
+          className="flex w-full items-center gap-2 rounded-lg border border-vex-border/90 bg-vex-surface/90 px-2 py-1.5 text-left text-[11px] text-zinc-100 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] outline-none backdrop-blur-sm transition hover:border-indigo-500/30 hover:bg-vex-bg/60 focus:border-vex-accent focus:ring-1 focus:ring-vex-accent sm:text-sm"
         >
           {selectedGuild ? (
             <>
@@ -129,7 +132,7 @@ export function GuildSelector() {
               )}
             </>
           ) : (
-            <span className="flex-1 px-1 text-zinc-400">Choisir un serveur…</span>
+            <span className="min-w-0 flex-1 truncate px-1 text-zinc-400">Choisir un serveur</span>
           )}
           <span
             className={`fa-solid fa-chevron-down shrink-0 text-xs text-zinc-500 transition ${open ? "rotate-180" : ""}`}
@@ -142,7 +145,7 @@ export function GuildSelector() {
             id={listboxId}
             role="listbox"
             aria-labelledby="vex-guild-trigger"
-            className="absolute z-50 mt-1 max-h-72 w-full min-w-[16rem] overflow-auto rounded-xl border border-vex-border bg-vex-surface py-1 shadow-xl ring-1 ring-black/20"
+            className="absolute left-0 z-50 mt-1 max-h-[min(18rem,calc(100vh-9rem))] w-[min(20rem,calc(100vw-1.5rem))] overflow-auto rounded-xl border border-vex-border bg-vex-surface py-1 shadow-xl ring-1 ring-black/20"
           >
             <li role="presentation">
               <button

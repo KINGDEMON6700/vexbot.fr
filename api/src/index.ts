@@ -9,6 +9,7 @@ import { errorHandler } from "./middleware/errorHandler.js";
 import { notFound } from "./middleware/notFound.js";
 import { healthRouter } from "./routes/health.js";
 import { authRouter } from "./routes/auth.js";
+import { accountRouter } from "./routes/account.js";
 import { guildsRouter } from "./routes/guilds.js";
 import { createBotInternalRouter } from "./routes/botInternal.js";
 import { marketplaceRouter } from "./routes/marketplace.js";
@@ -27,6 +28,7 @@ app.use(createSessionMiddleware(env));
 
 app.use("/api", healthRouter);
 app.use("/api/auth", authRouter);
+app.use("/api/account", accountRouter);
 app.use("/api/guilds", guildsRouter);
 app.use("/api/marketplace", marketplaceRouter);
 app.use("/api/bot-internal", createBotInternalRouter(env));

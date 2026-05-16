@@ -36,9 +36,15 @@ type Props = {
   discordGuildId: string;
   bot: BotInfo;
   onSaved: () => Promise<void>;
+  className?: string;
 };
 
-export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
+export function BotAppearanceCard({
+  discordGuildId,
+  bot,
+  onSaved,
+  className = "mt-4 flex flex-col gap-5",
+}: Props) {
   const [nickDraft, setNickDraft] = useState(() => effectiveNicknameDisplay(bot));
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saved">("idle");
@@ -205,7 +211,7 @@ export function BotAppearanceCard({ discordGuildId, bot, onSaved }: Props) {
   };
 
   return (
-    <div className="mt-4 flex flex-col gap-5">
+    <div className={className}>
       <p className="text-sm leading-relaxed text-zinc-400">
         Photo, bannière et nom affichés sur <span className="text-zinc-300">ce serveur</span> uniquement — comme le
         profil du bot sur Discord.

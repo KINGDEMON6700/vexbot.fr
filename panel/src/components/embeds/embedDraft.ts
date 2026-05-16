@@ -103,6 +103,16 @@ export function defaultMessageComponent(kind: MessageComponentTemplate["type"]):
 
 export function defaultTemplateDraft(): TemplateDraft {
   return {
+    name: "",
+    listAccentColor: null,
+    listIconColor: null,
+    listIconKey: null,
+    messages: [defaultSingleMessageDraft()],
+  };
+}
+
+export function defaultExampleTemplateDraft(): TemplateDraft {
+  return {
     name: "Exemple",
     listAccentColor: null,
     listIconColor: null,

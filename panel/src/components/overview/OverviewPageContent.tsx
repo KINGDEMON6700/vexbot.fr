@@ -207,12 +207,6 @@ export function OverviewPageContent({ discordGuildId }: Props) {
                 </div>
               </div>
             </div>
-            {!d.partial && d.channelCategoriesCount != null ? (
-              <p className="mt-4 text-xs leading-relaxed text-zinc-500">
-                Les salons vocaux comptent aussi les scènes (conférences). Pas le nombre de messages
-                dans les forums — Discord ne l’envoie pas ici.
-              </p>
-            ) : null}
           </div>
         </div>
       </section>

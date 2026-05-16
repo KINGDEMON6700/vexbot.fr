@@ -197,28 +197,28 @@ export function MarketplaceDetailModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-3 sm:p-4"
+      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/65 p-2 py-4 sm:p-4"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className="ui-card flex max-h-[min(92vh,52rem)] w-full max-w-6xl flex-col overflow-hidden shadow-2xl"
+        className="ui-card flex max-h-[calc(100vh-2rem)] w-full max-w-6xl flex-col overflow-hidden shadow-2xl sm:max-h-[min(92vh,52rem)]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="marketplace-detail-title"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-vex-border px-4 py-3 sm:px-5">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-vex-border px-3 py-3 sm:px-5">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Marketplace</span>
           <button type="button" className="ui-btn-secondary shrink-0" onClick={onClose}>
             Fermer
           </button>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
-          <div className="vex-scrollbar flex min-h-0 w-full shrink-0 flex-col overflow-y-auto border-vex-border p-4 sm:p-5 lg:max-w-md lg:border-r xl:max-w-lg">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden xl:flex-row">
+          <div className="vex-scrollbar flex min-h-0 w-full shrink-0 flex-col overflow-y-auto border-vex-border p-3 sm:p-5 xl:max-w-lg xl:border-r">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <span
                 className={
@@ -379,7 +379,7 @@ export function MarketplaceDetailModal({
                 maxLength={2000}
                 disabled={commentBusy || deletingCommentId !== null}
               />
-              <div className="mt-1 flex items-center justify-between gap-2">
+            <div className="mt-1 flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-[10px] text-zinc-600">{commentDraft.length}/2000</span>
                 <button
                   type="button"
@@ -408,7 +408,7 @@ export function MarketplaceDetailModal({
           </div>
 
           <div
-            className="vex-scrollbar flex min-h-[min(52vh,26rem)] flex-1 flex-col overflow-y-auto border-t border-vex-border p-4 sm:p-5 lg:min-h-0 lg:border-t-0"
+            className="vex-scrollbar flex min-h-[min(52vh,26rem)] flex-1 flex-col overflow-y-auto border-t border-vex-border p-3 sm:p-5 xl:min-h-0 xl:border-t-0"
             style={{ backgroundColor: "rgba(14, 14, 20, 0.65)" }}
           >
             <p className="mb-3 shrink-0 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Aperçu</p>

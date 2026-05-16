@@ -115,14 +115,14 @@ export function ApplyTemplateRunModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4"
+      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/65 p-2 py-4 sm:p-4"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !closeDisabled) onClose(isFinished);
       }}
     >
       <div
-        className="ui-card flex max-h-[90vh] w-full max-w-2xl flex-col p-5 shadow-2xl"
+        className="ui-card flex max-h-[calc(100vh-2rem)] w-full max-w-2xl flex-col p-4 shadow-2xl sm:max-h-[90vh] sm:p-5"
         role="dialog"
         aria-modal="true"
         aria-labelledby="apply-run-title"
@@ -159,7 +159,7 @@ export function ApplyTemplateRunModal({
               Le bot va appliquer toutes les modifications listées dans l’aperçu. La progression
               s’affichera ici en temps réel.
             </p>
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-col-reverse justify-end gap-2 pt-2 sm:flex-row">
               <button
                 type="button"
                 className="ui-btn-secondary text-sm"

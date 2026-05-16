@@ -43,7 +43,7 @@ export function CommandsPageContent({ discordGuildId }: Props) {
   const [createOpen, setCreateOpen] = useState(false);
   const [createBusy, setCreateBusy] = useState(false);
   const [nativePermDrafts, setNativePermDrafts] = useState<
-    Record<string, { allowedRoleIds: string[]; allowedChannelIds: string[] }>
+    Record<string, { enabled: boolean; allowedRoleIds: string[]; allowedChannelIds: string[] }>
   >({});
   const [nativePermSaving, setNativePermSaving] = useState(false);
   const [nativeDiscardSignal, setNativeDiscardSignal] = useState(0);
@@ -132,7 +132,7 @@ export function CommandsPageContent({ discordGuildId }: Props) {
     (
       commandName: string,
       dirty: boolean,
-      payload: { allowedRoleIds: string[]; allowedChannelIds: string[] } | null,
+      payload: { enabled: boolean; allowedRoleIds: string[]; allowedChannelIds: string[] } | null,
     ) => {
       setNativePermDrafts((prev) => {
         const next = { ...prev };
@@ -183,7 +183,7 @@ export function CommandsPageContent({ discordGuildId }: Props) {
           </p>
         </header>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
             {natives.map((cmd) => (
               <div key={cmd.commandName} className="min-w-0">
                 <NativeCommandCard
@@ -235,12 +235,12 @@ export function CommandsPageContent({ discordGuildId }: Props) {
             </button>
           </div>
         ) : (
-          <div className="grid gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
+          <div className="grid gap-4 xl:grid-cols-[minmax(220px,260px)_minmax(0,1fr)]">
             <aside className="ui-card flex h-fit flex-col p-3">
               <p className="px-1 pb-2 text-[11px] uppercase tracking-wide text-zinc-500">
                 {customs.length} commande{customs.length > 1 ? "s" : ""}
               </p>
-              <div className="vex-scrollbar max-h-[480px] space-y-1 overflow-y-auto pr-1">
+              <div className="vex-scrollbar max-h-72 space-y-1 overflow-y-auto pr-1 xl:max-h-[480px]">
                 {customs.map((c) => {
                   const active = c.id === selectedCustomId;
                   return (

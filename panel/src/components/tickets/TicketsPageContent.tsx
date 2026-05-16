@@ -192,14 +192,14 @@ function TicketListRowBar({ t, discordGuildId, expanded, onToggleExpand, onCopyF
       tabIndex={0}
       aria-expanded={expanded}
       aria-label={`${ticketListRowTitle(t)}. Appuyez sur Entrée ou Espace pour ${expanded ? "replier" : "développer"}.`}
-      className={`flex w-full cursor-pointer flex-nowrap items-center gap-2 px-4 py-3 text-left text-sm transition hover:bg-vex-bg/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-vex-accent/50 ${
+      className={`flex w-full cursor-pointer flex-col items-start gap-2 px-3 py-3 text-left text-sm transition hover:bg-vex-bg/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-vex-accent/50 sm:flex-row sm:items-center sm:px-4 ${
         expanded ? "bg-vex-accent/10 ring-inset ring-1 ring-vex-accent/25" : ""
       }`}
       onClick={onToggleExpand}
       onKeyDown={onRowKeyDown}
     >
       <ChevronTicketRow expanded={expanded} />
-      <div className="min-w-0 flex-1 truncate">
+      <div className="min-w-0 flex-1 sm:truncate">
         <span className="text-zinc-400">ID: </span>
         <span className="text-zinc-200">#{t.ticketNumber}</span>
         <span className="text-zinc-600"> — </span>
@@ -223,7 +223,7 @@ function TicketListRowBar({ t, discordGuildId, expanded, onToggleExpand, onCopyF
           {openerLabel}
         </button>
       </div>
-      <span className="shrink-0 whitespace-nowrap text-xs text-zinc-500">
+      <span className="pl-6 text-xs text-zinc-500 sm:pl-0">
         {new Date(t.createdAt).toLocaleString("fr-FR")}
       </span>
     </div>
@@ -612,8 +612,8 @@ export function TicketsPageContent({ discordGuildId }: Props) {
   const [draftWelcomeMemberAddEmoji, setDraftWelcomeMemberAddEmoji] = useState("");
   const [customTicketEmojis, setCustomTicketEmojis] = useState<string[]>(() => readStoredTicketEmojis());
   const [openEmojiPicker, setOpenEmojiPicker] = useState<"close" | "add" | null>(null);
-  const [welcomeCloseDetailsOpen, setWelcomeCloseDetailsOpen] = useState(true);
-  const [welcomeAddDetailsOpen, setWelcomeAddDetailsOpen] = useState(true);
+  const [welcomeCloseDetailsOpen, setWelcomeCloseDetailsOpen] = useState(false);
+  const [welcomeAddDetailsOpen, setWelcomeAddDetailsOpen] = useState(false);
   const [draftMaxOpenTicketsPerOpener, setDraftMaxOpenTicketsPerOpener] = useState(1);
   const [draftPanelOpen, setDraftPanelOpen] = useState<TicketPanelOpenConfig>(() => defaultTicketPanelOpen());
   const [savedSnapshot, setSavedSnapshot] = useState("");
@@ -873,7 +873,7 @@ export function TicketsPageContent({ discordGuildId }: Props) {
         Math.min(25, Math.max(1, Math.trunc(restored.maxOpenTicketsPerOpener ?? 1))),
       );
       setSaveState("idle");
-      setSaveMessage("Modifications annulées.");
+      setSaveMessage(null);
     } catch {
       setSaveState("idle");
       setSaveMessage("Impossible de restaurer les réglages.");
@@ -980,14 +980,14 @@ export function TicketsPageContent({ discordGuildId }: Props) {
     <div
       className={`flex flex-col gap-6 ${isDirty || saveState === "ok" ? SAVE_BAR_PAGE_PADDING : ""}`}
     >
-      <section className="overflow-hidden rounded-xl border border-vex-border bg-vex-surface/70">
-        <div className="flex flex-col gap-3 border-b border-vex-border/80 bg-vex-bg/25 p-5 sm:flex-row sm:items-end sm:justify-between sm:p-6">
+      <section className="order-2 overflow-hidden rounded-xl border border-vex-border bg-vex-surface/70">
+        <div className="flex flex-col gap-3 border-b border-vex-border/80 bg-vex-bg/25 p-4 sm:flex-row sm:items-end sm:justify-between sm:p-6">
           <div>
             <h2 className="text-lg font-semibold text-zinc-100">Liste des tickets</h2>
             <p className="mt-1 text-sm text-zinc-500">Cliquez sur une ligne pour afficher le détail.</p>
           </div>
           <div
-            className="inline-flex shrink-0 rounded-lg border border-vex-border/80 bg-vex-bg/50 p-1"
+            className="grid w-full shrink-0 grid-cols-2 rounded-lg border border-vex-border/80 bg-vex-bg/50 p-1 sm:inline-flex sm:w-auto"
             role="tablist"
             aria-label="Filtrer les tickets ouverts ou fermés"
           >
@@ -1021,7 +1021,7 @@ export function TicketsPageContent({ discordGuildId }: Props) {
                 setSelectedId(null);
               }}
             >
-              Fermer
+              Fermés
             </button>
           </div>
         </div>
@@ -1090,8 +1090,8 @@ export function TicketsPageContent({ discordGuildId }: Props) {
         ) : null}
       </section>
 
-      <div className="flex flex-col gap-6">
-        <section className="rounded-xl border border-vex-border bg-vex-surface/70 p-5 sm:p-6">
+      <div className="order-1 flex flex-col gap-6">
+        <section className="rounded-xl border border-vex-border bg-vex-surface/70 p-4 sm:p-6">
           <h2 className="text-lg font-semibold text-zinc-100">Configuration</h2>
           <p className="mt-1 text-sm text-zinc-500">
             Choisissez le salon du panneau et la catégorie où les salons ticket sont créés. En dessous, le contenu affiché
@@ -1136,7 +1136,7 @@ export function TicketsPageContent({ discordGuildId }: Props) {
                 min={1}
                 max={25}
                 inputMode="numeric"
-                className="ui-input max-w-[10rem]"
+                className="ui-input sm:max-w-[10rem]"
                 value={draftMaxOpenTicketsPerOpener}
                 onChange={(e) => {
                   const v = parseInt(e.target.value, 10);
@@ -1158,17 +1158,17 @@ export function TicketsPageContent({ discordGuildId }: Props) {
               Panel dans le salon public ; message d&apos;accueil dans le salon du ticket.
             </p>
 
-            <div className="mt-5 grid gap-6 lg:grid-cols-2 lg:items-start">
-            <div className="space-y-4 rounded-lg border border-vex-border/80 border-l-2 border-l-vex-accent/45 bg-vex-bg/40 p-4 pl-4 sm:p-5">
-            <div className="flex items-center gap-2">
+            <div className="mt-5 grid min-w-0 gap-6 lg:grid-cols-2 lg:items-start">
+            <div className="min-w-0 space-y-4 rounded-lg border border-vex-border/80 border-l-2 border-l-vex-accent/45 bg-vex-bg/40 p-4 pl-4 sm:p-5">
+            <div className="flex min-w-0 items-center gap-2">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-vex-accent/35 bg-vex-accent/10 text-xs font-semibold text-vex-accent">
                 1
               </span>
-              <h4 className="text-sm font-semibold text-zinc-300">Panel ticket</h4>
+              <h4 className="min-w-0 text-sm font-semibold text-zinc-300">Panel ticket</h4>
             </div>
-            <label className="flex flex-col gap-1.5 text-sm sm:max-w-xl">
+            <label className="flex min-w-0 flex-col gap-1.5 text-sm sm:max-w-xl">
               <span className="text-zinc-400">Modèle du message</span>
-              <div className="flex gap-2">
+              <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
                 <select
                   className="ui-input min-w-0 flex-1"
                   value={draftPanelEmbed}
@@ -1183,7 +1183,7 @@ export function TicketsPageContent({ discordGuildId }: Props) {
                 </select>
                 <button
                   type="button"
-                  className="ui-btn-secondary shrink-0 px-3 py-2 text-sm whitespace-nowrap"
+                  className="ui-btn-secondary w-full shrink-0 px-3 py-2 text-sm sm:w-auto"
                   aria-label="Aperçu du message du Panel ticket avec ouverture de ticket"
                   onClick={() => setEmbedPreview("panel")}
                 >
@@ -1191,21 +1191,21 @@ export function TicketsPageContent({ discordGuildId }: Props) {
                 </button>
               </div>
             </label>
-            <div className="mt-4 border-t border-vex-border/80 pt-4">
+            <div className="mt-4 min-w-0 border-t border-vex-border/80 pt-4">
               <TicketPanelOpenSection value={draftPanelOpen} onChange={setDraftPanelOpen} />
             </div>
           </div>
 
-          <div className="space-y-4 rounded-lg border border-vex-border/80 border-l-2 border-l-vex-accent/45 bg-vex-bg/40 p-4 pl-4 sm:p-5">
-            <div className="flex items-center gap-2">
+          <div className="min-w-0 space-y-4 rounded-lg border border-vex-border/80 border-l-2 border-l-vex-accent/45 bg-vex-bg/40 p-4 pl-4 sm:p-5">
+            <div className="flex min-w-0 items-center gap-2">
               <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-vex-accent/35 bg-vex-accent/10 text-xs font-semibold text-vex-accent">
                 2
               </span>
-              <h4 className="text-sm font-semibold text-zinc-300">Message d’accueil</h4>
+              <h4 className="min-w-0 text-sm font-semibold text-zinc-300">Message d’accueil</h4>
             </div>
-            <label className="flex flex-col gap-1.5 text-sm sm:max-w-xl">
+            <label className="flex min-w-0 flex-col gap-1.5 text-sm sm:max-w-xl">
               <span className="text-zinc-400">Modèle du message</span>
-              <div className="flex gap-2">
+              <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
                 <select
                   className="ui-input min-w-0 flex-1"
                   value={draftWelcome}
@@ -1220,7 +1220,7 @@ export function TicketsPageContent({ discordGuildId }: Props) {
                 </select>
                 <button
                   type="button"
-                  className="ui-btn-secondary shrink-0 px-3 py-2 text-sm whitespace-nowrap"
+                  className="ui-btn-secondary w-full shrink-0 px-3 py-2 text-sm sm:w-auto"
                   aria-label="Aperçu du message d’accueil dans le salon du ticket"
                   onClick={() => setEmbedPreview("welcome")}
                 >
@@ -1228,7 +1228,7 @@ export function TicketsPageContent({ discordGuildId }: Props) {
                 </button>
               </div>
             </label>
-            <div className="mt-4 sm:max-w-xl">
+            <div className="mt-4 min-w-0 sm:max-w-xl">
               <UiToggle
                 title="Bouton pour fermer le ticket"
                 hint="Sous le message d'accueil"
@@ -1238,84 +1238,85 @@ export function TicketsPageContent({ discordGuildId }: Props) {
                 onToggle={() => {
                   setDraftWelcomeMemberClose((v) => {
                     const next = !v;
-                    if (next) setWelcomeCloseDetailsOpen(true);
+                    if (next) setWelcomeCloseDetailsOpen(false);
                     return next;
                   });
                 }}
-              />
-              {draftWelcomeMemberClose && welcomeCloseDetailsOpen ? (
-                <div className="mt-3 flex flex-col gap-2 rounded-md border border-vex-border/50 bg-vex-surface/30 px-3 py-2.5">
-                  <span className="text-sm text-zinc-400" id="ticket-close-btn-color-label">
-                    Couleur du bouton sur Discord
-                  </span>
-                  <div
-                    className="flex flex-wrap items-center gap-3"
-                    role="radiogroup"
-                    aria-labelledby="ticket-close-btn-color-label"
-                  >
-                    {DISCORD_TICKET_PANEL_BUTTON_SWATCHES.map((sw) => {
-                      const selected = draftWelcomeMemberCloseStyle === sw.value;
-                      return (
-                        <button
-                          key={sw.value}
-                          type="button"
-                          role="radio"
-                          aria-checked={selected}
-                          title={sw.label}
-                          aria-label={`${sw.label}${selected ? ", sélectionné" : ""}`}
-                          onClick={() => setDraftWelcomeMemberCloseStyle(sw.value)}
-                          className={`h-10 w-10 shrink-0 rounded-full border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-vex-accent/70 focus-visible:ring-offset-2 focus-visible:ring-offset-vex-bg ${
-                            selected
-                              ? "border-zinc-100 ring-2 ring-zinc-200/90 ring-offset-2 ring-offset-vex-bg"
-                              : "border-zinc-600/70 opacity-90 hover:border-zinc-400 hover:opacity-100"
-                          }`}
-                          style={{ backgroundColor: sw.hex }}
-                        />
-                      );
-                    })}
-                  </div>
-                  <div className="relative mt-3 block text-xs font-medium text-zinc-400" data-ticket-emoji-picker>
-                    <label htmlFor="ticket-close-emoji">Emoji</label>
-                    <input
-                      id="ticket-close-emoji"
-                      type="text"
-                      className="ui-input mt-1.5 w-full text-sm"
-                      value={draftWelcomeMemberCloseEmoji}
-                      onChange={(e) => setDraftWelcomeMemberCloseEmoji(e.target.value)}
-                      onClick={() => setOpenEmojiPicker("close")}
-                      onFocus={() => setOpenEmojiPicker("close")}
-                      maxLength={100}
-                      placeholder={DEFAULT_TICKET_WELCOME_CLOSE_EMOJI}
-                      title="Emoji simple, ou emoji du serveur au format <:nom:id>"
-                      disabled={!draftWelcomeMemberClose}
-                    />
-                    {openEmojiPicker === "close" ? (
-                      <div className="absolute left-0 top-full z-30 mt-2 flex max-w-xs flex-wrap gap-1.5 rounded-xl border border-vex-border bg-vex-surface p-2 shadow-xl shadow-black/30">
-                        {ticketEmojiChoices.map((emoji) => (
+              >
+                {draftWelcomeMemberClose && welcomeCloseDetailsOpen ? (
+                  <div className="flex min-w-0 flex-col gap-2">
+                    <div className="relative block min-w-0 text-xs font-medium text-zinc-400" data-ticket-emoji-picker>
+                      <label htmlFor="ticket-close-emoji">Emoji</label>
+                      <input
+                        id="ticket-close-emoji"
+                        type="text"
+                        className="ui-input mt-1.5 w-full text-sm"
+                        value={draftWelcomeMemberCloseEmoji}
+                        onChange={(e) => setDraftWelcomeMemberCloseEmoji(e.target.value)}
+                        onClick={() => setOpenEmojiPicker("close")}
+                        onFocus={() => setOpenEmojiPicker("close")}
+                        maxLength={100}
+                        placeholder={DEFAULT_TICKET_WELCOME_CLOSE_EMOJI}
+                        title="Emoji simple, ou emoji du serveur au format <:nom:id>"
+                        disabled={!draftWelcomeMemberClose}
+                      />
+                      {openEmojiPicker === "close" ? (
+                        <div className="absolute left-0 top-full z-30 mt-2 flex w-full max-w-[20rem] flex-wrap gap-1.5 rounded-xl border border-vex-border bg-vex-surface p-2 shadow-xl shadow-black/30">
+                          {ticketEmojiChoices.map((emoji) => (
+                            <button
+                              key={`close-${emoji}`}
+                              type="button"
+                              className="rounded-md border border-vex-border/70 bg-vex-bg/70 px-2.5 py-1.5 text-base hover:border-vex-accent/70 hover:bg-vex-accent/10"
+                              onClick={() => {
+                                setDraftWelcomeMemberCloseEmoji(emoji);
+                                setOpenEmojiPicker(null);
+                              }}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
                           <button
-                            key={`close-${emoji}`}
                             type="button"
-                            className="rounded-md border border-vex-border/70 bg-vex-bg/70 px-2.5 py-1.5 text-base hover:border-vex-accent/70 hover:bg-vex-accent/10"
-                            onClick={() => {
-                              setDraftWelcomeMemberCloseEmoji(emoji);
-                              setOpenEmojiPicker(null);
-                            }}
+                            className="rounded-md border border-dashed border-vex-accent/60 bg-vex-accent/10 px-2.5 py-1.5 text-sm text-vex-accent hover:bg-vex-accent/15"
+                            onClick={addCustomTicketEmoji}
                           >
-                            {emoji}
+                            +
                           </button>
-                        ))}
-                        <button
-                          type="button"
-                          className="rounded-md border border-dashed border-vex-accent/60 bg-vex-accent/10 px-2.5 py-1.5 text-sm text-vex-accent hover:bg-vex-accent/15"
-                          onClick={addCustomTicketEmoji}
-                        >
-                          +
-                        </button>
-                      </div>
-                    ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                    <span className="text-sm text-zinc-400" id="ticket-close-btn-color-label">
+                      Couleur du bouton
+                    </span>
+                    <div
+                      className="flex min-w-0 flex-wrap items-center gap-3"
+                      role="radiogroup"
+                      aria-labelledby="ticket-close-btn-color-label"
+                    >
+                      {DISCORD_TICKET_PANEL_BUTTON_SWATCHES.map((sw) => {
+                        const selected = draftWelcomeMemberCloseStyle === sw.value;
+                        return (
+                          <button
+                            key={sw.value}
+                            type="button"
+                            role="radio"
+                            aria-checked={selected}
+                            title={sw.label}
+                            aria-label={`${sw.label}${selected ? ", sélectionné" : ""}`}
+                            onClick={() => setDraftWelcomeMemberCloseStyle(sw.value)}
+                            className={`h-10 w-10 shrink-0 rounded-full border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-vex-accent/70 focus-visible:ring-offset-2 focus-visible:ring-offset-vex-bg ${
+                              selected
+                                ? "border-zinc-100 ring-2 ring-zinc-200/90 ring-offset-2 ring-offset-vex-bg"
+                                : "border-zinc-600/70 opacity-90 hover:border-zinc-400 hover:opacity-100"
+                            }`}
+                            style={{ backgroundColor: sw.hex }}
+                          />
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ) : null}
+                ) : null}
+              </UiToggle>
               <UiToggle
                 className="mt-4"
                 title="Bouton pour ajouter quelqu’un au ticket"
@@ -1326,107 +1327,108 @@ export function TicketsPageContent({ discordGuildId }: Props) {
                 onToggle={() => {
                   setDraftWelcomeMemberAdd((v) => {
                     const next = !v;
-                    if (next) setWelcomeAddDetailsOpen(true);
+                    if (next) setWelcomeAddDetailsOpen(false);
                     return next;
                   });
                 }}
-              />
-              {draftWelcomeMemberAdd && welcomeAddDetailsOpen ? (
-                <div className="mt-3 flex flex-col gap-2 rounded-md border border-vex-border/50 bg-vex-surface/30 px-3 py-2.5">
-                  <span className="text-sm text-zinc-400" id="ticket-add-btn-color-label">
-                    Couleur du bouton « Ajouter » sur Discord
-                  </span>
-                  <div
-                    className="flex flex-wrap items-center gap-3"
-                    role="radiogroup"
-                    aria-labelledby="ticket-add-btn-color-label"
-                  >
-                    {DISCORD_TICKET_PANEL_BUTTON_SWATCHES.map((sw) => {
-                      const selected = draftWelcomeMemberAddStyle === sw.value;
-                      return (
-                        <button
-                          key={sw.value}
-                          type="button"
-                          role="radio"
-                          aria-checked={selected}
-                          title={sw.label}
-                          aria-label={`Ajouter : ${sw.label}${selected ? ", sélectionné" : ""}`}
-                          onClick={() => setDraftWelcomeMemberAddStyle(sw.value)}
-                          className={`h-10 w-10 shrink-0 rounded-full border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-vex-accent/70 focus-visible:ring-offset-2 focus-visible:ring-offset-vex-bg ${
-                            selected
-                              ? "border-zinc-100 ring-2 ring-zinc-200/90 ring-offset-2 ring-offset-vex-bg"
-                              : "border-zinc-600/70 opacity-90 hover:border-zinc-400 hover:opacity-100"
-                          }`}
-                          style={{ backgroundColor: sw.hex }}
-                        />
-                      );
-                    })}
-                  </div>
-                  <div className="relative mt-3 block text-xs font-medium text-zinc-400" data-ticket-emoji-picker>
-                    <label htmlFor="ticket-add-emoji">Emoji devant « Ajouter au ticket »</label>
-                    <input
-                      id="ticket-add-emoji"
-                      type="text"
-                      className="ui-input mt-1.5 w-full text-sm"
-                      value={draftWelcomeMemberAddEmoji}
-                      onChange={(e) => setDraftWelcomeMemberAddEmoji(e.target.value)}
-                      onClick={() => setOpenEmojiPicker("add")}
-                      onFocus={() => setOpenEmojiPicker("add")}
-                      maxLength={100}
-                      placeholder={DEFAULT_TICKET_WELCOME_ADD_EMOJI}
-                      title="Emoji simple, ou emoji du serveur au format <:nom:id>"
-                      disabled={!draftWelcomeMemberAdd}
-                    />
-                    {openEmojiPicker === "add" ? (
-                      <div className="absolute left-0 top-full z-30 mt-2 flex max-w-xs flex-wrap gap-1.5 rounded-xl border border-vex-border bg-vex-surface p-2 shadow-xl shadow-black/30">
-                        {ticketEmojiChoices.map((emoji) => (
+              >
+                {draftWelcomeMemberAdd && welcomeAddDetailsOpen ? (
+                  <div className="flex min-w-0 flex-col gap-2">
+                    <div className="relative block min-w-0 text-xs font-medium text-zinc-400" data-ticket-emoji-picker>
+                      <label htmlFor="ticket-add-emoji">Emoji</label>
+                      <input
+                        id="ticket-add-emoji"
+                        type="text"
+                        className="ui-input mt-1.5 w-full text-sm"
+                        value={draftWelcomeMemberAddEmoji}
+                        onChange={(e) => setDraftWelcomeMemberAddEmoji(e.target.value)}
+                        onClick={() => setOpenEmojiPicker("add")}
+                        onFocus={() => setOpenEmojiPicker("add")}
+                        maxLength={100}
+                        placeholder={DEFAULT_TICKET_WELCOME_ADD_EMOJI}
+                        title="Emoji simple, ou emoji du serveur au format <:nom:id>"
+                        disabled={!draftWelcomeMemberAdd}
+                      />
+                      {openEmojiPicker === "add" ? (
+                        <div className="absolute left-0 top-full z-30 mt-2 flex w-full max-w-[20rem] flex-wrap gap-1.5 rounded-xl border border-vex-border bg-vex-surface p-2 shadow-xl shadow-black/30">
+                          {ticketEmojiChoices.map((emoji) => (
+                            <button
+                              key={`add-${emoji}`}
+                              type="button"
+                              className="rounded-md border border-vex-border/70 bg-vex-bg/70 px-2.5 py-1.5 text-base hover:border-vex-accent/70 hover:bg-vex-accent/10"
+                              onClick={() => {
+                                setDraftWelcomeMemberAddEmoji(emoji);
+                                setOpenEmojiPicker(null);
+                              }}
+                            >
+                              {emoji}
+                            </button>
+                          ))}
                           <button
-                            key={`add-${emoji}`}
                             type="button"
-                            className="rounded-md border border-vex-border/70 bg-vex-bg/70 px-2.5 py-1.5 text-base hover:border-vex-accent/70 hover:bg-vex-accent/10"
-                            onClick={() => {
-                              setDraftWelcomeMemberAddEmoji(emoji);
-                              setOpenEmojiPicker(null);
-                            }}
+                            className="rounded-md border border-dashed border-vex-accent/60 bg-vex-accent/10 px-2.5 py-1.5 text-sm text-vex-accent hover:bg-vex-accent/15"
+                            onClick={addCustomTicketEmoji}
                           >
-                            {emoji}
+                            +
                           </button>
-                        ))}
-                        <button
-                          type="button"
-                          className="rounded-md border border-dashed border-vex-accent/60 bg-vex-accent/10 px-2.5 py-1.5 text-sm text-vex-accent hover:bg-vex-accent/15"
-                          onClick={addCustomTicketEmoji}
-                        >
-                          +
-                        </button>
-                      </div>
-                    ) : null}
+                        </div>
+                      ) : null}
+                    </div>
+                    <span className="text-sm text-zinc-400" id="ticket-add-btn-color-label">
+                      Couleur du bouton « Ajouter » sur Discord
+                    </span>
+                    <div
+                      className="flex min-w-0 flex-wrap items-center gap-3"
+                      role="radiogroup"
+                      aria-labelledby="ticket-add-btn-color-label"
+                    >
+                      {DISCORD_TICKET_PANEL_BUTTON_SWATCHES.map((sw) => {
+                        const selected = draftWelcomeMemberAddStyle === sw.value;
+                        return (
+                          <button
+                            key={sw.value}
+                            type="button"
+                            role="radio"
+                            aria-checked={selected}
+                            title={sw.label}
+                            aria-label={`Ajouter : ${sw.label}${selected ? ", sélectionné" : ""}`}
+                            onClick={() => setDraftWelcomeMemberAddStyle(sw.value)}
+                            className={`h-10 w-10 shrink-0 rounded-full border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-vex-accent/70 focus-visible:ring-offset-2 focus-visible:ring-offset-vex-bg ${
+                              selected
+                                ? "border-zinc-100 ring-2 ring-zinc-200/90 ring-offset-2 ring-offset-vex-bg"
+                                : "border-zinc-600/70 opacity-90 hover:border-zinc-400 hover:opacity-100"
+                            }`}
+                            style={{ backgroundColor: sw.hex }}
+                          />
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ) : null}
+                ) : null}
+              </UiToggle>
             </div>
           </div>
             </div>
           </div>
 
-          <div
-            ref={saveFeedbackRef}
-            className="mt-6 border-t border-vex-border/80 pt-4"
-            style={
-              isDirty
-                ? { scrollMarginBottom: "calc(6.5rem + env(safe-area-inset-bottom, 0px))" }
-                : undefined
-            }
-          >
-            {saveMessage ? (
+          {saveMessage ? (
+            <div
+              ref={saveFeedbackRef}
+              className="mt-6 pt-4"
+              style={
+                isDirty
+                  ? { scrollMarginBottom: "calc(6.5rem + env(safe-area-inset-bottom, 0px))" }
+                  : undefined
+              }
+            >
               <p
                 className={`text-sm ${saveState === "err" ? "text-amber-200/90" : saveState === "ok" ? "text-amber-200/90" : "text-zinc-400"}`}
                 role="status"
               >
                 {saveMessage}
               </p>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
         </section>
       </div>
 

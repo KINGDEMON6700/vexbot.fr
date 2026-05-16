@@ -12,7 +12,7 @@ export function TicketsPage() {
   return (
     <AuthenticatedSection
       title="Tickets"
-      description="Liste des tickets en haut, puis salon Discord et messages du Panel (étapes 1 et 2). Sur Discord : /ticket pour fermer, inviter ou retirer quelqu’un."
+      description="Configuration en haut, puis liste des tickets. Sur Discord : /ticket pour fermer, inviter ou retirer quelqu’un."
       wrapContent={false}
     >
       <TicketsInner />

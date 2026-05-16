@@ -41,6 +41,18 @@ function formatDate(iso: string): string {
   }
 }
 
+function formatStructureUpdatedAt(iso: string): string {
+  try {
+    const d = new Date(iso);
+    return `${d.toLocaleDateString("fr-FR")} à ${d.toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    })}`;
+  } catch {
+    return iso;
+  }
+}
+
 function snapshotSummaryLine(snapshot: ServerTemplateSnapshot): string {
   const categoriesCount = snapshot.channels.filter((c) => c.type === "category").length;
   const channelsCount = snapshot.channels.filter((c) => c.type !== "category").length;
@@ -316,17 +328,6 @@ export function ServerTemplatesPageContent({ discordGuildId }: Props) {
     );
   }
 
-  function handleExportCurrentStructureJson() {
-    if (!structure) return;
-    const label = structure.snapshot.guildName?.trim() || "structure";
-    const payload = buildServerTemplateExportPayload({
-      name: label,
-      description: null,
-      snapshot: structure.snapshot,
-    });
-    triggerJsonDownload(`vex-structure-${slugForFilename(label, "serveur")}.json`, payload);
-  }
-
   async function handleImportFileSelected(e: ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -379,26 +380,26 @@ export function ServerTemplatesPageContent({ discordGuildId }: Props) {
         <div className="ui-card p-3 text-sm text-zinc-300">{actionMessage}</div>
       ) : null}
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         {/* Colonne principale : structure actuelle + drawer du template sélectionné en superposition */}
-        <div className="relative">
-          <div className="ui-card p-5 sm:p-6">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-vex-border pb-3">
+        <div className="relative order-2 xl:order-1">
+          <div className="ui-card p-4 sm:p-6">
+          <div className="flex flex-col items-stretch justify-between gap-3 border-b border-vex-border pb-3 lg:flex-row lg:items-center">
             <div>
               <h2 className="text-base font-semibold text-zinc-100">
                 <span className="fa-solid fa-server mr-2 text-zinc-500" aria-hidden />
-                Structure actuelle du serveur
+                Structure du serveur
               </h2>
               <p className="mt-1 text-[11px] text-zinc-500">
                 {structure
-                  ? `Lue le ${formatDate(structure.capturedAt)} — cliquez sur Actualiser si vous as changé des choses sur Discord depuis.`
+                  ? `Dernière mise à jour: ${formatStructureUpdatedAt(structure.capturedAt)} — cliquez sur Actualiser si vous as changé des choses sur Discord depuis.`
                   : "Lecture en cours…"}
               </p>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 lg:justify-end">
               <button
                 type="button"
-                className="ui-btn-secondary text-xs"
+                className="ui-btn-secondary whitespace-nowrap text-xs"
                 onClick={() => void loadStructure(true)}
                 disabled={structureLoading || structureRefreshing}
                 title="Re-lire la structure du serveur depuis Discord"
@@ -407,26 +408,7 @@ export function ServerTemplatesPageContent({ discordGuildId }: Props) {
                   className={`fa-solid fa-arrows-rotate mr-1.5 ${structureRefreshing ? "animate-spin" : ""}`}
                   aria-hidden
                 />
-                {structureRefreshing ? "Actualisation…" : "Actualiser"}
-              </button>
-              <button
-                type="button"
-                className="ui-btn-secondary text-xs"
-                onClick={() => void handleExportCurrentStructureJson()}
-                disabled={!structure || structureLoading}
-                title="Télécharger la structure actuelle du serveur au format JSON"
-              >
-                <span className="fa-solid fa-file-arrow-down mr-1.5" aria-hidden />
-                Exporter JSON
-              </button>
-              <button
-                type="button"
-                className="ui-btn-primary text-sm"
-                onClick={() => setSaveModalOpen(true)}
-                disabled={!structure || structureLoading}
-              >
-                <span className="fa-solid fa-floppy-disk mr-2" aria-hidden />
-                Sauvegarder en template
+                {structureRefreshing ? "Actualisation…" : "Mettre à jour"}
               </button>
             </div>
           </div>
@@ -456,6 +438,17 @@ export function ServerTemplatesPageContent({ discordGuildId }: Props) {
               />
             ) : null}
           </div>
+          <div className="mt-4 flex justify-end border-t border-vex-border pt-3">
+            <button
+              type="button"
+              className="ui-btn-primary text-sm"
+              onClick={() => setSaveModalOpen(true)}
+              disabled={!structure || structureLoading}
+            >
+              <span className="fa-solid fa-floppy-disk mr-2" aria-hidden />
+              Sauvegarder template
+            </button>
+          </div>
           </div>
 
           <TemplateDrawer
@@ -476,7 +469,7 @@ export function ServerTemplatesPageContent({ discordGuildId }: Props) {
         </div>
 
         {/* Colonne droite : liste des templates */}
-        <aside className="ui-card flex h-fit flex-col p-4">
+        <aside className="ui-card order-1 flex h-fit flex-col p-4 xl:order-2">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-zinc-200">Mes templates</h3>
             {list.length > 0 ? (
@@ -546,14 +539,14 @@ export function ServerTemplatesPageContent({ discordGuildId }: Props) {
 
       {applyPreviewError ? (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4"
+          className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/65 p-2 py-4 sm:p-4"
           role="presentation"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) setApplyPreviewError(null);
           }}
         >
           <div
-            className="ui-card w-full max-w-md p-5 shadow-2xl"
+            className="ui-card w-full max-w-md p-4 shadow-2xl sm:p-5"
             role="dialog"
             aria-modal="true"
             onMouseDown={(e) => e.stopPropagation()}
@@ -627,14 +620,14 @@ export function ServerTemplatesPageContent({ discordGuildId }: Props) {
 
       {confirmDelete && drawerSummary ? (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4"
+          className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/65 p-2 py-4 sm:p-4"
           role="presentation"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget && !actionBusy) setConfirmDelete(false);
           }}
         >
           <div
-            className="ui-card w-full max-w-md p-5 shadow-2xl"
+            className="ui-card w-full max-w-md p-4 shadow-2xl sm:p-5"
             role="dialog"
             aria-modal="true"
             onMouseDown={(e) => e.stopPropagation()}
@@ -647,7 +640,7 @@ export function ServerTemplatesPageContent({ discordGuildId }: Props) {
               <strong>{drawerSummary.name}</strong> du panel. Le serveur Discord d’origine n’est
               pas touché.
             </p>
-            <div className="mt-5 flex justify-end gap-2">
+            <div className="mt-5 flex flex-col-reverse justify-end gap-2 sm:flex-row">
               <button
                 type="button"
                 className="ui-btn-secondary text-sm"

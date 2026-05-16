@@ -339,15 +339,15 @@ export function DiscordServerStructurePreview({ serverName, iconUrl, categories,
       <div className="max-h-[min(88vh,52rem)] overflow-y-auto">
         <div className="flex min-h-[min(52vh,22rem)] sm:min-h-[min(48vh,26rem)]">
           <div
-            className="flex w-[52px] shrink-0 flex-col items-center border-r border-black/25 py-3"
+            className="flex w-11 shrink-0 flex-col items-center border-r border-black/25 py-3 sm:w-[52px]"
             style={{ backgroundColor: BG_SIDEBAR }}
             aria-hidden
           >
             {iconUrl ? (
-              <img src={iconUrl} alt="" className="h-10 w-10 rounded-[15px] object-cover" decoding="async" />
+              <img src={iconUrl} alt="" className="h-8 w-8 rounded-[12px] object-cover sm:h-10 sm:w-10 sm:rounded-[15px]" decoding="async" />
             ) : (
               <div
-                className="flex h-10 w-10 items-center justify-center rounded-[15px] text-sm font-bold text-white"
+                className="flex h-8 w-8 items-center justify-center rounded-[12px] text-sm font-bold text-white sm:h-10 sm:w-10 sm:rounded-[15px]"
                 style={{ backgroundColor: "#5865f2" }}
               >
                 {initial}

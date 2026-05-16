@@ -179,14 +179,14 @@ export function ApplyTemplatePreviewModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4"
+      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/65 p-2 py-4 sm:p-4"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && !busy) onCancel();
       }}
     >
       <div
-        className="ui-card flex max-h-[90vh] w-full max-w-3xl flex-col p-5 shadow-2xl"
+        className="ui-card flex max-h-[calc(100vh-2rem)] w-full max-w-3xl flex-col p-4 shadow-2xl sm:max-h-[90vh] sm:p-5"
         role="dialog"
         aria-modal="true"
         aria-labelledby="apply-preview-title"
@@ -225,7 +225,7 @@ export function ApplyTemplatePreviewModal({
           </ul>
         ) : null}
 
-        <div className="mt-4 grid flex-1 min-h-0 gap-4 overflow-y-auto pr-1 md:grid-cols-2">
+        <div className="mt-4 grid min-h-0 flex-1 gap-4 overflow-y-auto pr-1 xl:grid-cols-2">
           <section className="rounded-lg border border-vex-border/60 bg-vex-surface/30 p-2">
             <header className="px-2 pb-1.5 pt-1">
               <h3 className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
@@ -269,7 +269,7 @@ export function ApplyTemplatePreviewModal({
           </section>
         </div>
 
-        <footer className="mt-4 flex justify-end gap-2 border-t border-vex-border pt-3">
+        <footer className="mt-4 flex flex-col-reverse justify-end gap-2 border-t border-vex-border pt-3 sm:flex-row">
           <button
             type="button"
             className="ui-btn-secondary text-sm"

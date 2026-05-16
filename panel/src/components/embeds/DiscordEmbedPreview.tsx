@@ -91,7 +91,7 @@ function InteractiveButtonPreview({ c }: { c: MessageComponentTemplate }) {
         href={href}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex max-h-10 min-h-[32px] max-w-full min-w-[60px] cursor-pointer items-center justify-center gap-1.5 rounded-[3px] px-3 py-1.5 text-sm font-medium text-white no-underline transition hover:brightness-110 active:translate-y-px"
+        className="inline-flex min-h-[32px] max-w-full cursor-pointer items-center justify-center gap-1.5 rounded-[3px] px-3 py-1.5 text-sm font-medium text-white no-underline transition hover:brightness-110 active:translate-y-px"
         style={{ backgroundColor: "#4E5058" }}
         title={c.url}
         onClick={(e) => {
@@ -107,7 +107,7 @@ function InteractiveButtonPreview({ c }: { c: MessageComponentTemplate }) {
     <button
       type="button"
       disabled={c.disabled}
-      className="inline-flex max-h-10 min-h-[32px] max-w-full min-w-[60px] cursor-pointer items-center justify-center gap-1.5 rounded-[3px] px-3 py-1.5 text-sm font-medium text-white transition hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50"
+      className="inline-flex min-h-[32px] max-w-full cursor-pointer items-center justify-center gap-1.5 rounded-[3px] px-3 py-1.5 text-sm font-medium text-white transition hover:brightness-110 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50"
       style={{ backgroundColor: buttonStyleBg(c.style) }}
     >
       {"emoji" in c && c.emoji ? <ButtonEmojiPreview emoji={c.emoji} /> : null}
@@ -173,7 +173,7 @@ function SingleEmbedCard({
 
   return (
     <div
-      className="mt-2 max-w-[432px] overflow-hidden rounded-[4px] first:mt-0"
+      className="mt-2 max-w-full overflow-hidden rounded-[4px] sm:max-w-[432px] first:mt-0"
       style={{
         backgroundColor: "#2b2d31",
         borderLeftWidth: 4,
@@ -183,7 +183,7 @@ function SingleEmbedCard({
       }}
     >
       <div className="px-3 pb-3 pt-2">
-        <div className="flex gap-3">
+        <div className="flex gap-2.5 sm:gap-3">
           <div className="min-w-0 flex-1">
             {embedAuthor || block.authorIconUrl.trim() ? (
               <div className="mb-2 flex items-center gap-2">
@@ -262,7 +262,7 @@ function SingleEmbedCard({
             <img
               src={block.thumbnailUrl.trim()}
               alt=""
-              className="h-20 w-20 shrink-0 rounded object-cover"
+              className="h-16 w-16 shrink-0 rounded object-cover sm:h-20 sm:w-20"
             />
           ) : null}
         </div>
@@ -271,7 +271,7 @@ function SingleEmbedCard({
           <img
             src={block.imageUrl.trim()}
             alt=""
-            className="mt-3 max-h-48 w-full rounded object-cover"
+              className="mt-3 max-h-48 w-full rounded object-cover"
           />
         ) : null}
 
@@ -310,7 +310,7 @@ export function DiscordEmbedPreview({
   };
   const headerTime = useMemo(() => formatMessageHeaderTime(), []);
 
-  const outerClass = ["rounded-xl border border-vex-border p-4 shadow-inner", className].filter(Boolean).join(" ");
+  const outerClass = ["min-w-0 rounded-xl border border-vex-border p-3 shadow-inner sm:p-4", className].filter(Boolean).join(" ");
 
   return (
     <div
@@ -326,7 +326,7 @@ export function DiscordEmbedPreview({
         </p>
       ) : null}
 
-      <div className="mx-auto max-w-[480px]">
+      <div className="mx-auto max-w-full sm:max-w-[480px]">
         {draft.messages.map((singleMsg, mi) => {
           const nameOverride = singleMsg.profileDisplayName.trim();
           const avatarOverride = singleMsg.profileAvatarUrl.trim();
@@ -349,17 +349,17 @@ export function DiscordEmbedPreview({
                   Message {mi + 1}
                 </p>
               ) : null}
-              <div className="flex gap-4">
-                <div className="w-10 shrink-0 pt-0.5">
+              <div className="flex gap-2.5 sm:gap-4">
+                <div className="w-8 shrink-0 pt-0.5 sm:w-10">
                   {lineAuthor.avatarUrl ? (
                     <img
                       src={lineAuthor.avatarUrl}
                       alt=""
-                      className="h-10 w-10 rounded-full object-cover"
+                      className="h-8 w-8 rounded-full object-cover sm:h-10 sm:w-10"
                     />
                   ) : (
                     <div
-                      className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold text-white"
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-white sm:h-10 sm:w-10"
                       style={{ backgroundColor: "#5865f2" }}
                     >
                       {lineAuthor.displayName.slice(0, 1).toUpperCase() || "?"}

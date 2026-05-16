@@ -11,22 +11,35 @@ type Props = {
   discardSignal?: number;
   onPermissionsDirty?: (
     dirty: boolean,
-    payload: { allowedRoleIds: string[]; allowedChannelIds: string[] } | null,
+    payload: { enabled: boolean; allowedRoleIds: string[]; allowedChannelIds: string[] } | null,
   ) => void;
 };
+
+function sameIds(a: string[], b: string[]) {
+  if (a.length !== b.length) return false;
+  return a.every((id, i) => id === b[i]);
+}
 
 export function NativeCommandCard({ command, meta, onChange, discardSignal = 0, onPermissionsDirty }: Props) {
   const [busy, setBusy] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [draftEnabled, setDraftEnabled] = useState(command.enabled);
   const [draftRoles, setDraftRoles] = useState<string[]>(command.allowedRoleIds);
   const [draftChannels, setDraftChannels] = useState<string[]>(command.allowedChannelIds);
-  const [dirty, setDirty] = useState(false);
+  const isDirty =
+    draftEnabled !== command.enabled ||
+    !sameIds(draftRoles, command.allowedRoleIds) ||
+    !sameIds(draftChannels, command.allowedChannelIds);
 
   useEffect(() => {
+    setDraftEnabled(command.enabled);
     setDraftRoles(command.allowedRoleIds);
     setDraftChannels(command.allowedChannelIds);
-    setDirty(false);
-  }, [command.allowedRoleIds, command.allowedChannelIds, discardSignal]);
+  }, [command.enabled, command.allowedRoleIds, command.allowedChannelIds, discardSignal]);
+
+  useEffect(() => {
+    if (!draftEnabled) setExpanded(false);
+  }, [draftEnabled]);
 
   const onPermissionsDirtyRef = useRef(onPermissionsDirty);
   onPermissionsDirtyRef.current = onPermissionsDirty;
@@ -34,12 +47,12 @@ export function NativeCommandCard({ command, meta, onChange, discardSignal = 0, 
   useEffect(() => {
     const notify = onPermissionsDirtyRef.current;
     if (!notify) return;
-    if (!dirty) {
+    if (!isDirty) {
       notify(false, null);
       return;
     }
-    notify(true, { allowedRoleIds: draftRoles, allowedChannelIds: draftChannels });
-  }, [dirty, draftRoles, draftChannels]);
+    notify(true, { enabled: draftEnabled, allowedRoleIds: draftRoles, allowedChannelIds: draftChannels });
+  }, [draftChannels, draftEnabled, draftRoles, isDirty]);
 
   const roleOptions: MultiPickerOption[] = (meta?.roles ?? []).map((r) => ({
     id: r.id,
@@ -53,20 +66,23 @@ export function NativeCommandCard({ command, meta, onChange, discardSignal = 0, 
 
   async function handleToggleEnabled() {
     if (busy) return;
+    if (onPermissionsDirty) {
+      setDraftEnabled((v) => !v);
+      return;
+    }
     setBusy(true);
     try {
-      await onChange({ enabled: !command.enabled });
+      await onChange({ enabled: !draftEnabled });
     } finally {
       setBusy(false);
     }
   }
 
   async function handleSavePermissions() {
-    if (busy || !dirty) return;
+    if (busy || !isDirty) return;
     setBusy(true);
     try {
-      await onChange({ allowedRoleIds: draftRoles, allowedChannelIds: draftChannels });
-      setDirty(false);
+      await onChange({ enabled: draftEnabled, allowedRoleIds: draftRoles, allowedChannelIds: draftChannels });
     } finally {
       setBusy(false);
     }
@@ -74,37 +90,35 @@ export function NativeCommandCard({ command, meta, onChange, discardSignal = 0, 
 
   function setRoles(next: string[]) {
     setDraftRoles(next);
-    setDirty(true);
   }
   function setChannels(next: string[]) {
     setDraftChannels(next);
-    setDirty(true);
   }
 
   return (
     <div
       className={[
         "ui-card-interactive min-w-0 overflow-hidden",
-        command.enabled ? "opacity-100" : "opacity-70",
+        draftEnabled ? "opacity-100" : "opacity-70",
       ].join(" ")}
     >
-      <div className="flex flex-wrap items-start justify-between gap-2 p-3 sm:gap-3">
+      <div className="flex items-start justify-between gap-2 p-3 sm:gap-3">
         <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
           <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-300 ring-1 ring-indigo-500/25">
             <span className={`fa-solid fa-${command.icon}`} aria-hidden />
           </div>
           <div className="min-w-0">
-            <h3 className="line-clamp-2 text-sm font-semibold text-zinc-100">
+            <h3 className="truncate text-sm font-semibold text-zinc-100">
               {command.displayName}
             </h3>
             <p className="mt-1 line-clamp-3 text-xs text-zinc-400">{command.description}</p>
           </div>
         </div>
-        <div className="flex w-full shrink-0 flex-wrap items-center justify-end gap-2 sm:w-auto sm:justify-start">
+        <div className="flex shrink-0 items-center justify-end gap-2">
           <label
             className={[
               "inline-flex cursor-pointer items-center gap-2 rounded-full px-2 py-1 text-[11px] font-medium transition",
-              command.enabled
+              draftEnabled
                 ? "bg-emerald-500/15 text-emerald-300"
                 : "bg-zinc-700/40 text-zinc-400",
               busy ? "opacity-60" : "",
@@ -113,29 +127,29 @@ export function NativeCommandCard({ command, meta, onChange, discardSignal = 0, 
             <input
               type="checkbox"
               className="hidden"
-              checked={command.enabled}
+              checked={draftEnabled}
               onChange={() => void handleToggleEnabled()}
               disabled={busy}
             />
             <span
               className={[
                 "relative inline-block h-3.5 w-7 rounded-full transition",
-                command.enabled ? "bg-emerald-500/70" : "bg-zinc-600",
+                draftEnabled ? "bg-emerald-500/70" : "bg-zinc-600",
               ].join(" ")}
             >
               <span
                 className={[
                   "absolute top-0.5 inline-block h-2.5 w-2.5 rounded-full bg-white transition",
-                  command.enabled ? "left-3.5" : "left-0.5",
+                  draftEnabled ? "left-3.5" : "left-0.5",
                 ].join(" ")}
               />
             </span>
-            {command.enabled ? "Activée" : "Désactivée"}
+            {draftEnabled ? "Activée" : "Désactivée"}
           </label>
         </div>
       </div>
 
-      {command.enabled ? (
+      {draftEnabled ? (
         <div className="border-t border-vex-border/60 bg-vex-surface/20">
           <button
             type="button"
@@ -187,7 +201,7 @@ export function NativeCommandCard({ command, meta, onChange, discardSignal = 0, 
               </div>
               {onPermissionsDirty ? (
                 <p className="md:col-span-2 text-[11px] text-zinc-500">
-                  Utilise la barre « Enregistrer » en bas de la page pour sauvegarder les restrictions.
+                  Utilise la barre « Enregistrer » en bas de la page pour sauvegarder les changements.
                 </p>
               ) : (
                 <div className="md:col-span-2 flex justify-end">
@@ -195,7 +209,7 @@ export function NativeCommandCard({ command, meta, onChange, discardSignal = 0, 
                     type="button"
                     className="ui-btn-primary text-xs"
                     onClick={() => void handleSavePermissions()}
-                    disabled={!dirty || busy}
+                    disabled={!isDirty || busy}
                   >
                     {busy ? "Enregistrement…" : "Enregistrer les restrictions"}
                   </button>

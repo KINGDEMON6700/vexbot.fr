@@ -44,7 +44,7 @@ export function ModalShell({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[150] flex items-center justify-center bg-black/70 p-4 sm:p-6"
+      className="fixed inset-0 z-[150] flex items-start justify-center overflow-y-auto bg-black/70 p-2 py-4 sm:p-6 sm:py-6"
       role="presentation"
       onMouseDown={(e) => {
         if (lockDismiss) return;
@@ -55,11 +55,11 @@ export function ModalShell({
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? "modal-shell-title" : undefined}
-        className={`ui-card flex max-h-[min(92vh,52rem)] w-full ${maxW} flex-col overflow-hidden shadow-2xl`}
+        className={`ui-card flex max-h-[calc(100vh-2rem)] w-full ${maxW} flex-col overflow-hidden shadow-2xl sm:max-h-[min(92vh,52rem)]`}
         onMouseDown={(e) => e.stopPropagation()}
       >
         {title ? (
-          <header className="flex shrink-0 items-center justify-between gap-3 border-b border-vex-border/80 px-4 py-3 sm:px-5">
+          <header className="flex shrink-0 items-center justify-between gap-3 border-b border-vex-border/80 px-3 py-3 sm:px-5">
             <h2 id="modal-shell-title" className="text-base font-semibold text-zinc-100">
               {title}
             </h2>
@@ -75,7 +75,7 @@ export function ModalShell({
             ) : null}
           </header>
         ) : null}
-        <div className="min-h-0 flex-1 overflow-y-auto vex-scrollbar p-4 sm:p-5">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto vex-scrollbar p-3 sm:p-5">{children}</div>
       </div>
     </div>,
     document.body,

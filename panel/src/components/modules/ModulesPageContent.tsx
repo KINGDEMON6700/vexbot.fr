@@ -30,11 +30,14 @@ function embedColorToInput(n: number | null): string {
   return `#${v.toString(16).padStart(6, "0")}`;
 }
 
-/** Champs enregistrés via « Enregistrer » (les interrupteurs principaux sont sauvegardés tout de suite). */
+/** Champs enregistrés via « Enregistrer ». */
 function welcomeGoodbyeDraftSnapshot(s: WelcomeGoodbyeSettings): string {
   const welcomeKind: "simple" | "template" = s.welcomeEmbedId?.trim() ? "template" : "simple";
   const goodbyeKind: "simple" | "template" = s.goodbyeEmbedId?.trim() ? "template" : "simple";
   return JSON.stringify({
+    moduleEnabled: s.moduleEnabled,
+    welcomeMessagesEnabled: s.welcomeMessagesEnabled,
+    goodbyeMessagesEnabled: s.goodbyeMessagesEnabled,
     welcomeChannelId: s.welcomeChannelId ?? "",
     welcomeContent: s.welcomeContent ?? "",
     welcomeKind,
@@ -49,6 +52,9 @@ function welcomeGoodbyeDraftSnapshot(s: WelcomeGoodbyeSettings): string {
 }
 
 type WelcomeGoodbyeDraft = {
+  moduleEnabled: boolean;
+  welcomeMessagesEnabled: boolean;
+  goodbyeMessagesEnabled: boolean;
   welcomeChannelId: string;
   welcomeContent: string;
   welcomeKind: "simple" | "template";
@@ -64,48 +70,129 @@ type WelcomeGoodbyeDraft = {
 const PLACEHOLDER_VARS =
   "{user} · {user.mention} · {user.name} · {user.id} · {server} ou {guild} · {memberCount}";
 
+const EMBED_COLOR_SWATCHES: ReadonlyArray<{ label: string; hex: string }> = [
+  { label: "Bleu nuit", hex: "#4F7BFF" },
+  { label: "Violet", hex: "#9B5CFF" },
+  { label: "Rose", hex: "#EB6BA8" },
+  { label: "Corail", hex: "#FF6B6B" },
+  { label: "Orange", hex: "#F59E0B" },
+  { label: "Menthe", hex: "#34D399" },
+  { label: "Turquoise", hex: "#22D3EE" },
+  { label: "Ardoise", hex: "#64748B" },
+];
+
+function EmbedColorPicker({
+  label,
+  labelId,
+  value,
+  onChange,
+}: {
+  label: string;
+  labelId: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const selectedValue = value.toLowerCase();
+
+  return (
+    <div className="space-y-2">
+      <span className="block text-xs font-medium text-zinc-400" id={labelId}>
+        {label}
+      </span>
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          className="h-9 w-14 cursor-pointer rounded border border-vex-border bg-vex-bg p-0"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <span className="text-xs text-zinc-500">{value}</span>
+      </div>
+      <div className="flex flex-wrap items-center gap-3" role="radiogroup" aria-labelledby={labelId}>
+        {EMBED_COLOR_SWATCHES.map((sw) => {
+          const selected = selectedValue === sw.hex.toLowerCase();
+          return (
+            <button
+              key={sw.hex}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              title={sw.label}
+              aria-label={`${sw.label}${selected ? ", sélectionné" : ""}`}
+              onClick={() => onChange(sw.hex)}
+              className={`h-10 w-10 shrink-0 rounded-full border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-vex-accent/70 focus-visible:ring-offset-2 focus-visible:ring-offset-vex-bg ${
+                selected
+                  ? "border-zinc-100 ring-2 ring-zinc-200/90 ring-offset-2 ring-offset-vex-bg"
+                  : "border-zinc-600/70 opacity-90 hover:border-zinc-400 hover:opacity-100"
+              }`}
+              style={{ backgroundColor: sw.hex }}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function SubModuleToggle({
   title,
   hint,
   active,
   busy,
   onToggle,
+  detailsExpanded,
+  onToggleDetails,
 }: {
   title: string;
   hint: string;
   active: boolean;
   busy: boolean;
   onToggle: () => void;
+  detailsExpanded?: boolean;
+  onToggleDetails?: () => void;
 }) {
   return (
-    <div className="flex flex-col justify-between gap-2 rounded-md border border-vex-border/50 bg-vex-bg/25 p-3 sm:flex-row sm:items-center">
-      <div className="min-w-0">
-        <p className="text-xs font-medium text-zinc-300">{title}</p>
+    <div className="flex items-start justify-between gap-2 rounded-md border border-vex-border/50 bg-vex-bg/25 p-3">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-xs font-medium text-zinc-300">{title}</p>
         <p className="mt-0.5 text-[11px] text-zinc-500">{hint}</p>
       </div>
-      <label
-        className={[
-          "inline-flex shrink-0 cursor-pointer items-center self-end rounded-full p-1 transition sm:self-auto",
-          active ? "bg-emerald-500/15" : "bg-zinc-700/40",
-          busy ? "pointer-events-none opacity-60" : "",
-        ].join(" ")}
-        aria-label={active ? `Désactiver ${title}` : `Activer ${title}`}
-      >
-        <input type="checkbox" className="hidden" checked={active} onChange={() => onToggle()} disabled={busy} />
-        <span
+      <div className="inline-flex shrink-0 items-center gap-2">
+        {active && onToggleDetails ? (
+          <button
+            type="button"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-vex-border/70 bg-vex-bg/60 text-xs text-zinc-300 transition hover:border-vex-accent/70 hover:text-vex-accent"
+            aria-label={detailsExpanded ? `Replier : ${title}` : `Déplier : ${title}`}
+            aria-expanded={detailsExpanded}
+            onClick={onToggleDetails}
+          >
+            {detailsExpanded ? "▼" : "▶"}
+          </button>
+        ) : null}
+        <label
           className={[
-            "relative inline-block h-3.5 w-7 rounded-full transition",
-            active ? "bg-emerald-500/70" : "bg-zinc-600",
+            "inline-flex cursor-pointer items-center rounded-full p-1 transition",
+            active ? "bg-emerald-500/15" : "bg-zinc-700/40",
+            busy ? "pointer-events-none opacity-60" : "",
           ].join(" ")}
+          aria-label={active ? `Désactiver ${title}` : `Activer ${title}`}
         >
+          <input type="checkbox" className="hidden" checked={active} onChange={() => onToggle()} disabled={busy} />
           <span
             className={[
-              "absolute top-0.5 inline-block h-2.5 w-2.5 rounded-full bg-white transition",
-              active ? "left-3.5" : "left-0.5",
+              "relative inline-block h-3.5 w-7 rounded-full transition",
+              active ? "bg-emerald-500/70" : "bg-zinc-600",
             ].join(" ")}
-          />
-        </span>
-      </label>
+          >
+            <span
+              className={[
+                "absolute top-0.5 inline-block h-2.5 w-2.5 rounded-full bg-white transition",
+                active ? "left-3.5" : "left-0.5",
+              ].join(" ")}
+            />
+          </span>
+        </label>
+      </div>
     </div>
   );
 }
@@ -115,16 +202,20 @@ export function ModulesPageContent({ discordGuildId }: Props) {
   const [embedTemplates, setEmbedTemplates] = useState<EmbedTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [flagsSaving, setFlagsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedOk, setSavedOk] = useState(false);
   const [joinVerifyDirty, setJoinVerifyDirty] = useState(false);
   const [joinVerifyDiscardSignal, setJoinVerifyDiscardSignal] = useState(0);
   const joinVerifySaveRef = useRef<(() => Promise<void>) | null>(null);
+  const [appearanceDirty, setAppearanceDirty] = useState(false);
+  const [appearanceDiscardSignal, setAppearanceDiscardSignal] = useState(0);
+  const appearanceSaveRef = useRef<(() => Promise<void>) | null>(null);
 
   const [moduleEnabled, setModuleEnabled] = useState(true);
   const [welcomeMessagesEnabled, setWelcomeMessagesEnabled] = useState(true);
   const [goodbyeMessagesEnabled, setGoodbyeMessagesEnabled] = useState(true);
+  const [welcomeDetailsOpen, setWelcomeDetailsOpen] = useState(false);
+  const [goodbyeDetailsOpen, setGoodbyeDetailsOpen] = useState(false);
 
   const [welcomeChannelId, setWelcomeChannelId] = useState("");
   const [welcomeContent, setWelcomeContent] = useState("");
@@ -142,8 +233,6 @@ export function ModulesPageContent({ discordGuildId }: Props) {
   const [joinModuleEnabled, setJoinModuleEnabled] = useState(false);
   const [joinRoleIds, setJoinRoleIds] = useState<string[]>([]);
   const [joinRoleSnapshot, setJoinRoleSnapshot] = useState("");
-  const [joinFlagsSaving, setJoinFlagsSaving] = useState(false);
-  const [joinRolesSaving, setJoinRolesSaving] = useState(false);
 
   const [savedDraftSnapshot, setSavedDraftSnapshot] = useState("");
   const [guildOverview, setGuildOverview] = useState<OverviewResponse | null>(null);
@@ -177,7 +266,7 @@ export function ModulesPageContent({ discordGuildId }: Props) {
   const applyJoinFromSettings = useCallback((s: JoinAutoRoleSettings) => {
     setJoinModuleEnabled(s.moduleEnabled);
     setJoinRoleIds([...s.discordRoleIds]);
-    setJoinRoleSnapshot(JSON.stringify(s.discordRoleIds));
+    setJoinRoleSnapshot(JSON.stringify({ moduleEnabled: s.moduleEnabled, discordRoleIds: s.discordRoleIds }));
   }, []);
 
   const load = useCallback(async () => {
@@ -206,41 +295,6 @@ export function ModulesPageContent({ discordGuildId }: Props) {
     }
   }, [discordGuildId, applySettingsToForm, applyJoinFromSettings]);
 
-  const patchJoinFlags = useCallback(async () => {
-    setJoinFlagsSaving(true);
-    setError(null);
-    setSavedOk(false);
-    try {
-      const next = await patchJoinAutoRoleSettings(discordGuildId, { moduleEnabled: !joinModuleEnabled });
-      applyJoinFromSettings(next);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Mise à jour impossible.");
-    } finally {
-      setJoinFlagsSaving(false);
-    }
-  }, [discordGuildId, joinModuleEnabled, applyJoinFromSettings]);
-
-  const patchFlags = useCallback(
-    async (
-      partial: Partial<
-        Pick<WelcomeGoodbyeSettings, "moduleEnabled" | "welcomeMessagesEnabled" | "goodbyeMessagesEnabled">
-      >,
-    ) => {
-      setFlagsSaving(true);
-      setError(null);
-      setSavedOk(false);
-      try {
-        const next = await patchWelcomeGoodbyeSettings(discordGuildId, partial);
-        applySettingsToForm(next);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Mise à jour impossible.");
-      } finally {
-        setFlagsSaving(false);
-      }
-    },
-    [discordGuildId, applySettingsToForm],
-  );
-
   useEffect(() => {
     void load();
   }, [load]);
@@ -248,6 +302,9 @@ export function ModulesPageContent({ discordGuildId }: Props) {
   const currentDraftSnapshot = useMemo(
     () =>
       JSON.stringify({
+        moduleEnabled,
+        welcomeMessagesEnabled,
+        goodbyeMessagesEnabled,
         welcomeChannelId,
         welcomeContent,
         welcomeKind,
@@ -261,6 +318,9 @@ export function ModulesPageContent({ discordGuildId }: Props) {
       }),
     [
       welcomeChannelId,
+      moduleEnabled,
+      welcomeMessagesEnabled,
+      goodbyeMessagesEnabled,
       welcomeContent,
       welcomeKind,
       welcomeEmbedColorHex,
@@ -274,16 +334,16 @@ export function ModulesPageContent({ discordGuildId }: Props) {
   );
 
   const isDraftDirty = savedDraftSnapshot !== "" && currentDraftSnapshot !== savedDraftSnapshot;
-  const showSaveBar = isDraftDirty || joinVerifyDirty;
+  const joinRolesDirty = useMemo(
+    () => joinRoleSnapshot !== JSON.stringify({ moduleEnabled: joinModuleEnabled, discordRoleIds: joinRoleIds }),
+    [joinModuleEnabled, joinRoleSnapshot, joinRoleIds],
+  );
+
+  const showSaveBar = isDraftDirty || joinVerifyDirty || joinRolesDirty || appearanceDirty;
 
   useEffect(() => {
     if (showSaveBar && savedOk) setSavedOk(false);
   }, [showSaveBar, savedOk]);
-
-  const joinRolesDirty = useMemo(
-    () => joinRoleSnapshot !== JSON.stringify(joinRoleIds),
-    [joinRoleSnapshot, joinRoleIds],
-  );
 
   const joinRolePickerOptions: MultiPickerOption[] = useMemo(() => {
     const roles = mentionMeta?.roles ?? [];
@@ -296,6 +356,9 @@ export function ModulesPageContent({ discordGuildId }: Props) {
   function handleDiscardDraft() {
     try {
       const d = JSON.parse(savedDraftSnapshot) as WelcomeGoodbyeDraft;
+      setModuleEnabled(d.moduleEnabled ?? true);
+      setWelcomeMessagesEnabled(d.welcomeMessagesEnabled ?? true);
+      setGoodbyeMessagesEnabled(d.goodbyeMessagesEnabled ?? true);
       setWelcomeChannelId(d.welcomeChannelId ?? "");
       setWelcomeContent(d.welcomeContent ?? "");
       setWelcomeKind(d.welcomeKind === "template" ? "template" : "simple");
@@ -309,7 +372,15 @@ export function ModulesPageContent({ discordGuildId }: Props) {
     } catch {
       void load();
     }
+    try {
+      const d = JSON.parse(joinRoleSnapshot) as { moduleEnabled?: boolean; discordRoleIds?: string[] };
+      setJoinModuleEnabled(d.moduleEnabled ?? false);
+      setJoinRoleIds(Array.isArray(d.discordRoleIds) ? [...d.discordRoleIds] : []);
+    } catch {
+      void load();
+    }
     setJoinVerifyDiscardSignal((n) => n + 1);
+    setAppearanceDiscardSignal((n) => n + 1);
   }
 
   async function handleSave() {
@@ -349,27 +420,21 @@ export function ModulesPageContent({ discordGuildId }: Props) {
       if (joinVerifyDirty && joinVerifySaveRef.current) {
         await joinVerifySaveRef.current();
       }
+      if (joinRolesDirty) {
+        const nextJoin = await patchJoinAutoRoleSettings(discordGuildId, {
+          moduleEnabled: joinModuleEnabled,
+          discordRoleIds: joinRoleIds,
+        });
+        applyJoinFromSettings(nextJoin);
+      }
+      if (appearanceDirty && appearanceSaveRef.current) {
+        await appearanceSaveRef.current();
+      }
       setSavedOk(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Enregistrement impossible.");
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handleSaveJoinRoles() {
-    if (!joinRolesDirty) return;
-    setJoinRolesSaving(true);
-    setError(null);
-    setSavedOk(false);
-    try {
-      const next = await patchJoinAutoRoleSettings(discordGuildId, { discordRoleIds: joinRoleIds });
-      applyJoinFromSettings(next);
-      setSavedOk(true);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Enregistrement impossible.");
-    } finally {
-      setJoinRolesSaving(false);
     }
   }
 
@@ -381,15 +446,15 @@ export function ModulesPageContent({ discordGuildId }: Props) {
     <div className={`space-y-6 ${showSaveBar || savedOk ? SAVE_BAR_PAGE_PADDING : ""}`}>
       {error ? <div className="ui-card p-4 text-sm text-amber-200">{error}</div> : null}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6 lg:items-start">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2 xl:items-start xl:gap-6">
         <div className="min-w-0">
           <ModuleCard
             icon="user-plus"
             title="Arrivées et départs"
             description="Messages quand un membre rejoint ou quitte le serveur."
             enabled={moduleEnabled}
-            enabledBusy={flagsSaving}
-            onToggleEnabled={() => void patchFlags({ moduleEnabled: !moduleEnabled })}
+            enabledBusy={saving}
+            onToggleEnabled={() => setModuleEnabled((v) => !v)}
           >
             <p className="mb-4 text-xs text-zinc-500">
               Choisissez un salon texte, puis un <strong className="font-medium text-zinc-400">embed simple</strong> ici ou un{" "}
@@ -403,10 +468,12 @@ export function ModulesPageContent({ discordGuildId }: Props) {
                   title="Messages d’arrivée"
                   hint="Salon + texte de bienvenue pour les nouveaux membres."
                   active={welcomeMessagesEnabled}
-                  busy={flagsSaving}
-                  onToggle={() => void patchFlags({ welcomeMessagesEnabled: !welcomeMessagesEnabled })}
+                  busy={saving}
+                  detailsExpanded={welcomeDetailsOpen}
+                  onToggleDetails={() => setWelcomeDetailsOpen((v) => !v)}
+                  onToggle={() => setWelcomeMessagesEnabled((v) => !v)}
                 />
-                {welcomeMessagesEnabled ? (
+                {welcomeMessagesEnabled && welcomeDetailsOpen ? (
                   <div className="space-y-3 border-t border-vex-border/50 pt-3">
                     <label className="block text-xs font-medium text-zinc-400">
                       Salon
@@ -425,7 +492,7 @@ export function ModulesPageContent({ discordGuildId }: Props) {
                     </label>
                     <div className="space-y-2">
                       <p className="text-xs font-medium text-zinc-400">Format du message dans le salon</p>
-                      <div className="inline-flex rounded-full border border-vex-border bg-vex-bg/40 p-1 text-xs font-medium">
+                      <div className="grid grid-cols-1 rounded-2xl border border-vex-border bg-vex-bg/40 p-1 text-xs font-medium sm:inline-flex sm:rounded-full">
                         <button
                           type="button"
                           className={[
@@ -454,18 +521,12 @@ export function ModulesPageContent({ discordGuildId }: Props) {
                       </div>
                     </div>
                     {welcomeKind === "simple" ? (
-                      <label className="block text-xs font-medium text-zinc-400">
-                        Couleur de la barre latérale
-                        <div className="mt-1 flex items-center gap-2">
-                          <input
-                            type="color"
-                            className="h-9 w-14 cursor-pointer rounded border border-vex-border bg-vex-bg p-0"
-                            value={welcomeEmbedColorHex}
-                            onChange={(e) => setWelcomeEmbedColorHex(e.target.value)}
-                          />
-                          <span className="text-xs text-zinc-500">{welcomeEmbedColorHex}</span>
-                        </div>
-                      </label>
+                      <EmbedColorPicker
+                        label="Couleur de la barre latérale"
+                        labelId="welcome-embed-color-label"
+                        value={welcomeEmbedColorHex}
+                        onChange={setWelcomeEmbedColorHex}
+                      />
                     ) : null}
                     {welcomeKind === "template" ? (
                       <div className="space-y-1">
@@ -513,10 +574,12 @@ export function ModulesPageContent({ discordGuildId }: Props) {
                   title="Messages de départ"
                   hint="Message dans le salon quand quelqu’un quitte le serveur."
                   active={goodbyeMessagesEnabled}
-                  busy={flagsSaving}
-                  onToggle={() => void patchFlags({ goodbyeMessagesEnabled: !goodbyeMessagesEnabled })}
+                  busy={saving}
+                  detailsExpanded={goodbyeDetailsOpen}
+                  onToggleDetails={() => setGoodbyeDetailsOpen((v) => !v)}
+                  onToggle={() => setGoodbyeMessagesEnabled((v) => !v)}
                 />
-                {goodbyeMessagesEnabled ? (
+                {goodbyeMessagesEnabled && goodbyeDetailsOpen ? (
                   <div className="space-y-3 border-t border-vex-border/50 pt-3">
                     <label className="block text-xs font-medium text-zinc-400">
                       Salon
@@ -535,7 +598,7 @@ export function ModulesPageContent({ discordGuildId }: Props) {
                     </label>
                     <div className="space-y-2">
                       <p className="text-xs font-medium text-zinc-400">Format du message dans le salon</p>
-                      <div className="inline-flex rounded-full border border-vex-border bg-vex-bg/40 p-1 text-xs font-medium">
+                      <div className="grid grid-cols-1 rounded-2xl border border-vex-border bg-vex-bg/40 p-1 text-xs font-medium sm:inline-flex sm:rounded-full">
                         <button
                           type="button"
                           className={[
@@ -564,18 +627,12 @@ export function ModulesPageContent({ discordGuildId }: Props) {
                       </div>
                     </div>
                     {goodbyeKind === "simple" ? (
-                      <label className="block text-xs font-medium text-zinc-400">
-                        Couleur de la barre latérale
-                        <div className="mt-1 flex items-center gap-2">
-                          <input
-                            type="color"
-                            className="h-9 w-14 cursor-pointer rounded border border-vex-border bg-vex-bg p-0"
-                            value={goodbyeEmbedColorHex}
-                            onChange={(e) => setGoodbyeEmbedColorHex(e.target.value)}
-                          />
-                          <span className="text-xs text-zinc-500">{goodbyeEmbedColorHex}</span>
-                        </div>
-                      </label>
+                      <EmbedColorPicker
+                        label="Couleur de la barre latérale"
+                        labelId="goodbye-embed-color-label"
+                        value={goodbyeEmbedColorHex}
+                        onChange={setGoodbyeEmbedColorHex}
+                      />
                     ) : null}
                     {goodbyeKind === "template" ? (
                       <div className="space-y-1">
@@ -626,6 +683,9 @@ export function ModulesPageContent({ discordGuildId }: Props) {
             discordGuildId={discordGuildId}
             overview={guildOverview}
             onRefresh={refreshGuildOverview}
+            onDirtyChange={setAppearanceDirty}
+            saveRef={appearanceSaveRef}
+            discardSignal={appearanceDiscardSignal}
           />
         </div>
 
@@ -635,8 +695,8 @@ export function ModulesPageContent({ discordGuildId }: Props) {
             title="Rôles à l’arrivée"
             description="Ajoute un ou plusieurs rôles après la vérification (ou tout de suite si la vérification à l’arrivée est désactivée). Le rôle du bot doit être au-dessus de ces rôles, avec « Gérer les rôles »."
             enabled={joinModuleEnabled}
-            enabledBusy={joinFlagsSaving}
-            onToggleEnabled={() => void patchJoinFlags()}
+            enabledBusy={saving}
+            onToggleEnabled={() => setJoinModuleEnabled((v) => !v)}
           >
             {!mentionMeta ? (
               <p className="text-xs text-amber-200/90">
@@ -644,7 +704,7 @@ export function ModulesPageContent({ discordGuildId }: Props) {
               </p>
             ) : null}
             <p className="mb-3 text-xs text-zinc-500">
-              Choisissez un ou plusieurs rôles ci-dessous, puis cliquez sur « Enregistrer la sélection ». Vous pouvez laisser le module activé sans rôle : dans ce cas, rien ne sera ajouté.
+              Choisissez un ou plusieurs rôles ci-dessous, puis utilisez la barre « Enregistrer ». Vous pouvez laisser le module activé sans rôle : dans ce cas, rien ne sera ajouté.
             </p>
             <MultiPicker
               options={joinRolePickerOptions}
@@ -654,18 +714,6 @@ export function ModulesPageContent({ discordGuildId }: Props) {
               noneLabel="Aucun rôle sélectionné"
               disabled={!joinModuleEnabled || joinRolePickerOptions.length === 0}
             />
-            {joinRolesDirty ? (
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className="ui-btn-primary text-sm"
-                  disabled={joinRolesSaving}
-                  onClick={() => void handleSaveJoinRoles()}
-                >
-                  {joinRolesSaving ? "Enregistrement…" : "Enregistrer la sélection"}
-                </button>
-              </div>
-            ) : null}
           </ModuleCard>
         </div>
 

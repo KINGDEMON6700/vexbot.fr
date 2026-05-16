@@ -141,6 +141,7 @@ model Embed {
 
   welcomeSettingsAsWelcome WelcomeSettings[]    @relation("WelcomeEmbed")
   welcomeSettingsAsGoodbye WelcomeSettings[]    @relation("GoodbyeEmbed")
+  joinVerificationPanelFor JoinVerificationSettings[] @relation("JoinVerificationPanelEmbed")
   customSlashCommands      CustomSlashCommand[]
   tickets                  Ticket[]
   guildTicketWelcomeFor  GuildTicketSettings[] @relation("TicketWelcomeEmbed")
@@ -405,6 +406,15 @@ model JoinVerificationSettings {
 
   /// Message Discord du panneau (bouton de vérification).
   panelMessageId String?
+  /// Texte simple du panneau Discord si aucun modèle Embed n’est choisi.
+  panelContent String?
+  /// Si true et aucun modèle Embed : `panelContent` est envoyé dans un embed simple.
+  panelUseEmbed Boolean @default(true)
+  /// Couleur de l’embed simple du panneau (0xRRGGBB). Null = couleur Vex par défaut.
+  panelEmbedColor Int?
+  /// Modèle Embeds optionnel utilisé comme contenu du panneau Discord.
+  panelEmbedId String?
+  panelEmbed   Embed? @relation("JoinVerificationPanelEmbed", fields: [panelEmbedId], references: [id], onDelete: SetNull)
 
   /// Libellé du bouton, max 80 caractères côté Discord.
   buttonLabel String?

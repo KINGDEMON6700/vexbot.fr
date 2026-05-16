@@ -35,13 +35,13 @@ export function UserAccountMenu({ user, onLogout }: Props) {
   }, [open]);
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className="relative min-w-0 shrink-0">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="flex max-w-full items-center gap-2 rounded-lg border border-vex-border/90 bg-vex-surface/90 px-2 py-1.5 text-left shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] transition hover:border-indigo-500/30 hover:bg-vex-bg/60"
+        className="flex min-h-10 max-w-full items-center gap-2 rounded-lg border border-vex-border/90 bg-vex-surface/90 px-2 py-1.5 text-left shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset] transition hover:border-indigo-500/30 hover:bg-vex-bg/60"
       >
         {avatarUrl ? (
           <img
@@ -57,7 +57,7 @@ export function UserAccountMenu({ user, onLogout }: Props) {
             {displayName.charAt(0).toUpperCase()}
           </span>
         )}
-        <span className="hidden min-w-0 max-w-[10rem] truncate text-sm font-medium text-zinc-200 sm:inline">
+        <span className="inline min-w-0 max-w-24 truncate text-[11px] font-medium text-zinc-200 min-[420px]:max-w-32 sm:max-w-40 sm:text-sm">
           {displayName}
         </span>
         <span
@@ -69,7 +69,7 @@ export function UserAccountMenu({ user, onLogout }: Props) {
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+0.35rem)] z-[120] w-[min(16rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-vex-border bg-vex-surface shadow-2xl ring-1 ring-white/5"
+          className="absolute right-0 top-[calc(100%+0.35rem)] z-[120] w-[min(16rem,calc(100vw-1rem))] overflow-hidden rounded-xl border border-vex-border bg-vex-surface shadow-2xl ring-1 ring-white/5"
         >
           <div className="border-b border-vex-border/80 px-3 py-2.5">
             <p className="truncate text-sm font-medium text-zinc-100">{displayName}</p>
@@ -84,6 +84,15 @@ export function UserAccountMenu({ user, onLogout }: Props) {
             >
               <span className="fa-solid fa-server mr-2 w-4 text-center text-zinc-500" aria-hidden />
               Changer de serveur
+            </Link>
+            <Link
+              role="menuitem"
+              to={`/account-settings${qs}`}
+              className="rounded-lg px-3 py-2 text-sm text-zinc-300 transition hover:bg-vex-bg/70 hover:text-zinc-100"
+              onClick={() => setOpen(false)}
+            >
+              <span className="fa-solid fa-user-gear mr-2 w-4 text-center text-zinc-500" aria-hidden />
+              Paramètres du compte
             </Link>
             <button
               type="button"

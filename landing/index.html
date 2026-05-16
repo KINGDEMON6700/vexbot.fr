@@ -3,18 +3,18 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Vexbot — Bot Discord &amp; panel de gestion pour votre serveur</title>
+    <title>Vexbot — Le panel pour gérer votre serveur Discord</title>
     <meta
       name="description"
-      content="Vexbot structure, sécurise et anime votre communauté Discord : tickets, embeds, bienvenue, vérification et commandes — le tout depuis un panel web clair, sans coder."
+      content="Vexbot centralise la gestion de votre serveur Discord dans un panel clair : tickets, embeds, commandes, modules d’accueil, templates serveur et marketplace."
     />
     <link rel="canonical" href="https://vexbot.fr/" />
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
-    <link rel="icon" href="assets/logofav.png" type="image/png" />
+    <link rel="icon" href="assets/vex-logo.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
     <link
@@ -31,30 +31,39 @@
     </script>
   </head>
   <body>
-    <div class="bg-orbs" aria-hidden="true">
-      <span class="orb orb-1"></span>
-      <span class="orb orb-2"></span>
-      <span class="orb orb-3"></span>
+    <div class="site-bg" aria-hidden="true">
+      <span class="bg-glow bg-glow-a"></span>
+      <span class="bg-glow bg-glow-b"></span>
+      <span class="bg-pattern"></span>
     </div>
 
-    <header class="nav">
-      <div class="wrap nav-inner">
-        <a href="#" class="brand">
-          <img src="assets/logofav.png" width="36" height="36" alt="Logo Vexbot" />
-          Vexbot
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="#" aria-label="Accueil Vexbot">
+          <img src="assets/vex-logo.svg" width="38" height="38" alt="" />
+          <span>Vexbot</span>
         </a>
-        <nav class="nav-links" aria-label="Navigation">
-          <a href="#pourquoi">Pourquoi Vexbot</a>
-          <a href="#fonctionnalites">Fonctionnalités</a>
-          <a href="#demarrage">Démarrer</a>
+
+        <button class="menu-button" type="button" aria-expanded="false" aria-controls="main-nav">
+          <span></span><span></span><span></span>
+          Menu
+        </button>
+
+        <nav class="main-nav" id="main-nav" aria-label="Navigation principale">
+          <a href="#problem">Problème</a>
+          <a href="#features">Fonctionnalités</a>
+          <a href="#panel">Panel</a>
+          <a href="#how">Démarrer</a>
         </nav>
-        <div class="nav-cta">
-          <a class="btn btn-ghost" href="https://panel.vexbot.fr/">Panel</a>
+
+        <div class="header-actions">
+          <a class="btn btn-ghost" href="https://panel.vexbot.fr/">Ouvrir le panel</a>
           <a
             class="btn btn-primary"
             href="https://discord.com/api/oauth2/authorize?client_id=1495026020473110619&amp;permissions=8&amp;scope=bot%20applications.commands"
-            >Ajouter le bot</a
           >
+            Ajouter le bot
+          </a>
         </div>
       </div>
     </header>
@@ -62,12 +71,15 @@
     <main>
       <section class="hero">
         <div class="wrap hero-grid">
-          <div class="reveal">
-            <p class="badge"><i class="fa-solid fa-sparkles" aria-hidden="true"></i> Bot + panel web pour Discord</p>
-            <h1>Votre serveur Discord, <span>structuré et serein</span></h1>
+          <div class="hero-copy reveal">
+            <p class="pill">
+              <i class="fa-solid fa-layer-group" aria-hidden="true"></i>
+              Bot Discord + panel web
+            </p>
+            <h1>Gérez votre serveur Discord depuis un panel pensé pour les admins.</h1>
             <p class="hero-lead">
-              Vexbot centralise l’essentiel : support par tickets, messages soignés, accueil des membres et
-              sécurité à l’arrivée. Tout se règle depuis un panel clair — sans écrire une ligne de code.
+              Tickets, embeds, commandes, accueil des membres, templates et marketplace :
+              Vexbot réunit les réglages importants dans une interface claire, sans configuration dispersée.
             </p>
             <div class="hero-actions">
               <a
@@ -75,342 +87,350 @@
                 href="https://discord.com/api/oauth2/authorize?client_id=1495026020473110619&amp;permissions=8&amp;scope=bot%20applications.commands"
               >
                 <i class="fa-brands fa-discord" aria-hidden="true"></i>
-                Ajouter Vexbot à mon serveur
+                Ajouter Vexbot
               </a>
-              <a class="btn btn-ghost btn-lg" href="https://panel.vexbot.fr/">
-                <i class="fa-solid fa-sliders" aria-hidden="true"></i>
-                Ouvrir le panel
-              </a>
+              <a class="btn btn-ghost btn-lg" href="https://panel.vexbot.fr/">Voir le panel</a>
             </div>
-            <p class="hero-note">
-              <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
-              Connexion avec votre compte Discord · Réservé aux administrateurs de serveur
-            </p>
+            <div class="trust-row">
+              <span>Connexion Discord</span>
+              <span>Serveurs administrables</span>
+              <span>Sans code</span>
+            </div>
           </div>
 
-          <div class="hero-preview-wrap reveal reveal-delay-1" data-hero-preview>
-            <article class="hero-preview" aria-label="Aperçu animé du panel Vexbot">
-              <div class="preview-chrome">
-                <div class="preview-dots"><span></span><span></span><span></span></div>
-                <span class="preview-url">panel.vexbot.fr</span>
+          <div class="hero-product reveal reveal-delay-1" data-panel-preview>
+            <div class="panel-window">
+              <div class="window-bar">
+                <div class="window-dots"><span></span><span></span><span></span></div>
+                <span>panel.vexbot.fr</span>
+                <strong>Serveur connecté</strong>
               </div>
-              <div class="preview-body">
-                <aside class="preview-sidebar">
-                  <div class="preview-nav-item is-active" data-preview-tab="0">
+              <div class="panel-layout">
+                <aside class="panel-nav">
+                  <div class="server-card">
+                    <span>VX</span>
+                    <div>
+                      <strong>Vex Community</strong>
+                      <small>Administrateur</small>
+                    </div>
+                  </div>
+                  <button class="panel-tab is-active" type="button" data-panel-tab="overview">
                     <i class="fa-solid fa-chart-pie"></i> Vue d’ensemble
-                  </div>
-                  <div class="preview-nav-item" data-preview-tab="1">
+                  </button>
+                  <button class="panel-tab" type="button" data-panel-tab="tickets">
                     <i class="fa-solid fa-ticket"></i> Tickets
-                  </div>
-                  <div class="preview-nav-item" data-preview-tab="2">
+                  </button>
+                  <button class="panel-tab" type="button" data-panel-tab="embeds">
                     <i class="fa-solid fa-layer-group"></i> Embeds
-                  </div>
-                  <div class="preview-nav-item" data-preview-tab="3">
+                  </button>
+                  <button class="panel-tab" type="button" data-panel-tab="modules">
                     <i class="fa-solid fa-puzzle-piece"></i> Modules
-                  </div>
+                  </button>
+                  <button class="panel-tab" type="button" data-panel-tab="commands">
+                    <i class="fa-solid fa-terminal"></i> Commandes
+                  </button>
+                  <button class="panel-tab" type="button" data-panel-tab="templates">
+                    <i class="fa-solid fa-sitemap"></i> Templates
+                  </button>
                 </aside>
-                <div class="preview-main">
-                  <div class="preview-pane is-active">
-                    <h4>Vexbot sur ce serveur</h4>
-                    <div class="preview-stat-row">
-                      <div class="preview-stat">Membres<strong>1 240</strong></div>
-                      <div class="preview-stat">Tickets<strong>12</strong></div>
-                      <div class="preview-stat">Embeds<strong>28</strong></div>
+
+                <div class="panel-main">
+                  <article class="panel-view is-active" data-panel-view="overview">
+                    <p class="panel-kicker">Vue d’ensemble</p>
+                    <h2>Votre serveur, résumé en quelques cartes.</h2>
+                    <div class="stat-grid">
+                      <div><span>Membres</span><strong>1 240</strong></div>
+                      <div><span>Salons</span><strong>31</strong></div>
+                      <div><span>Rôles</span><strong>12</strong></div>
                     </div>
-                    <div class="mock-ticket-list">
-                      <div class="mock-row is-highlight">
-                        <span class="mock-icon"><i class="fa-solid fa-robot"></i></span>
-                        Identité du bot personnalisée
-                      </div>
-                      <div class="mock-row">
-                        <span class="mock-icon"><i class="fa-solid fa-bolt"></i></span>
-                        Modules actifs : 4
-                      </div>
+                    <div class="panel-list">
+                      <span><i class="fa-solid fa-circle-check"></i> Bot présent sur le serveur</span>
+                      <span><i class="fa-solid fa-palette"></i> Apparence du bot personnalisable</span>
+                      <span><i class="fa-solid fa-lock"></i> Accès réservé aux administrateurs</span>
                     </div>
-                  </div>
-                  <div class="preview-pane">
-                    <h4>Tickets — en direct</h4>
-                    <div class="mock-ticket-list">
-                      <div class="mock-row is-highlight">
-                        <span class="mock-icon"><i class="fa-solid fa-ticket"></i></span>
-                        Ticket #042 — Ouvert
+                  </article>
+
+                  <article class="panel-view" data-panel-view="tickets">
+                    <p class="panel-kicker">Tickets</p>
+                    <h2>Un support structuré dès le premier message.</h2>
+                    <div class="ticket-card">
+                      <span>#42</span>
+                      <div>
+                        <strong>#support-lina</strong>
+                        <small>Membre identifié · salon associé</small>
                       </div>
-                      <div class="mock-row">
-                        <span class="mock-icon"><i class="fa-solid fa-message"></i></span>
-                        Conversation synchronisée
-                      </div>
-                      <div class="mock-row">
-                        <span class="mock-icon"><i class="fa-solid fa-file-lines"></i></span>
-                        Transcript HTML à la fermeture
-                      </div>
+                      <em>Ouvert</em>
                     </div>
-                  </div>
-                  <div class="preview-pane">
-                    <h4>Modèle embed — aperçu</h4>
-                    <div class="mock-embed">
-                      <div class="mock-embed-title">Bienvenue sur le support</div>
-                      <p>Ouvrez un ticket en un clic. Notre équipe vous répond sous 24 h.</p>
-                      <span class="mock-embed-btn">Ouvrir un ticket</span>
+                    <div class="panel-list">
+                      <span><i class="fa-solid fa-square-check"></i> Panneau avec bouton, menu ou formulaire</span>
+                      <span><i class="fa-solid fa-comments"></i> Suivi des échanges</span>
+                      <span><i class="fa-solid fa-file-lines"></i> Transcript à la fermeture</span>
                     </div>
-                  </div>
-                  <div class="preview-pane">
-                    <h4>Modules d’accueil</h4>
-                    <div class="mock-ticket-list">
-                      <div class="mock-row is-highlight">
-                        <span class="mock-icon"><i class="fa-solid fa-door-open"></i></span>
-                        Message bienvenue {user}
-                      </div>
-                      <div class="mock-row">
-                        <span class="mock-icon"><i class="fa-solid fa-user-check"></i></span>
-                        Vérification captcha active
-                      </div>
-                      <div class="mock-row">
-                        <span class="mock-icon"><i class="fa-solid fa-id-badge"></i></span>
-                        Rôle « Membre » automatique
-                      </div>
+                  </article>
+
+                  <article class="panel-view" data-panel-view="embeds">
+                    <p class="panel-kicker">Embeds</p>
+                    <h2>Des messages propres, prêts à publier.</h2>
+                    <div class="embed-card">
+                      <strong>Règlement du serveur</strong>
+                      <p>Message structuré avec couleur, texte, bouton et aperçu.</p>
+                      <button type="button">Bouton configurable</button>
                     </div>
-                  </div>
+                    <div class="panel-list compact">
+                      <span><i class="fa-solid fa-eye"></i> Aperçu avant envoi</span>
+                      <span><i class="fa-solid fa-code"></i> Import / export JSON</span>
+                    </div>
+                  </article>
+
+                  <article class="panel-view" data-panel-view="modules">
+                    <p class="panel-kicker">Modules</p>
+                    <h2>Accueil, rôles et vérification sous contrôle.</h2>
+                    <div class="module-grid">
+                      <div><span>Bienvenue</span><strong>Actif</strong></div>
+                      <div><span>Rôle auto</span><strong>Actif</strong></div>
+                      <div><span>Vérification</span><strong>Prête</strong></div>
+                    </div>
+                    <div class="panel-list compact">
+                      <span><i class="fa-solid fa-hashtag"></i> Salons sélectionnables</span>
+                      <span><i class="fa-solid fa-user-check"></i> Panneau Discord configurable</span>
+                    </div>
+                  </article>
+
+                  <article class="panel-view" data-panel-view="commands">
+                    <p class="panel-kicker">Commandes</p>
+                    <h2>Des commandes slash contrôlées par rôle et par salon.</h2>
+                    <div class="command-list">
+                      <span>/ticket</span>
+                      <span>/sendembed</span>
+                      <span>/faq</span>
+                    </div>
+                    <div class="panel-list compact">
+                      <span><i class="fa-solid fa-toggle-on"></i> Commandes natives activables</span>
+                      <span><i class="fa-solid fa-key"></i> Permissions personnalisées</span>
+                    </div>
+                  </article>
+
+                  <article class="panel-view" data-panel-view="templates">
+                    <p class="panel-kicker">Templates</p>
+                    <h2>Sauvegardez une structure serveur et réutilisez-la.</h2>
+                    <div class="template-list">
+                      <span>Accueil</span>
+                      <span>Règlement</span>
+                      <span>Support</span>
+                      <span>Staff</span>
+                    </div>
+                    <div class="panel-list compact">
+                      <span><i class="fa-solid fa-eye"></i> Prévisualisation avant application</span>
+                      <span><i class="fa-solid fa-file-export"></i> Import et export JSON</span>
+                    </div>
+                  </article>
                 </div>
               </div>
-              <div class="preview-tabs-dots" role="tablist" aria-label="Changer d’aperçu">
-                <button type="button" class="is-active" aria-selected="true" aria-label="Vue d’ensemble"></button>
-                <button type="button" aria-selected="false" aria-label="Tickets"></button>
-                <button type="button" aria-selected="false" aria-label="Embeds"></button>
-                <button type="button" aria-selected="false" aria-label="Modules"></button>
-              </div>
-            </article>
+            </div>
           </div>
         </div>
       </section>
 
-      <div class="trust">
-        <div class="wrap trust-grid">
-          <div class="trust-item reveal">
-            <i class="fa-solid fa-window-maximize" aria-hidden="true"></i>
-            <strong>Panel web dédié</strong>
-            <span>Configurez sans commandes compliquées</span>
-          </div>
-          <div class="trust-item reveal reveal-delay-1">
-            <i class="fa-brands fa-discord" aria-hidden="true"></i>
-            <strong>Intégré à Discord</strong>
-            <span>Boutons, menus et commandes slash</span>
-          </div>
-          <div class="trust-item reveal reveal-delay-2">
-            <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i>
-            <strong>Sans développeur</strong>
-            <span>Admins et modérateurs autonomes</span>
-          </div>
-          <div class="trust-item reveal reveal-delay-3">
-            <i class="fa-solid fa-arrows-rotate" aria-hidden="true"></i>
-            <strong>Évolution continue</strong>
-            <span>Nouvelles fonctions au fil du temps</span>
-          </div>
-        </div>
-      </div>
-
-      <section id="pourquoi" class="bg-alt">
+      <section class="problem-section" id="problem">
         <div class="wrap">
-          <div class="section-head reveal">
-            <h2>Pourquoi les serveurs choisissent Vexbot</h2>
+          <div class="section-heading reveal">
+            <p class="section-label">Le problème</p>
+            <h2>Administrer un serveur Discord devient vite dispersé.</h2>
             <p>
-              Communauté gaming, entraide ou espace pro : Vexbot vous fait gagner du temps et offre une expérience
-              cohérente — pour vos membres comme pour votre équipe.
+              Sans interface claire, les réglages se retrouvent entre commandes, salons, rôles,
+              messages copiés à la main et configurations difficiles à retrouver.
             </p>
           </div>
-          <div class="pillars">
-            <article class="pillar reveal">
-              <div class="pillar-icon"><i class="fa-solid fa-headset" aria-hidden="true"></i></div>
-              <h3>Support qui rassure</h3>
-              <p>
-                Vos membres ouvrent un ticket en un clic. Vous suivez, répondez et clôturez avec une trace claire.
-              </p>
+
+          <div class="compare-grid">
+            <article class="compare-card bad reveal">
+              <p>Sans panel centralisé</p>
+              <h3>Vous perdez du temps sur des tâches répétitives.</h3>
+              <ul>
+                <li>Tickets difficiles à suivre proprement</li>
+                <li>Messages importants recréés à la main</li>
+                <li>Permissions et salons à vérifier partout</li>
+                <li>Structures serveur difficiles à reproduire</li>
+              </ul>
             </article>
-            <article class="pillar reveal reveal-delay-1">
-              <div class="pillar-icon"><i class="fa-solid fa-palette" aria-hidden="true"></i></div>
-              <h3>Image soignée</h3>
-              <p>Embeds, couleurs, boutons : une communication digne des grandes communautés.</p>
-            </article>
-            <article class="pillar reveal reveal-delay-2">
-              <div class="pillar-icon"><i class="fa-solid fa-user-shield" aria-hidden="true"></i></div>
-              <h3>Arrivées sous contrôle</h3>
-              <p>Bienvenue, rôles automatiques et vérification avant d’accéder au reste du serveur.</p>
-            </article>
-            <article class="pillar reveal reveal-delay-3">
-              <div class="pillar-icon"><i class="fa-solid fa-copy" aria-hidden="true"></i></div>
-              <h3>Gain de temps</h3>
-              <p>Dupliquez la structure d’un serveur et réutilisez des modèles prêts à l’emploi.</p>
+            <article class="compare-card good reveal reveal-delay-1">
+              <p>Avec Vexbot</p>
+              <h3>Votre équipe configure depuis un panel unique.</h3>
+              <ul>
+                <li>Système de tickets clair et archivable</li>
+                <li>Embeds sauvegardés et réutilisables</li>
+                <li>Modules visibles et faciles à activer</li>
+                <li>Templates serveur exportables et partageables</li>
+              </ul>
             </article>
           </div>
         </div>
       </section>
 
-      <section id="fonctionnalites">
+      <section class="features-section" id="features">
         <div class="wrap">
-          <div class="section-head reveal">
-            <h2>Tout ce que Vexbot met à votre disposition</h2>
-            <p>Un bot sur Discord, un cerveau dans le panel : chaque fonction est réglée en quelques minutes.</p>
+          <div class="section-heading reveal">
+            <p class="section-label">Fonctionnalités</p>
+            <h2>Tout ce dont un serveur Discord sérieux a besoin.</h2>
+            <p>Chaque module de Vexbot répond à un usage concret du panel.</p>
           </div>
 
-          <article class="feature reveal">
-            <div class="feature-text">
-              <span class="feature-tag">Tickets</span>
-              <h3>Un support structuré, de l’ouverture à l’archivage</h3>
-              <p class="feature-desc">
-                Fini les fils noyés dans le général. Vexbot propose un parcours clair pour vos membres et votre équipe.
-              </p>
-              <ul class="feature-bullets">
-                <li>Panneau d’ouverture par bouton ou menu, synchronisé automatiquement</li>
-                <li>Formulaire optionnel avant création du salon</li>
-                <li>Transcript HTML à chaque fermeture</li>
-                <li>Commandes <code>/ticket</code> pour le staff</li>
-              </ul>
-            </div>
-            <div class="feature-visual mock-ui" data-mock-cycle aria-hidden="true">
-              <div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span></div>
-              <div class="mock-row active"><span class="mock-icon"><i class="fa-solid fa-ticket"></i></span> Ticket #042 — Ouvert</div>
-              <div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-message"></i></span> Conversation en direct</div>
-              <div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-file-lines"></i></span> Transcript à la fermeture</div>
-            </div>
-          </article>
-
-          <article class="feature reverse reveal">
-            <div class="feature-text">
-              <span class="feature-tag">Embeds</span>
-              <h3>Des messages visuels, réutilisables à l’infini</h3>
-              <p class="feature-desc">
-                Bibliothèque de modèles : annonces, règles, FAQ… Aperçu fidèle à Discord avant publication.
-              </p>
-              <ul class="feature-bullets">
-                <li>Éditeur complet : texte, embeds, images, boutons</li>
-                <li>Envoi direct depuis le panel</li>
-                <li>Commande <code>/sendembed</code> sur Discord</li>
-              </ul>
-            </div>
-            <div class="feature-visual mock-ui mock-embed-preview" aria-hidden="true">
-              <div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span></div>
-              <div class="mock-embed">
-                <div class="mock-embed-title">Modèle « Bienvenue support »</div>
-                <p>Aperçu en temps réel — prêt à publier sur #annonces.</p>
-                <span class="mock-embed-btn">Ouvrir un ticket</span>
-              </div>
-              <div class="mock-row" style="margin-top: 0.75rem"><span class="mock-icon"><i class="fa-solid fa-paper-plane"></i></span> Publier sur Discord</div>
-            </div>
-          </article>
-
-          <article class="feature reveal">
-            <div class="feature-text">
-              <span class="feature-tag">Modules</span>
-              <h3>Accueillir, informer et filtrer les nouveaux membres</h3>
-              <p class="feature-desc">Donnez le ton dès l’arrivée et protégez votre serveur avant l’accès aux salons sensibles.</p>
-              <ul class="feature-bullets">
-                <li>Messages d’arrivée et de départ personnalisables</li>
-                <li>Rôles automatiques et vérification captcha</li>
-              </ul>
-            </div>
-            <div class="feature-visual mock-ui" data-mock-cycle aria-hidden="true">
-              <div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span></div>
-              <div class="mock-row active"><span class="mock-icon"><i class="fa-solid fa-door-open"></i></span> Bienvenue {user}</div>
-              <div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-user-check"></i></span> Vérification captcha</div>
-              <div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-id-badge"></i></span> Rôle « Membre » automatique</div>
-            </div>
-          </article>
-
-          <article class="feature reverse reveal">
-            <div class="feature-text">
-              <span class="feature-tag">Commandes</span>
-              <h3>Vos propres commandes slash, sans programmer</h3>
-              <p class="feature-desc">Répondez aux questions fréquentes avec des droits précis par rôle et par salon.</p>
-              <ul class="feature-bullets">
-                <li>Texte, embed simple ou modèle de la bibliothèque</li>
-                <li>Synchronisation automatique avec Discord</li>
-              </ul>
-            </div>
-            <div class="feature-visual mock-ui" data-mock-cycle aria-hidden="true">
-              <div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span></div>
-              <div class="mock-row active"><span class="mock-icon"><i class="fa-solid fa-terminal"></i></span> /regles</div>
-              <div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-lock"></i></span> Réservé au rôle Modérateur</div>
-              <div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-hashtag"></i></span> Salon #informations</div>
-            </div>
-          </article>
-
-          <article class="feature reveal">
-            <div class="feature-text">
-              <span class="feature-tag">Templates &amp; Marketplace</span>
-              <h3>Dupliquez, partagez, inspirez-vous</h3>
-              <p class="feature-desc">Sauvegardez la structure de votre serveur ou importez le travail d’autres communautés.</p>
-              <ul class="feature-bullets">
-                <li>Capture et application progressive</li>
-                <li>Marketplace : modèles publiés par la communauté</li>
-              </ul>
-            </div>
-            <div class="feature-visual mock-ui" data-mock-cycle aria-hidden="true">
-              <div class="mock-bar"><span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span></div>
-              <div class="mock-row active"><span class="mock-icon"><i class="fa-solid fa-sitemap"></i></span> Template « Support pro »</div>
-              <div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-store"></i></span> Marketplace communautaire</div>
-              <div class="mock-row"><span class="mock-icon"><i class="fa-solid fa-download"></i></span> Importer sur mon serveur</div>
-            </div>
-          </article>
-        </div>
-      </section>
-
-      <section id="demarrage" class="bg-alt">
-        <div class="wrap">
-          <div class="section-head reveal">
-            <h2>Démarrer en trois étapes</h2>
-            <p>Invitez, connectez-vous, réglez — le bot fait le reste sur Discord.</p>
-          </div>
-          <div class="steps">
-            <article class="step reveal">
-              <div class="step-num">1</div>
-              <h3>Ajoutez Vexbot</h3>
-              <p>Invitez le bot sur votre serveur Discord. Il est prêt à recevoir vos réglages.</p>
+          <div class="feature-grid">
+            <article class="feature-card reveal">
+              <i class="fa-solid fa-ticket"></i>
+              <h3>Tickets complets</h3>
+              <p>Panneau public, formulaires, messages d’accueil, suivi des conversations et transcripts.</p>
             </article>
-            <article class="step reveal reveal-delay-1">
-              <div class="step-num">2</div>
-              <h3>Ouvrez le panel</h3>
-              <p>Connectez-vous avec Discord, choisissez votre serveur et accédez à toutes les sections.</p>
+            <article class="feature-card reveal reveal-delay-1">
+              <i class="fa-solid fa-layer-group"></i>
+              <h3>Embeds professionnels</h3>
+              <p>Éditeur avec aperçu, boutons, images, mentions, envoi direct, import et export JSON.</p>
             </article>
-            <article class="step reveal reveal-delay-2">
-              <div class="step-num">3</div>
-              <h3>Configurez à votre rythme</h3>
-              <p>Tickets, embeds, accueil : chaque changement est pris en charge sur Discord.</p>
+            <article class="feature-card reveal reveal-delay-2">
+              <i class="fa-solid fa-puzzle-piece"></i>
+              <h3>Modules d’accueil</h3>
+              <p>Messages d’arrivée et de départ, rôles automatiques, vérification et apparence du bot.</p>
+            </article>
+            <article class="feature-card reveal">
+              <i class="fa-solid fa-terminal"></i>
+              <h3>Commandes slash</h3>
+              <p>Commandes natives, commandes personnalisées et restrictions par rôle ou salon.</p>
+            </article>
+            <article class="feature-card reveal reveal-delay-1">
+              <i class="fa-solid fa-sitemap"></i>
+              <h3>Templates serveur</h3>
+              <p>Sauvegarde de rôles, salons et catégories, prévisualisation, import et export.</p>
+            </article>
+            <article class="feature-card reveal reveal-delay-2">
+              <i class="fa-solid fa-store"></i>
+              <h3>Marketplace</h3>
+              <p>Publication et import de modèles d’embeds avec recherche, filtres, likes et commentaires.</p>
             </article>
           </div>
         </div>
       </section>
 
-      <section>
-        <div class="wrap">
-          <div class="cta-block reveal">
-            <h2>Prêt à offrir une meilleure expérience à votre communauté ?</h2>
+      <section class="benefits-section">
+        <div class="wrap benefits-grid">
+          <div class="section-heading align-left reveal">
+            <p class="section-label">Bénéfices</p>
+            <h2>Moins de manipulations répétées, plus de cohérence sur le serveur.</h2>
             <p>
-              Rejoignez les serveurs qui centralisent leur gestion avec Vexbot. Installation gratuite, panel accessible
-              dès que le bot est invité.
+              Vexbot ne remplace pas Discord : il donne aux administrateurs une interface claire
+              pour préparer, vérifier et réutiliser les réglages importants.
+            </p>
+          </div>
+
+          <div class="benefit-list">
+            <article class="benefit-card reveal">
+              <span>01</span>
+              <h3>Gagner du temps</h3>
+              <p>Créez un panneau de tickets, un message embed ou une commande sans refaire les mêmes réglages à la main.</p>
+            </article>
+            <article class="benefit-card reveal reveal-delay-1">
+              <span>02</span>
+              <h3>Réduire les erreurs</h3>
+              <p>Sélectionnez les salons et rôles depuis le panel, puis vérifiez les options avant publication.</p>
+            </article>
+            <article class="benefit-card reveal reveal-delay-2">
+              <span>03</span>
+              <h3>Garder un serveur propre</h3>
+              <p>Standardisez le support, l’accueil et les annonces avec des modèles réutilisables.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="trust-section">
+        <div class="wrap">
+          <div class="section-heading reveal">
+            <p class="section-label">Confiance</p>
+            <h2>Un panel pensé pour agir proprement sur Discord.</h2>
+            <p>
+              Les actions restent liées à votre serveur Discord : vous choisissez le serveur,
+              les salons, les rôles et les messages à publier.
+            </p>
+          </div>
+
+          <div class="trust-grid">
+            <article class="trust-card reveal">
+              <i class="fa-solid fa-user-shield"></i>
+              <h3>Accès administrateur</h3>
+              <p>Le panel s’appuie sur la connexion Discord et affiche les serveurs que vous pouvez administrer.</p>
+            </article>
+            <article class="trust-card reveal reveal-delay-1">
+              <i class="fa-solid fa-eye"></i>
+              <h3>Aperçu avant action</h3>
+              <p>Embeds, templates et réglages sensibles sont pensés pour être vérifiés avant d’être appliqués.</p>
+            </article>
+            <article class="trust-card reveal reveal-delay-2">
+              <i class="fa-solid fa-rotate"></i>
+              <h3>Configuration maintenable</h3>
+              <p>Les modèles, commandes et modules restent accessibles pour être ajustés quand le serveur évolue.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="how-section" id="how">
+        <div class="wrap">
+          <div class="section-heading reveal">
+            <p class="section-label">Comment ça marche</p>
+            <h2>De l’invitation du bot à la configuration du serveur.</h2>
+          </div>
+
+          <div class="steps-grid">
+            <article class="step-card reveal">
+              <span>1</span>
+              <h3>Ajoutez Vexbot</h3>
+              <p>Invitez le bot sur votre serveur Discord avec les permissions nécessaires.</p>
+            </article>
+            <article class="step-card reveal reveal-delay-1">
+              <span>2</span>
+              <h3>Connectez-vous</h3>
+              <p>Ouvrez le panel avec Discord et choisissez le serveur que vous administrez.</p>
+            </article>
+            <article class="step-card reveal reveal-delay-2">
+              <span>3</span>
+              <h3>Configurez</h3>
+              <p>Activez les modules, préparez vos embeds, vos tickets et vos commandes.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="cta-section">
+        <div class="wrap">
+          <div class="cta-card reveal">
+            <p class="section-label">Prêt à structurer votre serveur ?</p>
+            <h2>Ajoutez Vexbot et gérez votre serveur depuis le panel.</h2>
+            <p>
+              Commencez avec le bot, puis configurez les fonctions importantes depuis une interface claire.
             </p>
             <div class="cta-actions">
               <a
                 class="btn btn-primary btn-lg"
                 href="https://discord.com/api/oauth2/authorize?client_id=1495026020473110619&amp;permissions=8&amp;scope=bot%20applications.commands"
               >
-                <i class="fa-brands fa-discord" aria-hidden="true"></i>
-                Ajouter Vexbot à Discord
+                Ajouter Vexbot
               </a>
-              <a class="btn btn-ghost btn-lg" href="https://panel.vexbot.fr/">Accéder au panel</a>
+              <a class="btn btn-ghost btn-lg" href="https://panel.vexbot.fr/">Ouvrir le panel</a>
             </div>
           </div>
         </div>
       </section>
     </main>
 
-    <footer>
+    <footer class="site-footer">
       <div class="wrap footer-inner">
-        <p>© <span id="y"></span> Vexbot · Bot Discord &amp; panel de gestion</p>
-        <nav class="footer-links" aria-label="Liens utiles">
+        <p>© <span id="y"></span> Vexbot · Panel de gestion Discord</p>
+        <nav aria-label="Liens utiles">
           <a href="https://panel.vexbot.fr/">Panel</a>
           <a href="https://discord.com/api/oauth2/authorize?client_id=1495026020473110619&amp;permissions=8&amp;scope=bot%20applications.commands">Inviter le bot</a>
         </nav>
       </div>
     </footer>
+
     <script src="main.js"></script>
   </body>
 </html>

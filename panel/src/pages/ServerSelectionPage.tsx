@@ -77,11 +77,11 @@ export function ServerSelectionPage() {
         {eligibleGuilds.map((guild) => {
           const ready = guild.botPresent;
           return (
-            <article key={guild.id} className="ui-card p-4">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 items-center gap-3">
+            <article key={guild.id} className="ui-card p-3 sm:p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
                   <GuildAvatar guildId={guild.id} guildName={guild.name} guildIcon={guild.icon} />
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-zinc-100">{guild.name}</p>
                     <p className="mt-0.5 text-xs text-zinc-500">
                       Statut :{" "}
@@ -92,7 +92,7 @@ export function ServerSelectionPage() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-end gap-2 sm:justify-end">
+                <div className="flex shrink-0 items-center justify-end gap-2 sm:self-auto">
                   {ready ? (
                     <button
                       type="button"
@@ -115,7 +115,7 @@ export function ServerSelectionPage() {
                       href={guild.inviteUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="ui-btn-primary inline-flex"
+                      className="ui-btn-primary w-full shrink-0 sm:w-auto"
                     >
                       Inviter le bot
                     </a>

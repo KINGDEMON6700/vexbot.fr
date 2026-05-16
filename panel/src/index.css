@@ -13,6 +13,7 @@
 body {
   font-family: var(--font-sans);
   background-color: var(--color-vex-bg);
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -90,15 +91,19 @@ body {
   }
 
   .ui-save-bar-inner {
-    @apply pointer-events-auto mx-auto flex max-w-6xl items-center justify-center gap-2 px-4 sm:px-6;
+    @apply pointer-events-auto mx-auto flex w-full max-w-6xl flex-col items-center justify-center gap-2 px-3 sm:px-6;
+  }
+
+  .ui-save-bar-actions {
+    @apply flex w-full max-w-xs items-center justify-center gap-2 sm:max-w-sm;
   }
 
   .ui-save-bar-btn-primary {
-    @apply rounded-lg bg-vex-accent px-3 py-1.5 text-xs font-medium text-white shadow-[0_0_16px_rgba(99,102,241,0.3)] transition hover:bg-indigo-400 active:scale-[0.98] disabled:opacity-50;
+    @apply inline-flex min-h-9 min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-lg bg-vex-accent px-3 py-1.5 text-xs font-medium text-white shadow-[0_0_16px_rgba(99,102,241,0.3)] transition hover:bg-indigo-400 active:scale-[0.98] disabled:opacity-50;
   }
 
   .ui-save-bar-btn-secondary {
-    @apply rounded-lg border border-vex-border/80 bg-vex-bg/30 px-2.5 py-1.5 text-xs text-zinc-300 backdrop-blur-sm transition hover:border-zinc-600 hover:bg-vex-surface/50 disabled:opacity-50;
+    @apply inline-flex min-h-9 min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-lg border border-vex-border/80 bg-vex-bg/30 px-2.5 py-1.5 text-xs text-zinc-300 backdrop-blur-sm transition hover:border-zinc-600 hover:bg-vex-surface/50 disabled:opacity-50;
   }
 
   .ui-gradient-text {
@@ -106,7 +111,7 @@ body {
   }
 
   .ui-page-header h1 {
-    @apply text-2xl font-semibold tracking-tight text-zinc-100;
+    @apply text-[1.65rem] font-semibold leading-tight tracking-tight text-zinc-100 sm:text-2xl;
   }
 
   .ui-page-header p {
@@ -118,31 +123,31 @@ body {
   }
 
   .ui-card {
-    @apply rounded-xl border border-vex-border/90 bg-vex-surface/90 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset,0_8px_32px_rgba(0,0,0,0.22)] backdrop-blur-md;
+    @apply min-w-0 rounded-xl border border-vex-border/90 bg-vex-surface/90 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset,0_8px_32px_rgba(0,0,0,0.22)] backdrop-blur-md;
   }
 
   .ui-card-interactive {
-    @apply rounded-xl border border-vex-border/90 bg-vex-surface/90 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset,0_8px_32px_rgba(0,0,0,0.22)] backdrop-blur-md transition duration-300 ease-out hover:-translate-y-0.5 hover:border-indigo-500/40 hover:shadow-[0_16px_48px_rgba(99,102,241,0.14)];
+    @apply min-w-0 rounded-xl border border-vex-border/90 bg-vex-surface/90 shadow-[0_0_0_1px_rgba(255,255,255,0.03)_inset,0_8px_32px_rgba(0,0,0,0.22)] backdrop-blur-md transition duration-300 ease-out hover:-translate-y-0.5 hover:border-indigo-500/40 hover:shadow-[0_16px_48px_rgba(99,102,241,0.14)];
   }
 
   .ui-card-muted {
-    @apply rounded-xl border border-vex-border bg-vex-surface/55 shadow-sm shadow-black/15 backdrop-blur-sm;
+    @apply min-w-0 rounded-xl border border-vex-border bg-vex-surface/55 shadow-sm shadow-black/15 backdrop-blur-sm;
   }
 
   .ui-empty-state {
-    @apply rounded-xl border border-dashed border-vex-border/80 bg-vex-bg/50 px-6 py-10 text-center text-sm text-zinc-400 backdrop-blur-sm;
+    @apply min-w-0 rounded-xl border border-dashed border-vex-border/80 bg-vex-bg/50 px-4 py-8 text-center text-sm text-zinc-400 backdrop-blur-sm sm:px-6 sm:py-10;
   }
 
   .ui-btn-primary {
-    @apply rounded-lg bg-vex-accent px-4 py-2 text-sm font-medium text-white shadow-[0_0_24px_rgba(99,102,241,0.35)] transition hover:bg-indigo-400 hover:shadow-[0_0_32px_rgba(99,102,241,0.45)] active:scale-[0.98] disabled:opacity-50 disabled:shadow-none;
+    @apply inline-flex min-h-10 max-w-full items-center justify-center rounded-lg bg-vex-accent px-4 py-2 text-center text-sm font-medium text-white shadow-[0_0_24px_rgba(99,102,241,0.35)] transition hover:bg-indigo-400 hover:shadow-[0_0_32px_rgba(99,102,241,0.45)] active:scale-[0.98] disabled:opacity-50 disabled:shadow-none;
   }
 
   .ui-btn-secondary {
-    @apply rounded-lg border border-vex-border bg-vex-surface/80 px-3 py-2 text-sm text-zinc-300 backdrop-blur-sm transition hover:border-zinc-600 hover:bg-vex-surface-2 disabled:opacity-50;
+    @apply inline-flex min-h-10 max-w-full items-center justify-center rounded-lg border border-vex-border bg-vex-surface/80 px-3 py-2 text-center text-sm text-zinc-300 backdrop-blur-sm transition hover:border-zinc-600 hover:bg-vex-surface-2 disabled:opacity-50;
   }
 
   .ui-input {
-    @apply w-full rounded-lg border border-vex-border bg-vex-bg/80 px-3 py-2 text-sm text-zinc-100 backdrop-blur-sm placeholder:text-zinc-600 focus:border-vex-accent focus:ring-1 focus:ring-vex-accent focus:outline-none disabled:opacity-50;
+    @apply min-h-10 w-full min-w-0 rounded-lg border border-vex-border bg-vex-bg/80 px-3 py-2 text-sm text-zinc-100 backdrop-blur-sm placeholder:text-zinc-600 focus:border-vex-accent focus:ring-1 focus:ring-vex-accent focus:outline-none disabled:opacity-50;
   }
 
   .ui-nav-link-active {
@@ -150,7 +155,7 @@ body {
   }
 
   .ui-nav-bar {
-    @apply border-t border-white/[0.06] bg-vex-surface/35 px-4 pb-2.5 pt-2 backdrop-blur-md sm:px-6;
+    @apply border-t border-white/[0.06] bg-vex-surface/35 px-0 pb-2.5 pt-2 backdrop-blur-md;
   }
 
   .ui-nav-pills {
@@ -205,6 +210,10 @@ body {
 
   .animate-vex-shake {
     animation: vex-shake 0.42s ease-in-out both;
+  }
+
+  .ui-responsive-row {
+    @apply flex flex-col gap-2 sm:flex-row sm:items-center;
   }
 }
 

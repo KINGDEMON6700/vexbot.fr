@@ -357,14 +357,14 @@ export function TicketEmbedPreviewModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/65 p-4"
+      className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/65 p-2 py-4 sm:p-4"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className="ui-card max-h-[min(90vh,52rem)] w-full max-w-3xl overflow-y-auto p-5 shadow-2xl"
+        className="ui-card max-h-[calc(100vh-2rem)] w-full max-w-3xl overflow-y-auto p-3 shadow-2xl sm:max-h-[min(90vh,52rem)] sm:p-5"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -415,7 +415,7 @@ export function TicketEmbedPreviewModal({
               className="rounded-none border-0 p-3 shadow-none"
             />
             <div className="px-3 pb-3">
-              <div className="mx-auto max-w-[480px] pl-14">
+              <div className="mx-auto max-w-full pl-10 sm:max-w-[480px] sm:pl-14">
                 <TicketPanelOpenRowPreview config={panelOpen} />
               </div>
             </div>

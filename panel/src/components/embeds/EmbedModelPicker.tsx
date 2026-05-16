@@ -285,7 +285,7 @@ export function EmbedModelPicker({
 
       {editId && templateBeingEdited ? (
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/60 p-2 py-4 sm:p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="embed-model-edit-title"

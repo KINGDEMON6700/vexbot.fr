@@ -14,7 +14,7 @@ type Props = {
 
 /** Espace sous le contenu quand la barre fixe est visible (bandeau fin). */
 export const SAVE_BAR_PAGE_PADDING =
-  "pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))]" as const;
+  "pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))]" as const;
 
 /** Barre fixe Enregistrer / Ne pas enregistrer — même style que le bandeau navigation (.ui-nav-bar). */
 export function SaveChangesBar({
@@ -52,14 +52,14 @@ export function SaveChangesBar({
           {statusLabel}
         </p>
         {!isSaved ? (
-          <>
+          <div className="ui-save-bar-actions">
             <button type="button" onClick={onSave} disabled={saving} className="ui-save-bar-btn-primary">
               {saving ? "Enregistrement..." : "Enregistrer"}
             </button>
             <button type="button" onClick={onDiscard} disabled={saving} className="ui-save-bar-btn-secondary">
               Ne pas enregistrer
             </button>
-          </>
+          </div>
         ) : null}
       </div>
     </div>,

@@ -59,7 +59,7 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
 
   /** `true` = section développée pour l’option d’index `i`. */
   const [optionExpanded, setOptionExpanded] = useState<boolean[]>([]);
-  const [buttonModalDetailsOpen, setButtonModalDetailsOpen] = useState(true);
+  const [buttonModalDetailsOpen, setButtonModalDetailsOpen] = useState(false);
   const [optionModalExpanded, setOptionModalExpanded] = useState<boolean[]>([]);
 
   useEffect(() => {
@@ -67,11 +67,11 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
     const n = value.options.length;
     setOptionExpanded((prev) => {
       if (prev.length === n) return prev;
-      return Array.from({ length: n }, (_, i) => prev[i] ?? true);
+      return Array.from({ length: n }, (_, i) => prev[i] ?? false);
     });
     setOptionModalExpanded((prev) => {
       if (prev.length === n) return prev;
-      return Array.from({ length: n }, (_, i) => prev[i] ?? true);
+      return Array.from({ length: n }, (_, i) => prev[i] ?? false);
     });
   }, [value.style, selectOptionCount]);
 
@@ -98,7 +98,7 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
     onChange({
       v: 1,
       style: "select",
-      selectPlaceholder: "Choisissez un type de demande",
+      selectPlaceholder: "Choisissez une catégories",
       options: rm
         ? [
             {
@@ -127,7 +127,7 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
         modalInputStyle: "paragraph",
       });
     } else {
-      setButtonModalDetailsOpen(true);
+      setButtonModalDetailsOpen(false);
       onChange({
         ...valueNorm,
         requireModal: true,
@@ -169,9 +169,9 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
       </div>
 
       {valueNorm.style === "button" ? (
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1.5 text-sm">
-            <span className="text-zinc-400">Libellé du bouton d’ouverture</span>
+        <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">
+          <label className="flex min-w-0 flex-col gap-1.5 text-sm">
+            <span className="text-zinc-400">Libellé du bouton</span>
             <input
               className="ui-input"
               maxLength={80}
@@ -179,9 +179,9 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
               onChange={(e) => onChange({ ...valueNorm, buttonLabel: e.target.value })}
             />
           </label>
-          <div className="flex flex-col gap-2 sm:col-span-2">
+          <div className="flex min-w-0 flex-col gap-2 sm:col-span-2">
             <span className="text-sm text-zinc-400" id="discord-ticket-btn-color-label">
-              Couleur du bouton sur Discord
+              Couleur du bouton
             </span>
             <div
               className="flex flex-wrap items-center gap-3"
@@ -211,65 +211,66 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
             </div>
           </div>
           <UiToggle
-            className="sm:col-span-2"
+            className="min-w-0 sm:col-span-2"
             title="Question/réponse avant ouverture"
             hint="Si activé, Discord ouvre une fenêtre pour détailler la demande avant l’ouverture du ticket. Si désactivé, le ticket s’ouvre tout de suite."
             active={valueNorm.requireModal}
             detailsExpanded={buttonModalDetailsOpen}
             onToggleDetails={() => setButtonModalDetailsOpen((v) => !v)}
             onToggle={() => setRequireModal(!valueNorm.requireModal)}
-          />
-          {valueNorm.requireModal && buttonModalDetailsOpen ? (
-            <>
-              <label className="mt-4 flex flex-col gap-1.5 text-sm sm:col-span-2">
-                <span className="text-zinc-400">Titre de la fenêtre Discord (45 caractères max.)</span>
-                <input
-                  className="ui-input"
-                  maxLength={45}
-                  value={valueNorm.modalTitle ?? ""}
-                  onChange={(e) => onChange({ ...valueNorm, modalTitle: e.target.value })}
-                />
-              </label>
-              <label className="flex flex-col gap-1.5 text-sm">
-                <span className="text-zinc-400">Question au-dessus de la zone de texte</span>
-                <input
-                  className="ui-input"
-                  maxLength={45}
-                  value={valueNorm.modalInputLabel ?? ""}
-                  onChange={(e) => onChange({ ...valueNorm, modalInputLabel: e.target.value })}
-                />
-              </label>
-              <label className="flex flex-col gap-1.5 text-sm">
-                <span className="text-zinc-400">Exemple grisé dans la zone (facultatif)</span>
-                <input
-                  className="ui-input"
-                  maxLength={100}
-                  value={valueNorm.modalInputPlaceholder ?? ""}
-                  onChange={(e) => onChange({ ...valueNorm, modalInputPlaceholder: e.target.value })}
-                />
-              </label>
-              <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
-                <span className="text-zinc-400">Réponse courte ou longue</span>
-                <select
-                  className="ui-input"
-                  value={valueNorm.modalInputStyle ?? "paragraph"}
-                  onChange={(e) =>
-                    onChange({
-                      ...valueNorm,
-                      modalInputStyle: e.target.value === "short" ? "short" : "paragraph",
-                    })
-                  }
-                >
-                  <option value="short">Une seule ligne</option>
-                  <option value="paragraph">Plusieurs lignes (recommandé)</option>
-                </select>
-              </label>
-            </>
-          ) : null}
+          >
+            {valueNorm.requireModal && buttonModalDetailsOpen ? (
+              <div className="grid min-w-0 gap-3 sm:grid-cols-2">
+                <label className="flex min-w-0 flex-col gap-1.5 text-sm sm:col-span-2">
+                  <span className="text-zinc-400">Titre de la fenêtre Discord (45 caractères max.)</span>
+                  <input
+                    className="ui-input"
+                    maxLength={45}
+                    value={valueNorm.modalTitle ?? ""}
+                    onChange={(e) => onChange({ ...valueNorm, modalTitle: e.target.value })}
+                  />
+                </label>
+                <label className="flex min-w-0 flex-col gap-1.5 text-sm">
+                  <span className="text-zinc-400">Question au-dessus de la zone de texte</span>
+                  <input
+                    className="ui-input"
+                    maxLength={45}
+                    value={valueNorm.modalInputLabel ?? ""}
+                    onChange={(e) => onChange({ ...valueNorm, modalInputLabel: e.target.value })}
+                  />
+                </label>
+                <label className="flex min-w-0 flex-col gap-1.5 text-sm">
+                  <span className="text-zinc-400">Exemple grisé dans la zone (facultatif)</span>
+                  <input
+                    className="ui-input"
+                    maxLength={100}
+                    value={valueNorm.modalInputPlaceholder ?? ""}
+                    onChange={(e) => onChange({ ...valueNorm, modalInputPlaceholder: e.target.value })}
+                  />
+                </label>
+                <label className="flex min-w-0 flex-col gap-1.5 text-sm sm:col-span-2">
+                  <span className="text-zinc-400">Réponse courte ou longue</span>
+                  <select
+                    className="ui-input"
+                    value={valueNorm.modalInputStyle ?? "paragraph"}
+                    onChange={(e) =>
+                      onChange({
+                        ...valueNorm,
+                        modalInputStyle: e.target.value === "short" ? "short" : "paragraph",
+                      })
+                    }
+                  >
+                    <option value="short">Une seule ligne</option>
+                    <option value="paragraph">Plusieurs lignes (recommandé)</option>
+                  </select>
+                </label>
+              </div>
+            ) : null}
+          </UiToggle>
         </div>
       ) : (
-        <div className="mt-4 space-y-4">
-          <label className="flex flex-col gap-1.5 text-sm">
+        <div className="mt-4 min-w-0 space-y-4">
+          <label className="flex min-w-0 flex-col gap-1.5 text-sm">
             <span className="text-zinc-400">Texte invitant à choisir dans la liste (grisé)</span>
             <input
               className="ui-input"
@@ -279,18 +280,18 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
             />
           </label>
 
-          <ul className="space-y-3">
+          <ul className="min-w-0 space-y-3">
             {valueNorm.options.map((opt, i) => {
               const open = optionExpanded[i] !== false;
               return (
                 <li
                   key={i}
-                  className="overflow-hidden rounded-lg border border-vex-border/60 bg-vex-surface/40"
+                  className="min-w-0 overflow-hidden rounded-lg border border-vex-border/60 bg-vex-surface/40"
                 >
-                  <div className="flex flex-wrap items-stretch gap-2 border-b border-vex-border/40 p-2 sm:items-center">
+                  <div className="flex min-w-0 flex-wrap items-stretch gap-2 border-b border-vex-border/40 p-2 sm:items-center">
                     <button
                       type="button"
-                      className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-zinc-200 hover:bg-vex-bg/50"
+                      className="flex min-w-0 flex-1 basis-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm text-zinc-200 hover:bg-vex-bg/50 sm:basis-0"
                       aria-expanded={open}
                       onClick={() =>
                         setOptionExpanded((prev) => {
@@ -304,7 +305,7 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
                       <span className="shrink-0 text-zinc-500" aria-hidden>
                         {open ? "▼" : "▶"}
                       </span>
-                      <span className="min-w-0">
+                      <span className="min-w-0 flex-1">
                         <span className="text-xs font-medium text-zinc-500">Option {i + 1}</span>
                         <span className="mt-0.5 block truncate text-sm text-zinc-200">
                           {opt.label.trim() || "Sans nom"}
@@ -333,8 +334,8 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
                     ) : null}
                   </div>
                   {open ? (
-                    <div className="grid gap-2 p-3 sm:grid-cols-2">
-                      <label className="flex flex-col gap-1 text-sm sm:col-span-2">
+                    <div className="grid min-w-0 gap-2 p-3 sm:grid-cols-2">
+                      <label className="flex min-w-0 flex-col gap-1 text-sm sm:col-span-2">
                         <span className="text-zinc-400">Nom visible dans la liste</span>
                         <input
                           className="ui-input"
@@ -343,7 +344,7 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
                           onChange={(e) => updateSelectOption(i, { label: e.target.value })}
                         />
                       </label>
-                      <label className="flex flex-col gap-1 text-sm sm:col-span-2">
+                      <label className="flex min-w-0 flex-col gap-1 text-sm sm:col-span-2">
                         <span className="text-zinc-400">Petite phrase sous le nom (facultatif)</span>
                         <input
                           className="ui-input"
@@ -353,16 +354,16 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
                         />
                       </label>
                       <UiToggle
-                        className="sm:col-span-2"
+                        className="min-w-0 sm:col-span-2"
                         title="Question/réponse avant ouverture"
                         hint="Si activé, une fenêtre demande le détail après le choix de cette option. Si désactivé, le ticket s’ouvre tout de suite avec ce type."
                         active={opt.requireModal}
-                        detailsExpanded={optionModalExpanded[i] !== false}
+                        detailsExpanded={optionModalExpanded[i] === true}
                         onToggleDetails={() =>
                           setOptionModalExpanded((prev) => {
                             const next = [...prev];
-                            while (next.length <= i) next.push(true);
-                            next[i] = next[i] === false;
+                            while (next.length <= i) next.push(false);
+                            next[i] = next[i] !== true;
                             return next;
                           })
                         }
@@ -372,61 +373,62 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
                             setOptionModalExpanded((prev) => {
                               const next = [...prev];
                               while (next.length <= i) next.push(true);
-                              next[i] = true;
+                              next[i] = false;
                               return next;
                             });
                           }
                           updateSelectOption(i, { requireModal: nextRequireModal });
                         }}
-                      />
-                      {opt.requireModal && optionModalExpanded[i] !== false ? (
-                        <>
-                          <label className="flex flex-col gap-1 text-sm sm:col-span-2">
-                            <span className="text-zinc-400">Titre de la fenêtre après le choix</span>
-                            <input
-                              className="ui-input"
-                              maxLength={45}
-                              value={opt.modalTitle}
-                              onChange={(e) => updateSelectOption(i, { modalTitle: e.target.value })}
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1 text-sm">
-                            <span className="text-zinc-400">Question au-dessus de la zone de texte</span>
-                            <input
-                              className="ui-input"
-                              maxLength={45}
-                              value={opt.modalInputLabel}
-                              onChange={(e) => updateSelectOption(i, { modalInputLabel: e.target.value })}
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1 text-sm">
-                            <span className="text-zinc-400">Exemple grisé (facultatif)</span>
-                            <input
-                              className="ui-input"
-                              maxLength={100}
-                              value={opt.modalInputPlaceholder ?? ""}
-                              onChange={(e) =>
-                                updateSelectOption(i, { modalInputPlaceholder: e.target.value || null })
-                              }
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1 text-sm sm:col-span-2">
-                            <span className="text-zinc-400">Réponse courte ou longue</span>
-                            <select
-                              className="ui-input"
-                              value={opt.modalInputStyle}
-                              onChange={(e) =>
-                                updateSelectOption(i, {
-                                  modalInputStyle: e.target.value === "short" ? "short" : "paragraph",
-                                })
-                              }
-                            >
-                              <option value="short">Une seule ligne</option>
-                              <option value="paragraph">Plusieurs lignes (recommandé)</option>
-                            </select>
-                          </label>
-                        </>
-                      ) : null}
+                      >
+                        {opt.requireModal && optionModalExpanded[i] === true ? (
+                          <div className="grid min-w-0 gap-2 sm:grid-cols-2">
+                            <label className="flex min-w-0 flex-col gap-1 text-sm sm:col-span-2">
+                              <span className="text-zinc-400">Titre de la fenêtre après le choix</span>
+                              <input
+                                className="ui-input"
+                                maxLength={45}
+                                value={opt.modalTitle}
+                                onChange={(e) => updateSelectOption(i, { modalTitle: e.target.value })}
+                              />
+                            </label>
+                            <label className="flex min-w-0 flex-col gap-1 text-sm">
+                              <span className="text-zinc-400">Question au-dessus de la zone de texte</span>
+                              <input
+                                className="ui-input"
+                                maxLength={45}
+                                value={opt.modalInputLabel}
+                                onChange={(e) => updateSelectOption(i, { modalInputLabel: e.target.value })}
+                              />
+                            </label>
+                            <label className="flex min-w-0 flex-col gap-1 text-sm">
+                              <span className="text-zinc-400">Exemple grisé (facultatif)</span>
+                              <input
+                                className="ui-input"
+                                maxLength={100}
+                                value={opt.modalInputPlaceholder ?? ""}
+                                onChange={(e) =>
+                                  updateSelectOption(i, { modalInputPlaceholder: e.target.value || null })
+                                }
+                              />
+                            </label>
+                            <label className="flex min-w-0 flex-col gap-1 text-sm sm:col-span-2">
+                              <span className="text-zinc-400">Réponse courte ou longue</span>
+                              <select
+                                className="ui-input"
+                                value={opt.modalInputStyle}
+                                onChange={(e) =>
+                                  updateSelectOption(i, {
+                                    modalInputStyle: e.target.value === "short" ? "short" : "paragraph",
+                                  })
+                                }
+                              >
+                                <option value="short">Une seule ligne</option>
+                                <option value="paragraph">Plusieurs lignes (recommandé)</option>
+                              </select>
+                            </label>
+                          </div>
+                        ) : null}
+                      </UiToggle>
                     </div>
                   ) : null}
                 </li>
@@ -438,7 +440,7 @@ export function TicketPanelOpenSection({ value, onChange }: Props) {
               type="button"
               className="ui-btn-secondary text-sm"
               onClick={() => {
-                setOptionExpanded((e) => [...e, true]);
+                setOptionExpanded((e) => [...e, false]);
                 onChange({ ...valueNorm, options: [...valueNorm.options, defaultOption()] });
               }}
             >
