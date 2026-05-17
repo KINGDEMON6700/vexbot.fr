@@ -1,5 +1,6 @@
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { PanelPageHeader } from "../components/ui/PanelPageHeader.js";
+import { useAuth } from "../contexts/AuthContext.js";
 import { useGuild } from "../contexts/GuildContext.js";
 import { guildIconUrl } from "../lib/guildIconUrl.js";
 
@@ -36,7 +37,12 @@ function GuildAvatar({
 
 export function ServerSelectionPage() {
   const navigate = useNavigate();
+  const { status, user } = useAuth();
   const { loadStatus, eligibleGuilds, setSelectedGuildId } = useGuild();
+
+  if (status === "ready" && !user) {
+    return <Navigate to="/login" replace state={{ pageTitle: "Sélection du serveur" }} />;
+  }
 
   if (loadStatus === "idle" || loadStatus === "loading") {
     return (

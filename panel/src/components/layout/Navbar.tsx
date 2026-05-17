@@ -33,7 +33,7 @@ export function Navbar() {
     <header className="sticky top-0 z-50 border-b border-vex-border/60 bg-vex-surface/40 shadow-[0_4px_24px_rgba(0,0,0,0.18)] backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-3 py-3 sm:px-6 sm:py-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex min-w-0 items-center justify-between gap-3 lg:justify-start">
+          <div className="flex min-w-0 items-center justify-start gap-2.5 sm:gap-3">
             <NavLink to={`/${qs}`} className="flex min-w-0 items-center gap-2.5">
               <img
                 src={vexLogoFav}
@@ -44,8 +44,17 @@ export function Navbar() {
               />
               <span className="ui-gradient-text truncate text-lg font-bold tracking-tight">Vexbot</span>
             </NavLink>
-            <span className="hidden text-zinc-600 sm:inline">|</span>
-            <span className="hidden text-xs text-zinc-500 sm:inline">Panel</span>
+            <span className="text-zinc-600">|</span>
+            <a
+              href="https://discord.gg/Hb4wrHQ8mw"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Rejoindre le Discord VexBot"
+              title="Rejoindre le Discord VexBot"
+              className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-indigo-500/30 bg-indigo-500/10 text-indigo-200 transition hover:border-indigo-400/50 hover:bg-indigo-500/20 hover:text-white"
+            >
+              <span className="fa-brands fa-discord text-sm" aria-hidden />
+            </a>
           </div>
 
           {status === "ready" && user ? (

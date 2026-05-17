@@ -278,8 +278,9 @@ export async function buildGuildOverview(
   userGuild: DiscordGuild,
   botToken: string,
   clientId: string,
+  frontendUrl: string,
 ): Promise<GuildOverviewResponse> {
-  const inviteUrl = buildBotInviteUrl(clientId, discordGuildId);
+  const inviteUrl = buildBotInviteUrl(frontendUrl, discordGuildId, "panel_overview");
 
   let botPresent = false;
   try {

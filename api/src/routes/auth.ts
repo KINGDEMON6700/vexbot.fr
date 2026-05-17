@@ -1,9 +1,14 @@
 import { randomBytes } from "node:crypto";
 import { Router } from "express";
 import { loadEnv } from "../config/env.js";
+import { prisma } from "../db.js";
 import { asyncHandler } from "../lib/asyncHandler.js";
 import { AppError } from "../lib/AppError.js";
+import { trackingFromRequest } from "../lib/trackingCookies.js";
 import { requireSession } from "../middleware/requireSession.js";
+import { ensureCsrfToken } from "../middleware/csrf.js";
+import { isAdminDiscordUser } from "../middleware/requireAdmin.js";
+import { networkMetadataFromRequest, recordPanelLogin, recordProductEvent } from "../services/metricsService.js";
 import {
   buildAuthorizeUrl,
   exchangeCodeForToken,
@@ -26,6 +31,15 @@ authRouter.get(
     req.session.oauthState = state;
     const redirectUri = oauthRedirectUri(req);
     const url = buildAuthorizeUrl(state, redirectUri);
+    const tracking = trackingFromRequest(req);
+    await recordProductEvent(prisma, {
+      type: "discord_login_started",
+      source: "panel",
+      path: "/api/auth/discord",
+      visitorId: tracking.visitorId,
+      sessionId: tracking.sessionId,
+      metadata: { network: networkMetadataFromRequest(req) },
+    });
     res.redirect(url);
   }),
 );
@@ -64,8 +78,20 @@ authRouter.get(
     req.session.discordAccessToken = accessToken;
     req.session.discordUser = user;
     req.session.discordGuilds = guilds;
+    ensureCsrfToken(req);
+    const tracking = trackingFromRequest(req);
+    await recordPanelLogin(prisma, user, tracking);
+    await recordProductEvent(prisma, {
+      type: "panel_login",
+      source: "discord_oauth",
+      path: "/api/auth/callback",
+      visitorId: tracking.visitorId,
+      sessionId: tracking.sessionId,
+      discordUserId: user.id,
+      metadata: { username: user.username, globalName: user.global_name, network: networkMetadataFromRequest(req) },
+    });
 
-    res.redirect(`${env.FRONTEND_URL.replace(/\/$/, "")}/`);
+    res.redirect(`${env.FRONTEND_URL.replace(/\/$/, "")}/select-server`);
   }),
 );
 
@@ -83,12 +109,21 @@ authRouter.post(
 );
 
 authRouter.get(
+  "/csrf",
+  requireSession,
+  asyncHandler(async (req, res) => {
+    res.json({ csrfToken: ensureCsrfToken(req) });
+  }),
+);
+
+authRouter.get(
   "/me",
   requireSession,
   asyncHandler(async (req, res) => {
     res.json({
       user: req.session.discordUser,
       guilds: req.session.discordGuilds ?? [],
+      isAdmin: isAdminDiscordUser(req.session.discordUser?.id),
     });
   }),
 );

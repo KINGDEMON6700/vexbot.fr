@@ -39,15 +39,26 @@ export async function isBotMemberOfGuild(guildId: string, botToken: string): Pro
   return snap !== null;
 }
 
-export function buildBotInviteUrl(clientId: string, guildId: string): string {
+export function buildDiscordBotInviteUrl(clientId: string, guildId?: string | null): string {
   const params = new URLSearchParams({
     client_id: clientId,
     permissions: BOT_INVITE_PERMISSIONS.toString(),
     scope: "bot applications.commands",
-    guild_id: guildId,
-    disable_guild_select: "true",
   });
+  if (guildId) {
+    params.set("guild_id", guildId);
+    params.set("disable_guild_select", "true");
+  }
   return `https://discord.com/oauth2/authorize?${params.toString()}`;
+}
+
+export function buildBotInviteUrl(frontendUrl: string, guildId: string, source = "panel_guild_selector"): string {
+  const base = frontendUrl.replace(/\/$/, "");
+  const params = new URLSearchParams({
+    source,
+    guildId,
+  });
+  return `${base}/api/public/bot-invite?${params.toString()}`;
 }
 
 export type EligibleGuildPayload = {
@@ -63,6 +74,7 @@ export async function buildEligibleGuildList(
   guilds: DiscordGuild[],
   clientId: string,
   botToken: string,
+  frontendUrl: string,
 ): Promise<EligibleGuildPayload[]> {
   const filtered = guilds.filter(isGuildEligibleForPanel);
 
@@ -81,7 +93,7 @@ export async function buildEligibleGuildList(
       } catch {
         botPresent = false;
       }
-      const inviteUrl = botPresent ? null : buildBotInviteUrl(clientId, g.id);
+      const inviteUrl = botPresent ? null : buildBotInviteUrl(frontendUrl, g.id);
       return {
         id: g.id,
         name,

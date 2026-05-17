@@ -18,6 +18,7 @@ const schema = z.object({
     z.string().url().optional(),
   ),
   FRONTEND_URL: z.string().url(),
+  LANDING_URL: z.string().url().default("https://vexbot.fr"),
   /** Affichée dans le footer des embeds tickets (ex. https://vexbot.fr). Si vide : footer « Vex » seul. */
   VEX_BRANDING_PUBLIC_URL: z.preprocess(
     (v) => (v === "" || v === undefined ? undefined : v),
@@ -32,6 +33,8 @@ const schema = z.object({
   DISCORD_BOT_TOKEN: z.string().min(1),
   /** Secret partagé bot ↔ API (commandes internes, ex. /sendembed). Min. 16 caractères. */
   VEX_BOT_API_SECRET: z.string().min(16, "VEX_BOT_API_SECRET doit faire au moins 16 caractères"),
+  /** IDs Discord autorisés à voir les statistiques globales du panel, séparés par des virgules. */
+  ADMIN_DISCORD_USER_IDS: z.string().default(""),
 });
 
 export type Env = z.infer<typeof schema>;

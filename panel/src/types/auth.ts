@@ -5,6 +5,7 @@ export type PanelUser = {
   discriminator: string;
   global_name: string | null;
   avatar: string | null;
+  isAdmin?: boolean;
 };
 
 /** Serveur renvoyé par GET /api/auth/me (scope guilds). */
@@ -19,4 +20,5 @@ export type PanelGuild = {
 export type AuthMeResponse = {
   user: PanelUser;
   guilds: PanelGuild[];
+  isAdmin?: boolean;
 };

@@ -3,12 +3,30 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Vexbot — Le panel pour gérer votre serveur Discord</title>
+    <title>Vexbot — Bot Discord avec panel web pour tickets, embeds et modules</title>
     <meta
       name="description"
-      content="Vexbot centralise la gestion de votre serveur Discord dans un panel clair : tickets, embeds, commandes, modules d’accueil, templates serveur et marketplace."
+      content="Vexbot est un bot Discord avec panel web pour gérer tickets, embeds, commandes, accueil, rôles, vérification, templates serveur et marketplace."
     />
+    <meta name="robots" content="index,follow" />
     <link rel="canonical" href="https://vexbot.fr/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:site_name" content="Vexbot" />
+    <meta property="og:title" content="Vexbot — Bot Discord avec panel web pour administrateurs" />
+    <meta
+      property="og:description"
+      content="Tickets, embeds, commandes, accueil des membres, templates et marketplace dans un panel clair pour admins Discord."
+    />
+    <meta property="og:url" content="https://vexbot.fr/" />
+    <meta property="og:image" content="https://vexbot.fr/assets/logofav.png" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Vexbot — Bot Discord avec panel web pour administrateurs" />
+    <meta
+      name="twitter:description"
+      content="Centralisez la gestion de votre serveur Discord dans un panel clair."
+    />
+    <meta name="twitter:image" content="https://vexbot.fr/assets/logofav.png" />
     <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
     <link rel="icon" href="assets/vex-logo.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -57,10 +75,10 @@
         </nav>
 
         <div class="header-actions">
-          <a class="btn btn-ghost" href="https://panel.vexbot.fr/">Ouvrir le panel</a>
+          <a class="btn btn-ghost" href="https://panel.vexbot.fr/login" data-track-event="panel_open_click">Ouvrir le panel</a>
           <a
             class="btn btn-primary"
-            href="https://discord.com/api/oauth2/authorize?client_id=1495026020473110619&amp;permissions=8&amp;scope=bot%20applications.commands"
+            href="https://panel.vexbot.fr/api/public/bot-invite?source=landing" data-track-event="bot_invite_click"
           >
             Ajouter le bot
           </a>
@@ -84,12 +102,12 @@
             <div class="hero-actions">
               <a
                 class="btn btn-primary btn-lg"
-                href="https://discord.com/api/oauth2/authorize?client_id=1495026020473110619&amp;permissions=8&amp;scope=bot%20applications.commands"
+                href="https://panel.vexbot.fr/api/public/bot-invite?source=landing" data-track-event="bot_invite_click"
               >
                 <i class="fa-brands fa-discord" aria-hidden="true"></i>
                 Ajouter Vexbot
               </a>
-              <a class="btn btn-ghost btn-lg" href="https://panel.vexbot.fr/">Voir le panel</a>
+              <a class="btn btn-ghost btn-lg" href="https://panel.vexbot.fr/login" data-track-event="panel_open_click">Voir le panel</a>
             </div>
             <div class="trust-row">
               <span>Connexion Discord</span>
@@ -399,6 +417,34 @@
         </div>
       </section>
 
+      <section class="faq-section">
+        <div class="wrap">
+          <div class="section-heading reveal">
+            <p class="section-label">FAQ</p>
+            <h2>Questions fréquentes sur Vexbot.</h2>
+            <p>Les réponses utiles avant d’ajouter le bot Discord sur votre serveur.</p>
+          </div>
+
+          <div class="feature-grid">
+            <article class="feature-card reveal">
+              <i class="fa-solid fa-shield-halved"></i>
+              <h3>Qui peut accéder au panel ?</h3>
+              <p>Le panel utilise la connexion Discord et affiche les serveurs où vous avez les droits nécessaires.</p>
+            </article>
+            <article class="feature-card reveal reveal-delay-1">
+              <i class="fa-solid fa-ticket"></i>
+              <h3>Vexbot gère-t-il les tickets ?</h3>
+              <p>Oui, vous pouvez préparer un panneau de tickets, suivre les salons ouverts et garder des transcripts.</p>
+            </article>
+            <article class="feature-card reveal reveal-delay-2">
+              <i class="fa-solid fa-layer-group"></i>
+              <h3>Peut-on créer des embeds sans code ?</h3>
+              <p>Oui, l’éditeur permet de créer, prévisualiser et réutiliser des messages propres depuis le panel.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
       <section class="cta-section">
         <div class="wrap">
           <div class="cta-card reveal">
@@ -410,11 +456,11 @@
             <div class="cta-actions">
               <a
                 class="btn btn-primary btn-lg"
-                href="https://discord.com/api/oauth2/authorize?client_id=1495026020473110619&amp;permissions=8&amp;scope=bot%20applications.commands"
+                href="https://panel.vexbot.fr/api/public/bot-invite?source=landing" data-track-event="bot_invite_click"
               >
                 Ajouter Vexbot
               </a>
-              <a class="btn btn-ghost btn-lg" href="https://panel.vexbot.fr/">Ouvrir le panel</a>
+              <a class="btn btn-ghost btn-lg" href="https://panel.vexbot.fr/login" data-track-event="panel_open_click">Ouvrir le panel</a>
             </div>
           </div>
         </div>
@@ -425,8 +471,8 @@
       <div class="wrap footer-inner">
         <p>© <span id="y"></span> Vexbot · Panel de gestion Discord</p>
         <nav aria-label="Liens utiles">
-          <a href="https://panel.vexbot.fr/">Panel</a>
-          <a href="https://discord.com/api/oauth2/authorize?client_id=1495026020473110619&amp;permissions=8&amp;scope=bot%20applications.commands">Inviter le bot</a>
+          <a href="https://panel.vexbot.fr/login" data-track-event="panel_open_click">Panel</a>
+          <a href="https://panel.vexbot.fr/api/public/bot-invite?source=landing" data-track-event="bot_invite_click">Inviter le bot</a>
         </nav>
       </div>
     </footer>

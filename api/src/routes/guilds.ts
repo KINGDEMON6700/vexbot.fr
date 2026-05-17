@@ -15,6 +15,7 @@ import {
 import {
   createEmbedTemplate,
   deleteEmbedTemplate,
+  findEmbedTemplateDtoById,
   listEmbedTemplates,
   updateEmbedTemplate,
 } from "../services/embedTemplateService.js";
@@ -77,8 +78,25 @@ import {
   upsertJoinVerificationSettings,
 } from "../services/joinVerificationSettingsService.js";
 import { syncJoinVerificationPanelDiscord } from "../services/joinVerificationPanelDiscordService.js";
+import { businessEventMetadata, networkMetadataFromRequest, recordProductEvent } from "../services/metricsService.js";
+import { trackingFromRequest } from "../lib/trackingCookies.js";
 
 export const guildsRouter = Router();
+
+async function trackPanelAction(req: import("express").Request, event: Parameters<typeof recordProductEvent>[1] & { type: string }) {
+  const tracking = trackingFromRequest(req);
+  await recordProductEvent(prisma, {
+    ...event,
+    source: "panel",
+    visitorId: tracking.visitorId,
+    sessionId: tracking.sessionId,
+    discordUserId: req.session.discordUser?.id,
+    metadata: {
+      ...(event.metadata && typeof event.metadata === "object" ? event.metadata as Record<string, unknown> : {}),
+      network: networkMetadataFromRequest(req),
+    },
+  });
+}
 
 guildsRouter.get(
   "/eligible",
@@ -86,7 +104,12 @@ guildsRouter.get(
   asyncHandler(async (req, res) => {
     const env = loadEnv();
     const guilds = req.session.discordGuilds ?? [];
-    const list = await buildEligibleGuildList(guilds, env.DISCORD_CLIENT_ID, env.DISCORD_BOT_TOKEN);
+    const list = await buildEligibleGuildList(
+      guilds,
+      env.DISCORD_CLIENT_ID,
+      env.DISCORD_BOT_TOKEN,
+      env.FRONTEND_URL,
+    );
     res.json({ guilds: list });
   }),
 );
@@ -104,6 +127,7 @@ guildsRouter.get(
       guild,
       env.DISCORD_BOT_TOKEN,
       env.DISCORD_CLIENT_ID,
+      env.FRONTEND_URL,
     );
     res.json(data);
   }),
@@ -182,6 +206,23 @@ guildsRouter.patch(
       throw e;
     }
 
+    await trackPanelAction(req, {
+      type: "bot_profile_updated",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "bot",
+        action: "update",
+        name: "Apparence du bot",
+        target: req.discordGuildAccess?.name ?? req.params.discordGuildId,
+        after: {
+          nicknameChanged: Object.prototype.hasOwnProperty.call(raw, "nickname"),
+          avatarChanged: Object.prototype.hasOwnProperty.call(raw, "avatar"),
+          bannerChanged: Object.prototype.hasOwnProperty.call(raw, "banner"),
+        },
+      }),
+    });
+
     res.status(204).end();
   }),
 );
@@ -210,6 +251,19 @@ guildsRouter.patch(
       }
       throw new AppError(500, "Discord a refusé la modification du surnom.", "DISCORD_ERROR");
     }
+
+    await trackPanelAction(req, {
+      type: "bot_nickname_updated",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "bot",
+        action: "update",
+        name: "Pseudo du bot",
+        target: nickname ?? "Pseudo retiré",
+        after: { nickname },
+      }),
+    });
 
     res.status(204).end();
   }),
@@ -372,6 +426,19 @@ guildsRouter.post(
       req.discordGuildAccess?.name,
       req.body,
     );
+    await trackPanelAction(req, {
+      type: "embed_created",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "embed",
+        action: "create",
+        name: created.name,
+        target: req.discordGuildAccess?.name ?? req.params.discordGuildId,
+        embedId: created.id,
+        messagesCount: created.messages.length,
+      }),
+    });
     res.status(201).json({ embed: created });
   }),
 );
@@ -381,6 +448,7 @@ guildsRouter.patch(
   requireSession,
   requireGuildAccess,
   asyncHandler(async (req, res) => {
+    const before = await findEmbedTemplateDtoById(prisma, req.params.discordGuildId, req.params.embedId);
     const updated = await updateEmbedTemplate(
       prisma,
       req.params.discordGuildId,
@@ -388,6 +456,20 @@ guildsRouter.patch(
       req.params.embedId,
       req.body,
     );
+    await trackPanelAction(req, {
+      type: "embed_updated",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "embed",
+        action: "update",
+        name: updated.name,
+        target: req.discordGuildAccess?.name ?? req.params.discordGuildId,
+        embedId: updated.id,
+        before: before ? { name: before.name, messagesCount: before.messages.length } : undefined,
+        after: { name: updated.name, messagesCount: updated.messages.length },
+      }),
+    });
     res.json({ embed: updated });
   }),
 );
@@ -397,12 +479,26 @@ guildsRouter.delete(
   requireSession,
   requireGuildAccess,
   asyncHandler(async (req, res) => {
+    const before = await findEmbedTemplateDtoById(prisma, req.params.discordGuildId, req.params.embedId);
     await deleteEmbedTemplate(
       prisma,
       req.params.discordGuildId,
       req.discordGuildAccess?.name,
       req.params.embedId,
     );
+    await trackPanelAction(req, {
+      type: "embed_deleted",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "embed",
+        action: "delete",
+        name: before?.name ?? req.params.embedId,
+        target: req.discordGuildAccess?.name ?? req.params.discordGuildId,
+        embedId: req.params.embedId,
+        before: before ? { name: before.name, messagesCount: before.messages.length } : undefined,
+      }),
+    });
     res.status(204).end();
   }),
 );
@@ -414,6 +510,22 @@ guildsRouter.post(
   asyncHandler(async (req, res) => {
     const env = loadEnv();
     const result = await sendTemplateMessagesToChannel(req.params.discordGuildId, env.DISCORD_BOT_TOKEN, req.body);
+    const body = req.body as { embedId?: unknown; templateName?: unknown; channelId?: unknown; threadId?: unknown };
+    const embedId = typeof body.embedId === "string" ? body.embedId : null;
+    const template = embedId ? await findEmbedTemplateDtoById(prisma, req.params.discordGuildId, embedId) : null;
+    await trackPanelAction(req, {
+      type: "embed_sent",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "embed",
+        action: "send",
+        name: template?.name ?? (typeof body.templateName === "string" ? body.templateName : "Embed"),
+        target: typeof body.channelId === "string" ? body.channelId : typeof body.threadId === "string" ? body.threadId : null,
+        embedId,
+        sentCount: (result as { sent?: unknown }).sent,
+      }),
+    });
     res.status(201).json(result);
   }),
 );
@@ -434,12 +546,40 @@ guildsRouter.patch(
   requireGuildAccess,
   asyncHandler(async (req, res) => {
     const env = loadEnv();
+    const before = await getGuildTicketSettingsDto(prisma, req.params.discordGuildId);
     const updated = await upsertGuildTicketSettings(
       prisma,
       req.params.discordGuildId,
       req.discordGuildAccess?.name,
       req.body,
     );
+    await trackPanelAction(req, {
+      type: "ticket_settings_updated",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "ticket",
+        action: "configure",
+        name: "Réglages tickets",
+        target: req.discordGuildAccess?.name ?? req.params.discordGuildId,
+        before: before
+          ? {
+              panelChannelId: before.panelChannelId,
+              ticketCategoryId: before.ticketCategoryId,
+              panelEmbedId: before.panelEmbedId,
+              welcomeEmbedId: before.welcomeEmbedId,
+              maxOpenTicketsPerOpener: before.maxOpenTicketsPerOpener,
+            }
+          : undefined,
+        after: {
+          panelChannelId: updated.panelChannelId,
+          ticketCategoryId: updated.ticketCategoryId,
+          panelEmbedId: updated.panelEmbedId,
+          welcomeEmbedId: updated.welcomeEmbedId,
+          maxOpenTicketsPerOpener: updated.maxOpenTicketsPerOpener,
+        },
+      }),
+    });
     const panelSync = await syncTicketPanelMessageDiscord(prisma, req.params.discordGuildId, env.DISCORD_BOT_TOKEN);
     res.json({
       settings: updated,
@@ -469,6 +609,18 @@ guildsRouter.patch(
       req.discordGuildAccess?.name ?? null,
       req.body,
     );
+    await trackPanelAction(req, {
+      type: "welcome_module_updated",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "module",
+        action: "configure",
+        name: "Arrivées et départs",
+        target: req.discordGuildAccess?.name ?? req.params.discordGuildId,
+        after: updated,
+      }),
+    });
     res.json({ settings: updated });
   }),
 );
@@ -494,6 +646,18 @@ guildsRouter.patch(
       req.discordGuildAccess?.name ?? null,
       req.body,
     );
+    await trackPanelAction(req, {
+      type: "autorole_module_updated",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "module",
+        action: "configure",
+        name: "Rôles auto",
+        target: req.discordGuildAccess?.name ?? req.params.discordGuildId,
+        after: updated,
+      }),
+    });
     res.json({ settings: updated });
   }),
 );
@@ -520,6 +684,18 @@ guildsRouter.patch(
       req.discordGuildAccess?.name ?? null,
       req.body,
     );
+    await trackPanelAction(req, {
+      type: "verification_module_updated",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "module",
+        action: "configure",
+        name: "Vérification",
+        target: req.discordGuildAccess?.name ?? req.params.discordGuildId,
+        after: updated,
+      }),
+    });
     const panelSync = await syncJoinVerificationPanelDiscord(
       prisma,
       req.params.discordGuildId,
@@ -567,6 +743,19 @@ guildsRouter.get(
     if (!detail) {
       throw new AppError(404, "Ticket introuvable.", "NOT_FOUND");
     }
+    await trackPanelAction(req, {
+      type: "ticket_viewed",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "ticket",
+        action: "view",
+        name: `Ticket ${(detail as { ticketNumber?: unknown }).ticketNumber ?? req.params.ticketId}`,
+        target: (detail as { channelId?: string }).channelId ?? null,
+        ticketId: req.params.ticketId,
+        status: (detail as { status?: unknown }).status,
+      }),
+    });
     res.json(detail);
   }),
 );
@@ -630,6 +819,23 @@ guildsRouter.post(
       env.DISCORD_BOT_TOKEN,
       req.body,
     );
+    await trackPanelAction(req, {
+      type: "server_template_created",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "template",
+        action: "create",
+        name: created.name,
+        target: req.discordGuildAccess?.name ?? req.params.discordGuildId,
+        templateId: created.id,
+        after: {
+          rolesCount: created.rolesCount,
+          channelsCount: created.channelsCount,
+          categoriesCount: created.categoriesCount,
+        },
+      }),
+    });
     res.status(201).json({ template: created });
   }),
 );
@@ -653,12 +859,27 @@ guildsRouter.patch(
   requireSession,
   requireGuildAccess,
   asyncHandler(async (req, res) => {
+    const before = await getServerTemplateDetail(prisma, req.params.discordGuildId, req.params.templateId);
     const updated = await updateServerTemplate(
       prisma,
       req.params.discordGuildId,
       req.params.templateId,
       req.body,
     );
+    await trackPanelAction(req, {
+      type: "server_template_updated",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "template",
+        action: "update",
+        name: updated.name,
+        target: req.discordGuildAccess?.name ?? req.params.discordGuildId,
+        templateId: updated.id,
+        before: { name: before.name, description: before.description },
+        after: { name: updated.name, description: updated.description },
+      }),
+    });
     res.json({ template: updated });
   }),
 );
@@ -668,7 +889,25 @@ guildsRouter.delete(
   requireSession,
   requireGuildAccess,
   asyncHandler(async (req, res) => {
+    const before = await getServerTemplateDetail(prisma, req.params.discordGuildId, req.params.templateId);
     await deleteServerTemplate(prisma, req.params.discordGuildId, req.params.templateId);
+    await trackPanelAction(req, {
+      type: "server_template_deleted",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "template",
+        action: "delete",
+        name: before.name,
+        target: req.discordGuildAccess?.name ?? req.params.discordGuildId,
+        templateId: req.params.templateId,
+        before: {
+          rolesCount: before.rolesCount,
+          channelsCount: before.channelsCount,
+          categoriesCount: before.categoriesCount,
+        },
+      }),
+    });
     res.status(204).end();
   }),
 );
@@ -686,6 +925,18 @@ guildsRouter.post(
       env.DISCORD_BOT_TOKEN,
       req.params.templateId,
     );
+    await trackPanelAction(req, {
+      type: "server_template_apply_previewed",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "template",
+        action: "preview",
+        name: (result as { templateName?: string }).templateName ?? req.params.templateId,
+        target: req.discordGuildAccess?.name ?? req.params.discordGuildId,
+        templateId: req.params.templateId,
+      }),
+    });
     res.json(result);
   }),
 );
@@ -725,6 +976,19 @@ guildsRouter.post(
       true,
     );
     const plan = buildApplyPlan(current.snapshot, detail.snapshot);
+    await trackPanelAction(req, {
+      type: "server_template_apply_started",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "template",
+        action: "apply",
+        name: detail.name,
+        target: req.discordGuildAccess?.name ?? discordGuildId,
+        templateId,
+        success: true,
+      }),
+    });
 
     // SSE headers
     res.setHeader("Content-Type", "text/event-stream");
@@ -737,6 +1001,7 @@ guildsRouter.post(
       res.write(`data: ${JSON.stringify(event)}\n\n`);
     };
 
+    let failed = false;
     try {
       for await (const ev of applyServerTemplate(
         discordGuildId,
@@ -745,15 +1010,30 @@ guildsRouter.post(
         current.snapshot,
         detail.snapshot,
       )) {
+        if ((ev as { type?: unknown }).type === "fatal") failed = true;
         send(ev);
       }
     } catch (err) {
+      failed = true;
       send({
         type: "fatal",
         error: err instanceof Error ? err.message : "Erreur inattendue.",
       });
     } finally {
       await invalidateGuildStructureCache(prisma, discordGuildId);
+      await trackPanelAction(req, {
+        type: failed ? "server_template_apply_failed" : "server_template_apply_finished",
+        discordUserId: req.session.discordUser?.id,
+        discordGuildId,
+        metadata: businessEventMetadata({
+          entity: "template",
+          action: "apply",
+          name: detail.name,
+          target: req.discordGuildAccess?.name ?? discordGuildId,
+          templateId,
+          success: !failed,
+        }),
+      });
       res.end();
     }
   }),
@@ -790,6 +1070,22 @@ guildsRouter.patch(
       req.params.commandName,
       req.body,
     );
+    await trackPanelAction(req, {
+      type: "native_command_updated",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "command",
+        action: "configure",
+        name: `/${updated.commandName}`,
+        target: req.discordGuildAccess?.name ?? req.params.discordGuildId,
+        after: {
+          enabled: updated.enabled,
+          allowedRoleCount: updated.allowedRoleIds.length,
+          allowedChannelCount: updated.allowedChannelIds.length,
+        },
+      }),
+    });
     res.json({ command: updated });
   }),
 );
@@ -822,6 +1118,23 @@ guildsRouter.post(
       env.DISCORD_CLIENT_ID,
       env.DISCORD_BOT_TOKEN,
     );
+    await trackPanelAction(req, {
+      type: "custom_command_created",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "command",
+        action: "create",
+        name: `/${created.name}`,
+        target: req.discordGuildAccess?.name ?? req.params.discordGuildId,
+        commandId: created.id,
+        after: {
+          responseType: created.responseType,
+          enabled: created.enabled,
+          ephemeral: created.ephemeral,
+        },
+      }),
+    });
     res.status(201).json({ command: created });
   }),
 );
@@ -846,6 +1159,7 @@ guildsRouter.patch(
   requireGuildAccess,
   asyncHandler(async (req, res) => {
     const env = loadEnv();
+    const before = await getCustomSlashCommand(prisma, req.params.discordGuildId, req.params.commandId);
     const updated = await updateCustomSlashCommand(
       prisma,
       req.params.discordGuildId,
@@ -854,6 +1168,20 @@ guildsRouter.patch(
       env.DISCORD_CLIENT_ID,
       env.DISCORD_BOT_TOKEN,
     );
+    await trackPanelAction(req, {
+      type: "custom_command_updated",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "command",
+        action: "update",
+        name: `/${updated.name}`,
+        target: req.discordGuildAccess?.name ?? req.params.discordGuildId,
+        commandId: updated.id,
+        before: { name: before.name, enabled: before.enabled, responseType: before.responseType },
+        after: { name: updated.name, enabled: updated.enabled, responseType: updated.responseType },
+      }),
+    });
     res.json({ command: updated });
   }),
 );
@@ -864,6 +1192,7 @@ guildsRouter.delete(
   requireGuildAccess,
   asyncHandler(async (req, res) => {
     const env = loadEnv();
+    const before = await getCustomSlashCommand(prisma, req.params.discordGuildId, req.params.commandId);
     await deleteCustomSlashCommand(
       prisma,
       req.params.discordGuildId,
@@ -871,6 +1200,19 @@ guildsRouter.delete(
       env.DISCORD_CLIENT_ID,
       env.DISCORD_BOT_TOKEN,
     );
+    await trackPanelAction(req, {
+      type: "custom_command_deleted",
+      discordUserId: req.session.discordUser?.id,
+      discordGuildId: req.params.discordGuildId,
+      metadata: businessEventMetadata({
+        entity: "command",
+        action: "delete",
+        name: `/${before.name}`,
+        target: req.discordGuildAccess?.name ?? req.params.discordGuildId,
+        commandId: req.params.commandId,
+        before: { name: before.name, responseType: before.responseType },
+      }),
+    });
     res.status(204).end();
   }),
 );

@@ -579,6 +579,97 @@ model MarketplacePublication {
   @@index([createdAt])
 }
 
+/// Utilisateur Discord déjà passé par le panel.
+model PanelUser {
+  id             String   @id @default(cuid())
+  discordUserId  String   @unique
+  username       String
+  globalName     String?
+  avatar         String?
+  firstSeenAt    DateTime @default(now())
+  lastLoginAt    DateTime @default(now())
+  loginCount     Int      @default(0)
+
+  loginEvents PanelLoginEvent[]
+
+  @@index([lastLoginAt])
+}
+
+/// Connexion Discord réussie au panel.
+model PanelLoginEvent {
+  id             String   @id @default(cuid())
+  panelUserId    String
+  panelUser      PanelUser @relation(fields: [panelUserId], references: [id], onDelete: Cascade)
+  discordUserId  String
+  visitorId      String?
+  sessionId      String?
+  createdAt      DateTime @default(now())
+
+  @@index([discordUserId])
+  @@index([visitorId])
+  @@index([sessionId])
+  @@index([createdAt])
+}
+
+/// Clic ou redirection vers l'invitation du bot.
+model BotInviteEvent {
+  id             String   @id @default(cuid())
+  source         String
+  discordGuildId String?
+  visitorId      String?
+  sessionId      String?
+  userAgent      String?
+  ipHash         String?
+  createdAt      DateTime @default(now())
+
+  @@index([source])
+  @@index([discordGuildId])
+  @@index([visitorId])
+  @@index([sessionId])
+  @@index([createdAt])
+}
+
+/// Événement simple produit/marketing, sans donnée sensible.
+model ProductEvent {
+  id             String   @id @default(cuid())
+  type           String
+  source         String?
+  path           String?
+  referrer       String?
+  visitorId      String?
+  sessionId      String?
+  discordUserId  String?
+  discordGuildId String?
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  @@index([type])
+  @@index([createdAt])
+  @@index([visitorId])
+  @@index([sessionId])
+  @@index([discordUserId])
+  @@index([discordGuildId])
+}
+
+/// Snapshot quotidien pour accélérer l'affichage admin si besoin.
+model DailyMetricSnapshot {
+  id        String   @id @default(cuid())
+  day       DateTime @unique
+  metrics   Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Session web du panel, persistée pour éviter le MemoryStore en production.
+model PanelSession {
+  sid       String   @id
+  data      Json
+  expiresAt DateTime
+  updatedAt DateTime @updatedAt
+
+  @@index([expiresAt])
+}
+
 /// Cache persistant de la dernière lecture Discord de la structure d'un serveur.
 /// Évite d'appeler Discord à chaque ouverture de la page Templates. Rafraîchi manuellement par l'utilisateur.
 model GuildStructureCache {

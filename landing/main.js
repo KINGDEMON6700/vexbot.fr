@@ -2,9 +2,103 @@
   "use strict";
 
   var prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var TRACKING_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+  function randomId(prefix) {
+    var raw = "";
+    if (window.crypto && window.crypto.getRandomValues) {
+      var bytes = new Uint8Array(12);
+      window.crypto.getRandomValues(bytes);
+      raw = Array.prototype.map.call(bytes, function (b) {
+        return b.toString(16).padStart(2, "0");
+      }).join("");
+    } else {
+      raw = String(Date.now()) + Math.random().toString(16).slice(2);
+    }
+    return prefix + "_" + raw;
+  }
+
+  function readCookie(name) {
+    return document.cookie
+      .split(";")
+      .map(function (v) { return v.trim(); })
+      .filter(function (v) { return v.indexOf(name + "=") === 0; })
+      .map(function (v) { return decodeURIComponent(v.slice(name.length + 1)); })[0] || "";
+  }
+
+  function writeTrackingCookie(name, value) {
+    document.cookie = name + "=" + encodeURIComponent(value) + "; Max-Age=" + TRACKING_COOKIE_MAX_AGE + "; Path=/; Domain=.vexbot.fr; SameSite=Lax; Secure";
+  }
+
+  function getTrackingIds() {
+    var visitorId = readCookie("vex_vid") || window.localStorage.getItem("vex_vid") || randomId("v");
+    var sessionId = window.sessionStorage.getItem("vex_sid_public") || randomId("s");
+    window.localStorage.setItem("vex_vid", visitorId);
+    window.sessionStorage.setItem("vex_sid_public", sessionId);
+    writeTrackingCookie("vex_vid", visitorId);
+    writeTrackingCookie("vex_sid_public", sessionId);
+    return { visitorId: visitorId, sessionId: sessionId };
+  }
 
   var yearEl = document.getElementById("y");
   if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+
+  function trackEvent(type, source, metadata) {
+    try {
+      var ids = getTrackingIds();
+      var payload = JSON.stringify({
+        type: type,
+        source: source || "landing",
+        path: window.location.pathname,
+        referrer: document.referrer || "",
+        visitorId: ids.visitorId,
+        sessionId: ids.sessionId,
+        metadata: metadata || null
+      });
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon("https://panel.vexbot.fr/api/public/events", new Blob([payload], { type: "application/json" }));
+        return;
+      }
+      fetch("https://panel.vexbot.fr/api/public/events", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+        keepalive: true
+      }).catch(function () {});
+    } catch {
+      // Le tracking ne doit jamais bloquer la page.
+    }
+  }
+
+  trackEvent("landing_visit", "landing");
+
+  if (performance && performance.getEntriesByType) {
+    var nav = performance.getEntriesByType("navigation")[0];
+    if (nav && nav.type === "back_forward") {
+      trackEvent("landing_return", "landing", { reason: "browser_back_forward" });
+    }
+  }
+
+  document.querySelectorAll("[data-track-event]").forEach(function (el) {
+    el.addEventListener("click", function () {
+      trackEvent(el.getAttribute("data-track-event") || "click", "landing", {
+        text: (el.textContent || "").trim().slice(0, 120),
+        href: el.href || null
+      });
+    });
+  });
+
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") {
+      trackEvent("landing_session_exit", "landing", { reason: "hidden" });
+    } else {
+      trackEvent("landing_session_return", "landing");
+    }
+  });
+
+  window.addEventListener("pagehide", function () {
+    trackEvent("landing_session_exit", "landing", { reason: "pagehide" });
+  });
 
   var header = document.querySelector(".site-header");
   if (header) {

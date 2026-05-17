@@ -24,6 +24,8 @@ import { evaluateNativeCommandAccess } from "../services/nativeCommandSettingsSe
 import { resolveCustomCommandForBot } from "../services/customSlashCommandService.js";
 import { getWelcomeGoodbyeSettings } from "../services/welcomeGoodbyeService.js";
 import { getJoinAutoRoleSettings } from "../services/joinAutoRoleSettingsService.js";
+import { ensureGuildForDiscord } from "../services/ensureGuild.js";
+import { businessEventMetadata, recordProductEvent } from "../services/metricsService.js";
 import {
   consumeJoinVerificationCaptcha,
   issueJoinVerificationCaptcha,
@@ -92,6 +94,14 @@ const ticketPanelRenderBodySchema = z.object({
   discordGuildId: z.string().regex(/^\d{5,25}$/),
 });
 
+const botGuildEventSchema = z.object({
+  discordGuildId: z.preprocess((value) => String(value ?? "").trim(), z.string().regex(/^\d{5,25}$/)),
+  name: z.preprocess((value) => {
+    if (value === undefined || value === null) return null;
+    return String(value).trim().slice(0, 100) || null;
+  }, z.string().nullable()).optional(),
+});
+
 function timingSafeStringEqual(a: string, b: string): boolean {
   try {
     const ba = Buffer.from(a, "utf8");
@@ -105,6 +115,45 @@ function timingSafeStringEqual(a: string, b: string): boolean {
 
 export function createBotInternalRouter(env: Env) {
   const router = Router();
+
+  router.post(
+    "/guild-installed",
+    async (req: Request, res: Response, next: NextFunction) => {
+      try {
+        const provided = req.get("x-vex-bot-key") ?? "";
+        if (!timingSafeStringEqual(provided, env.VEX_BOT_API_SECRET)) {
+          res.status(401).json({ error: { code: "UNAUTHORIZED", message: "Clé invalide." } });
+          return;
+        }
+        const parsed = botGuildEventSchema.safeParse(req.body);
+        if (!parsed.success) {
+          res.status(400).json({
+            error: {
+              code: "INVALID_BODY",
+              message: "Requête invalide.",
+              details: parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`),
+            },
+          });
+          return;
+        }
+        await ensureGuildForDiscord(prisma, parsed.data.discordGuildId, parsed.data.name ?? null);
+        await recordProductEvent(prisma, {
+          type: "bot_installed",
+          source: "discord_guild_create",
+          discordGuildId: parsed.data.discordGuildId,
+          metadata: businessEventMetadata({
+            entity: "bot",
+            action: "install",
+            name: parsed.data.name ?? parsed.data.discordGuildId,
+            target: parsed.data.discordGuildId,
+          }),
+        });
+        res.status(204).end();
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
 
   router.post(
     "/send-embed-template",
@@ -277,6 +326,17 @@ export function createBotInternalRouter(env: Env) {
           parsed.data.discordGuildId,
           parsed.data.panelMessageId,
         );
+        await recordProductEvent(prisma, {
+          type: "ticket_panel_message_synced",
+          source: "bot_internal",
+          discordGuildId: parsed.data.discordGuildId,
+          metadata: businessEventMetadata({
+            entity: "ticket",
+            action: "sync",
+            name: "Panneau ticket",
+            target: parsed.data.panelMessageId,
+          }),
+        });
         res.status(204).end();
       } catch (err) {
         next(err);
@@ -329,6 +389,17 @@ export function createBotInternalRouter(env: Env) {
           parsed.data.discordGuildId,
           parsed.data.channelId,
         );
+        await recordProductEvent(prisma, {
+          type: "ticket_open_reverted",
+          source: "bot_internal",
+          discordGuildId: parsed.data.discordGuildId,
+          metadata: businessEventMetadata({
+            entity: "ticket",
+            action: "delete",
+            name: "Ticket annulé",
+            target: parsed.data.channelId,
+          }),
+        });
         res.status(204).end();
       } catch (err) {
         next(err);
@@ -357,6 +428,20 @@ export function createBotInternalRouter(env: Env) {
           parsed.data.openerDiscordId,
           parsed.data.subject,
         );
+        await recordProductEvent(prisma, {
+          type: "ticket_open_registered",
+          source: "bot_internal",
+          discordGuildId: parsed.data.discordGuildId,
+          metadata: businessEventMetadata({
+            entity: "ticket",
+            action: "create",
+            name: `Ticket ${(out as { ticketNumber?: unknown }).ticketNumber ?? ""}`.trim(),
+            target: parsed.data.channelId,
+            openerDiscordId: parsed.data.openerDiscordId,
+            subject: parsed.data.subject ?? null,
+            after: out,
+          }),
+        });
         res.status(201).json(out);
       } catch (err) {
         next(err);
@@ -442,6 +527,26 @@ export function createBotInternalRouter(env: Env) {
           closeReason: d.closeReason,
           memberSelfClose: d.memberSelfClose,
           welcomeCloseByStaff: d.welcomeCloseByStaff,
+        });
+        await recordProductEvent(prisma, {
+          type: "ticket_closed",
+          source: "bot_internal",
+          discordGuildId: d.discordGuildId,
+          metadata: businessEventMetadata({
+            entity: "ticket",
+            action: "close",
+            name: "Ticket fermé",
+            target: d.channelId,
+            success: true,
+            closedByDiscordId: d.closedByDiscordId,
+            after: {
+              closeReason: d.closeReason,
+              messageCount: d.messageCount,
+              format: d.format,
+              memberSelfClose: d.memberSelfClose ?? false,
+              welcomeCloseByStaff: d.welcomeCloseByStaff ?? false,
+            },
+          }),
         });
         res.json({ ok: true, ...result });
       } catch (err) {
@@ -615,9 +720,35 @@ export function createBotInternalRouter(env: Env) {
         }
         const result = await issueJoinVerificationCaptcha(prisma, discordGuildId, discordUserId);
         if (!result.ok) {
+          await recordProductEvent(prisma, {
+            type: "join_verification_captcha_issued",
+            source: "bot_internal",
+            discordGuildId,
+            discordUserId,
+            metadata: businessEventMetadata({
+              entity: "module",
+              action: "captcha_issue",
+              name: "Vérification",
+              target: discordUserId,
+              success: false,
+              reason: result.reason,
+            }),
+          });
           res.status(400).json({ error: { code: "ISSUE_FAILED", message: result.reason } });
           return;
         }
+        await recordProductEvent(prisma, {
+          type: "join_verification_captcha_issued",
+          source: "bot_internal",
+          discordGuildId,
+          discordUserId,
+          metadata: businessEventMetadata({
+            entity: "module",
+            action: "captcha_issue",
+            name: "Vérification",
+            target: discordUserId,
+          }),
+        });
         res.json({ code: result.code });
       } catch (err) {
         next(err);
@@ -643,6 +774,19 @@ export function createBotInternalRouter(env: Env) {
           return;
         }
         const { ok } = await consumeJoinVerificationCaptcha(prisma, discordGuildId, discordUserId, code);
+        await recordProductEvent(prisma, {
+          type: "join_verification_captcha_checked",
+          source: "bot_internal",
+          discordGuildId,
+          discordUserId,
+          metadata: businessEventMetadata({
+            entity: "module",
+            action: "captcha_check",
+            name: "Vérification",
+            target: discordUserId,
+            success: ok,
+          }),
+        });
         res.json({ ok });
       } catch (err) {
         next(err);

@@ -42,8 +42,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setGuilds([]);
         return;
       }
-      const data = (await res.json()) as { user: PanelUser; guilds?: PanelGuild[] };
-      setUser(data.user);
+      const data = (await res.json()) as { user: PanelUser; guilds?: PanelGuild[]; isAdmin?: boolean };
+      setUser({ ...data.user, isAdmin: Boolean(data.isAdmin) });
       setGuilds(data.guilds ?? []);
     } catch {
       setUser(null);

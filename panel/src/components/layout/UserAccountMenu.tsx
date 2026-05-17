@@ -94,6 +94,17 @@ export function UserAccountMenu({ user, onLogout }: Props) {
               <span className="fa-solid fa-user-gear mr-2 w-4 text-center text-zinc-500" aria-hidden />
               Paramètres du compte
             </Link>
+            {user.isAdmin ? (
+              <Link
+                role="menuitem"
+                to="/admin/stats"
+                className="rounded-lg px-3 py-2 text-sm text-zinc-300 transition hover:bg-vex-bg/70 hover:text-zinc-100"
+                onClick={() => setOpen(false)}
+              >
+                <span className="fa-solid fa-chart-simple mr-2 w-4 text-center text-zinc-500" aria-hidden />
+                Panel développeur
+              </Link>
+            ) : null}
             <button
               type="button"
               role="menuitem"

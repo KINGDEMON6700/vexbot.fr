@@ -1,11 +1,14 @@
 import session from "express-session";
 import type { Env } from "../config/env.js";
+import { prisma } from "../db.js";
+import { PrismaSessionStore } from "./prismaSessionStore.js";
 
 export function createSessionMiddleware(env: Env) {
   const isProd = env.NODE_ENV === "production";
 
   return session({
     name: "vex.sid",
+    store: new PrismaSessionStore(prisma),
     secret: env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,

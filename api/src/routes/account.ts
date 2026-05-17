@@ -5,6 +5,8 @@ import { asyncHandler } from "../lib/asyncHandler.js";
 import { AppError } from "../lib/AppError.js";
 import { requireSession } from "../middleware/requireSession.js";
 import { isGuildEligibleForPanel } from "../services/eligibleGuilds.js";
+import { businessEventMetadata, networkMetadataFromRequest, recordProductEvent } from "../services/metricsService.js";
+import { trackingFromRequest } from "../lib/trackingCookies.js";
 
 export const accountRouter = Router();
 
@@ -79,6 +81,25 @@ accountRouter.post(
       prisma.guild.deleteMany({ where: { discordId: { in: guildDiscordIds } } }),
     ]);
 
+    const tracking = trackingFromRequest(req);
+    await recordProductEvent(prisma, {
+      type: "account_reset_confirmed",
+      source: "panel",
+      visitorId: tracking.visitorId,
+      sessionId: tracking.sessionId,
+      discordUserId: user.id,
+      metadata: {
+        ...businessEventMetadata({
+          entity: "account",
+          action: "delete",
+          name: user.username,
+          target: "Données panel du compte",
+          affectedGuildCount: guildDiscordIds.length,
+        }),
+        network: networkMetadataFromRequest(req),
+      },
+    });
+
     await new Promise<void>((resolve, reject) => {
       req.session.destroy((err) => {
         if (err) reject(err);
@@ -110,6 +131,26 @@ accountRouter.post(
     const left = results.filter((r) => r.status === "left").length;
     const notPresent = results.filter((r) => r.status === "not_present").length;
     const failed = results.filter((r) => r.status === "failed").length;
+    const tracking = trackingFromRequest(req);
+
+    await recordProductEvent(prisma, {
+      type: "bot_left_accessible_guilds",
+      source: "panel",
+      visitorId: tracking.visitorId,
+      sessionId: tracking.sessionId,
+      discordUserId: req.session.discordUser?.id,
+      metadata: {
+        ...businessEventMetadata({
+          entity: "bot",
+          action: "delete",
+          name: "Retrait du bot",
+          target: "Serveurs accessibles",
+          success: failed === 0,
+          after: { left, notPresent, failed },
+        }),
+        network: networkMetadataFromRequest(req),
+      },
+    });
 
     res.json({ left, notPresent, failed, results });
   }),
